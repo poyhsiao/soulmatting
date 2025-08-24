@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth-service]
+        service: [auth]
     
     steps:
     - name: Checkout code
@@ -49,13 +49,13 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
         cache: 'pnpm'
 
     - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: 8
+        version: 10.15.0
 
     - name: Install dependencies
       run: |
@@ -67,11 +67,11 @@ jobs:
 
     - name: Code linting (ESLint)
       run: |
-        pnpm --filter @soulmatting/${{ matrix.service }} lint
+        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} lint
 
     - name: Type checking (TypeScript)
       run: |
-        pnpm --filter @soulmatting/${{ matrix.service }} type-check
+        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} type-check
 
     - name: Security check (npm audit)
       run: |
@@ -83,11 +83,11 @@ jobs:
 
     - name: Run unit tests
       run: |
-        pnpm --filter @soulmatting/${{ matrix.service }} test
+        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} test
 
     - name: Run integration tests
       run: |
-        pnpm --filter @soulmatting/${{ matrix.service }} test:e2e
+        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} test:e2e
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
@@ -108,12 +108,12 @@ jobs:
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'
+        node-version: '22'
 
     - name: Install pnpm
       uses: pnpm/action-setup@v2
       with:
-        version: 8
+        version: 10.15.0
 
     - name: Install dependencies
       run: |
@@ -147,7 +147,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: frontend-build
-        path: frontend/dist/
+        path: apps/web/dist/
 
   # Job 3: Build and Push Docker Images
   build-images:
@@ -157,7 +157,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
-        service: [frontend, auth-service]
+        service: [web, auth]
     
     steps:
     - name: Checkout code
@@ -185,18 +185,18 @@ jobs:
           type=semver,pattern={{major}}.{{minor}}
           type=sha,prefix={{branch}}-
 
-    - name: Download frontend build (for frontend service)
-      if: matrix.service == 'frontend'
-        uses: actions/download-artifact@v3
-        with:
-          name: frontend-build
-          path: apps/web/dist/
+    - name: Download frontend build (for web service)
+      if: matrix.service == 'web'
+      uses: actions/download-artifact@v3
+      with:
+        name: frontend-build
+        path: apps/web/dist/
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ${{ matrix.service == 'frontend' && 'apps/web' || (matrix.service == 'auth-service' && 'services/auth' || format('services/{0}', matrix.service)) }}
-        file: ${{ matrix.service == 'frontend' && 'apps/web/Dockerfile' || (matrix.service == 'auth-service' && 'services/auth/Dockerfile' || format('services/{0}/Dockerfile', matrix.service)) }}
+        context: ${{ matrix.service == 'web' && 'apps/web' || (matrix.service == 'auth' && 'services/auth' || format('services/{0}', matrix.service)) }}
+        file: ${{ matrix.service == 'web' && 'apps/web/Dockerfile' || (matrix.service == 'auth' && 'services/auth/Dockerfile' || format('services/{0}/Dockerfile', matrix.service)) }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
@@ -211,7 +211,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
-        service: [frontend, auth, user, match, communication, media, notification, search, payment, analytics]
+        service: [web, auth-service]
     
     steps:
     - name: Run Trivy vulnerability scanner
