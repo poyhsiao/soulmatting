@@ -26,9 +26,9 @@ secretGroup = 2
 # Allowlist for false positives
 [allowlist]
 paths = [
-  "\.env\.example$",
-  "\.\(md|txt|rst\)$",
-  "(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$"
+  "\\.env\\.example$",
+  "\\.\\(md|txt|rst\\)$",
+  "(package-lock\\.json|yarn\\.lock|pnpm-lock\\.yaml)$"
 ]
 regexes = [
   "(test|spec|example|mock|fixture)",
