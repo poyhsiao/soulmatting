@@ -14,6 +14,7 @@ import { PrismaClient } from './generated/client';
 const prisma = new PrismaClient();
 
 async function main() {
+  // eslint-disable-next-line no-console
   console.log('🌱 Starting database seeding...');
 
   try {
@@ -26,8 +27,10 @@ async function main() {
     //   skipDuplicates: true,
     // });
 
+    // eslint-disable-next-line no-console
     console.log('✅ Database seeding completed successfully!');
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('❌ Error during database seeding:', error);
     throw error;
   }
@@ -35,6 +38,7 @@ async function main() {
 
 main()
   .catch(e => {
+    // eslint-disable-next-line no-console
     console.error('❌ Seed script failed:', e);
     process.exit(1);
   })
