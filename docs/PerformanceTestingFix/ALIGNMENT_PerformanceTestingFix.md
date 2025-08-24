@@ -16,9 +16,10 @@
 ## Project Context Analysis
 
 ### Current Project Structure
+
 - **Project Name:** SoulMatting - Next-generation dating platform
 - **Architecture:** Microservices with monorepo structure
-- **Tech Stack:** 
+- **Tech Stack:**
   - Frontend: React with TypeScript
   - Backend: NestJS with TypeScript
   - Database: PostgreSQL
@@ -29,6 +30,7 @@
   - Build Tool: Turbo
 
 ### Performance Testing Infrastructure
+
 - **Lighthouse CI:** Frontend performance testing
 - **Artillery:** Load testing for API endpoints
 - **GitHub Actions:** Automated performance testing workflow
@@ -37,9 +39,12 @@
 ## Requirement Clarification
 
 ### Original Requirements
-用戶報告 GitHub Actions 中的 **Performance Testing** 工作流程一直失敗，請求檢查並修正錯誤，並更新相關文檔。
+
+用戶報告 GitHub Actions 中的 **Performance Testing**
+工作流程一直失敗，請求檢查並修正錯誤，並更新相關文檔。
 
 ### Specific Issues Identified
+
 1. **pnpm Action Setup Version Inconsistency**
    - Mixed usage of `pnpm/action-setup@v4` and `pnpm/action-setup@v2`
    - Missing `run_install: false` parameter
@@ -64,6 +69,7 @@
 ## Scope Boundaries
 
 ### In Scope
+
 - Fix GitHub Actions Performance Testing workflow
 - Update pnpm action setup configurations
 - Implement proper dependency installation and caching
@@ -73,6 +79,7 @@
 - Update documentation
 
 ### Out of Scope
+
 - Modifying core application logic
 - Changing database schema
 - Updating frontend components
@@ -82,7 +89,9 @@
 ## Understanding of Existing Project
 
 ### Workflow Structure
+
 The performance testing workflow consists of multiple jobs:
+
 1. **setup:** Dependency and build cache management
 2. **lighthouse:** Frontend performance testing
 3. **load-test:** API load testing with Artillery
@@ -90,12 +99,14 @@ The performance testing workflow consists of multiple jobs:
 5. **performance-summary:** Results aggregation and reporting
 
 ### Service Dependencies
+
 - PostgreSQL database for data persistence
 - Redis for caching and session management
 - REST API service for backend functionality
 - Web application for frontend testing
 
 ### Testing Tools
+
 - **Lighthouse CI:** Measures Core Web Vitals and performance metrics
 - **Artillery:** Load testing with configurable scenarios
 - **Docker Compose:** Service orchestration for testing environment
@@ -103,12 +114,14 @@ The performance testing workflow consists of multiple jobs:
 ## Clarification of Ambiguities
 
 ### Resolved Decisions
+
 1. **pnpm Version:** Standardized on `pnpm/action-setup@v2` for consistency
 2. **Service Startup:** Implemented sequential startup with health checks
 3. **Test Configuration:** Created separate API test configuration for better organization
 4. **Dependency Management:** Added Artillery and Faker to support comprehensive testing
 
 ### Technical Constraints
+
 - Must maintain compatibility with existing Node.js and pnpm versions
 - Docker Compose configuration should not affect production setup
 - Test configurations should be environment-agnostic

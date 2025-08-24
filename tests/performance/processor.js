@@ -29,7 +29,7 @@ function generateTestUser(context, events, done) {
     email: faker.internet.email(),
     password: 'TestPassword123!',
     name: faker.person.fullName(),
-    username: faker.internet.userName()
+    username: faker.internet.userName(),
   };
   return done();
 }
@@ -71,5 +71,5 @@ module.exports = {
   generateRandomString,
   generateTestUser,
   logResponse,
-  setAuthToken
+  setAuthToken,
 };
