@@ -10,7 +10,7 @@ description = "Custom GitLeaks configuration for SoulMatting project"
   # Enable all default rules
   [rules.generic-api-key]
     description = "Generic API Key"
-    regex = '''(?i)(?:key|api|token|secret|password)\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?'''
+    regex = '''(?i)(?:key|api|token|secret|password)\s*[:=]\s*['""']?[a-z0-9]{20,}['""']?'''
     tags = ["key", "API", "generic"]
 
   [rules.aws-access-token]
@@ -47,7 +47,7 @@ description = "Custom GitLeaks configuration for SoulMatting project"
     ".git/",
     "helm/values-staging.yaml",
     "helm/values-production.yaml",
-    "helm/values-dev\.yaml$",
+    "helm/values-dev.yaml",
     "docker-compose.yml",
     "docker-compose.yaml",
     ".github/workflows/"
@@ -56,18 +56,18 @@ description = "Custom GitLeaks configuration for SoulMatting project"
   # Regular expressions for patterns to ignore
   regexes = [
     # Ignore Helm template variables
-    '''\{\{\s*\.Values\.[^}]+\}\}''',
+    "\\{\\{\\s*\\.Values\\.[^}]+\\}\\}",
     # Ignore environment variable references
-    '''\$\{[^}]+\}''',
-    '''\$[A-Z_][A-Z0-9_]*''',
+    "\\$\\{[^}]+\\}",
+    "\\$[A-Z_][A-Z0-9_]*",
     # Ignore placeholder values
-    '''(?i)(your|example|placeholder|dummy|test|sample)[-_]?(key|token|secret|password)''',
+    "(?i)(your|example|placeholder|dummy|test|sample)[-_]?(key|token|secret|password)",
     # Ignore common development/example values
-    '''(?i)(localhost|127\.0\.0\.1|example\.com|test\.com)''',
+    "(?i)(localhost|127\\.0\\.0\\.1|example\\.com|test\\.com)",
     # Ignore default JWT secrets in development
-    '''(?i)jwt[-_]?secret[-_]?(key)?\s*[:=]\s*['"]?(your|default|secret|test)[-_]?(jwt|secret|key)?['"]?''',
+    "(?i)jwt[-_]?secret[-_]?(key)?\\s*[:=]\\s*['\"']?(your|default|secret|test)[-_]?(jwt|secret|key)?['\"']?",
     # Ignore Supabase development keys
-    '''(?i)supabase[-_]?(service|anon)[-_]?key\s*[:=]\s*['"]?eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*['"]?''',
+    "(?i)supabase[-_]?(service|anon)[-_]?key\\s*[:=]\\s*['\"']?eyJ[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*['\"']?",
     # Ignore development database URLs with template variables
-    '''(?i)database[-_]?url\s*[:=]\s*['"]?postgres://\$\{[^}]+\}'''
+    "(?i)database[-_]?url\\s*[:=]\\s*['\"']?postgres://\\$\\{[^}]+\\}"
   ]
