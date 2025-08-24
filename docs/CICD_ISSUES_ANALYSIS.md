@@ -15,7 +15,9 @@
 
 ## Overview
 
-This document analyzes the CI/CD pipeline issues found in the SoulMatting project's GitHub Actions workflows. The analysis covers script mismatches, missing dependencies, and configuration inconsistencies.
+This document analyzes the CI/CD pipeline issues found in the SoulMatting project's GitHub Actions
+workflows. The analysis covers script mismatches, missing dependencies, and configuration
+inconsistencies.
 
 ## Identified Issues
 
@@ -24,7 +26,9 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 **Issue:** CI/CD workflows reference scripts that don't exist in package.json
 
 **Examples:**
-- `ci.yml` line 85: `pnpm license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC'`
+
+- `ci.yml` line 85:
+  `pnpm license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC'`
 - Root `package.json` doesn't have `license-checker` script or dependency
 
 ### 2. Prisma Command Path Issues
@@ -32,6 +36,7 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 **Issue:** Inconsistent Prisma command paths across workflows
 
 **Examples:**
+
 - `ci-cd.yml` line 108: `pnpm --filter @soulmatting/database prisma generate`
 - `ci.yml` line 76: `pnpm --filter @soulmatting/database generate`
 - Database package has `generate` script, not `prisma generate`
@@ -41,7 +46,9 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 **Issue:** Service filtering logic is inconsistent
 
 **Examples:**
-- `ci-cd.yml` uses complex matrix logic: `${{ matrix.service == 'auth' && 'auth-service' || matrix.service }}`
+
+- `ci-cd.yml` uses complex matrix logic:
+  `${{ matrix.service == 'auth' && 'auth-service' || matrix.service }}`
 - Actual service name is `@soulmatting/auth-service`
 
 ### 4. Missing Dependencies
@@ -49,6 +56,7 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 **Issue:** CI/CD workflows reference tools not installed
 
 **Examples:**
+
 - `license-checker` package not in dependencies
 - Some linting tools may be missing
 
@@ -57,6 +65,7 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 **Issue:** Test commands don't match available scripts
 
 **Examples:**
+
 - `ci.yml` calls `pnpm test:frontend` and `pnpm test:backend`
 - Root package.json has these scripts, but they may not work correctly with current setup
 
@@ -65,6 +74,7 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 **Issue:** Missing or incorrect environment setup
 
 **Examples:**
+
 - `.env.test` file creation in CI but no template exists
 - Database URL configuration may not match service expectations
 
@@ -117,14 +127,14 @@ This document analyzes the CI/CD pipeline issues found in the SoulMatting projec
 
 ## Priority Matrix
 
-| Issue | Impact | Effort | Priority |
-|-------|--------|--------|---------|
-| Missing Dependencies | High | Low | High |
-| Prisma Commands | High | Low | High |
-| Service Names | Medium | Medium | Medium |
-| Workflow Conditions | Medium | Medium | Medium |
-| Environment Config | Medium | Low | Medium |
-| Documentation | Low | Low | Low |
+| Issue                | Impact | Effort | Priority |
+| -------------------- | ------ | ------ | -------- |
+| Missing Dependencies | High   | Low    | High     |
+| Prisma Commands      | High   | Low    | High     |
+| Service Names        | Medium | Medium | Medium   |
+| Workflow Conditions  | Medium | Medium | Medium   |
+| Environment Config   | Medium | Low    | Medium   |
+| Documentation        | Low    | Low    | Low      |
 
 ## Next Steps
 

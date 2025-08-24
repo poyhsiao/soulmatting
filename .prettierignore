@@ -112,3 +112,8 @@ pnpm-lock.yaml
 packages/database/src/generated/
 **/prisma/generated/
 **/.prisma/
+
+# Helm templates
+helm/**/templates/
+*.yaml
+*.yml
