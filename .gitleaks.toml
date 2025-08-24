@@ -24,26 +24,13 @@ regex = '''(?i)(database[_-]?url|db[_-]?url|connection[_-]?string)[\s]*[=:][\s]*
 secretGroup = 2
 
 # Allowlist for false positives
-[[allowlist]]
-description = "Ignore test files and examples"
-regexTarget = "match"
-regex = '''(test|spec|example|mock|fixture)'''
-
-[[allowlist]]
-description = "Ignore .env.example files"
-regexTarget = "filename"
-regex = '''\.env\.example$'''
-
-[[allowlist]]
-description = "Ignore documentation files"
-regexTarget = "filename"
-regex = '''\.(md|txt|rst)$'''
-
-[[allowlist]]
-description = "Ignore package-lock.json and similar"
-regexTarget = "filename"
-regex = '''(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$'''
-
-[[allowlist]]
-description = "Ignore placeholder secrets in config"
-regex = '''(your[_-]?secret[_-]?here|placeholder|example[_-]?key|dummy[_-]?token)'''
+[allowlist]
+paths = [
+  "\.env\.example$",
+  "\.\(md|txt|rst\)$",
+  "(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$"
+]
+regexes = [
+  "(test|spec|example|mock|fixture)",
+  "(your[_-]?secret[_-]?here|placeholder|example[_-]?key|dummy[_-]?token)"
+]
