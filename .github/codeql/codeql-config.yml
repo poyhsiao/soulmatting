@@ -119,12 +119,12 @@ security:
   # Custom security patterns
   patterns:
     # SQL injection patterns
-    - pattern: "SELECT.*\$\{.*\}"
+    - pattern: "SELECT.*\\$\\{.*\\}"
       message: "Potential SQL injection vulnerability"
       severity: "error"
     
     # XSS patterns
-    - pattern: "innerHTML.*\$\{.*\}"
+    - pattern: "innerHTML.*\\$\\{.*\\}"
       message: "Potential XSS vulnerability"
       severity: "warning"
     
