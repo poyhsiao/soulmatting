@@ -291,11 +291,11 @@ jobs:
 
       - name: Start API server
         run: |
-          # Start REST API (services already running via GitHub Actions)
-          pnpm --filter './services/*' run dev &
+          # Start Supabase services (excluding postgres/redis as they're already running)
+          docker compose up -d kong auth realtime rest
           sleep 15
-          # Wait for API to be ready
-          timeout 60 bash -c 'until curl -f http://localhost:3001/; do sleep 2; done'
+          # Wait for Supabase REST API to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3001/rest/v1/; do sleep 2; done'
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
@@ -393,11 +393,11 @@ jobs:
 
       - name: Start API server
         run: |
-          # Start REST API (services already running via GitHub Actions)
-          pnpm --filter './services/*' run dev &
+          # Start Supabase services (excluding postgres/redis as they're already running)
+          docker compose up -d kong auth realtime rest
           sleep 15
-          # Wait for API to be ready
-          timeout 60 bash -c 'until curl -f http://localhost:3001/; do sleep 2; done'
+          # Wait for Supabase REST API to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3001/rest/v1/; do sleep 2; done'
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
