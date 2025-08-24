@@ -27,10 +27,21 @@ secretGroup = 2
 [allowlist]
 paths = [
   "\\.env\\.example$",
-  "\\.\\(md|txt|rst\\)$",
-  "(package-lock\\.json|yarn\\.lock|pnpm-lock\\.yaml)$"
+  "\\.md$",
+  "\\.txt$",
+  "\\.rst$",
+  "package-lock\\.json$",
+  "yarn\\.lock$",
+  "pnpm-lock\\.yaml$"
 ]
 regexes = [
-  "(test|spec|example|mock|fixture)",
-  "(your[_-]?secret[_-]?here|placeholder|example[_-]?key|dummy[_-]?token)"
+  "test",
+  "spec",
+  "example",
+  "mock",
+  "fixture",
+  "your.secret.here",
+  "placeholder",
+  "example.key",
+  "dummy.token"
 ]
