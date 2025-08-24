@@ -361,7 +361,7 @@ jobs:
 
           # Validate Docker Compose file
           if [ -f "environments/${{ matrix.environment }}/generated/docker-compose.yml" ]; then
-            docker-compose -f "environments/${{ matrix.environment }}/generated/docker-compose.yml" config
+            docker compose -f "environments/${{ matrix.environment }}/generated/docker-compose.yml" config
             echo "✅ Docker Compose configuration valid"
           fi
 
@@ -652,7 +652,7 @@ jobs:
           for compose_file in "${COMPOSE_FILES[@]}"; do
             if [ -f "$compose_file" ]; then
               echo "🔍 Validating Docker Compose: $compose_file"
-              if docker-compose -f "$compose_file" config >/dev/null 2>&1; then
+              if docker compose -f "$compose_file" config >/dev/null 2>&1; then
                 echo "✅ Docker Compose valid: $compose_file"
                 VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ Docker Compose: $compose_file\n"
               else
@@ -753,7 +753,7 @@ jobs:
 
           # Stop and remove containers
           if [ -f "docker-compose.${{ matrix.environment }}.yml" ]; then
-            docker-compose -f "docker-compose.${{ matrix.environment }}.yml" down --volumes --remove-orphans || true
+            docker compose -f "docker-compose.${{ matrix.environment }}.yml" down --volumes --remove-orphans || true
             echo "✅ Docker containers cleaned up"
           fi
 

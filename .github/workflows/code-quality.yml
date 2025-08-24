@@ -732,7 +732,7 @@ EOF
           echo "🔍 Running Docker Compose validation"
           
           # Find all docker-compose files
-          COMPOSE_FILES=$(find . -name "docker-compose*.yml" -o -name "docker-compose*.yaml" -type f)
+        COMPOSE_FILES=$(find . -name "docker-compose*.yml" -o -name "docker-compose*.yaml" -type f)
           
           if [ -z "$COMPOSE_FILES" ]; then
             echo "⚠️ No Docker Compose files found"
@@ -744,7 +744,7 @@ EOF
             echo "🔍 Validating $compose_file"
             
             # Validate syntax
-            docker-compose -f "$compose_file" config --quiet || {
+            docker compose -f "$compose_file" config --quiet || {
               echo "❌ Docker Compose validation failed for $compose_file"
               exit 1
             }

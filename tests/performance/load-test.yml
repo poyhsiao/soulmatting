@@ -1,0 +1,111 @@
+# Load Testing Configuration for SoulMatting API
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+config:
+  target: 'http://localhost:3001'
+  phases:
+    # Warm-up phase
+    - duration: 30
+      arrivalRate: 1
+      name: "Warm-up"
+    # Ramp-up phase
+    - duration: 60
+      arrivalRate: 5
+      rampTo: 20
+      name: "Ramp-up"
+    # Sustained load phase
+    - duration: 120
+      arrivalRate: 20
+      name: "Sustained load"
+    # Peak load phase
+    - duration: 60
+      arrivalRate: 50
+      name: "Peak load"
+    # Cool-down phase
+    - duration: 30
+      arrivalRate: 5
+      name: "Cool-down"
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+      User-Agent: 'Artillery Load Test'
+  processor: '../load/processors.js'
+
+scenarios:
+  - name: "Health Check"
+    weight: 20
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+
+  - name: "API Status"
+    weight: 30
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+            - hasProperty: "status"
+
+  - name: "Authentication Flow"
+    weight: 25
+    flow:
+      - post:
+          url: "/auth/login"
+          json:
+            email: "test@example.com"
+            password: "testpassword"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+      - get:
+          url: "/auth/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: 200
+
+  - name: "User Management"
+    weight: 25
+    flow:
+      - get:
+          url: "/users"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/users/1"
+          expect:
+            - statusCode: [200, 404]
+
+# Environment-specific configurations
+environments:
+  development:
+    target: 'http://localhost:3001'
+    phases:
+      - duration: 30
+        arrivalRate: 2
+      - duration: 60
+        arrivalRate: 5
+
+  staging:
+    target: 'https://staging-api.soulmatting.com'
+    phases:
+      - duration: 60
+        arrivalRate: 10
+      - duration: 120
+        arrivalRate: 25
+
+  production:
+    target: 'https://api.soulmatting.com'
+    phases:
+      - duration: 120
+        arrivalRate: 20
+      - duration: 300
+        arrivalRate: 50
+      - duration: 120
+        arrivalRate: 100

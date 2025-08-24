@@ -1,4 +1,18 @@
-/** @type {import('jest').Config} */
+/**
+ * Jest Configuration for SoulMatting Platform
+ * 
+ * This configuration follows Context7 standards for:
+ * - Code quality and testing best practices
+ * - Comprehensive test coverage requirements
+ * - Scalable testing architecture
+ * - Security-focused testing patterns
+ * 
+ * @version 1.0.0
+ * @created 2024-01-20
+ * @updated 2024-01-20
+ * @author Kim Hsiao
+ * @type {import('jest').Config}
+ */
 module.exports = {
   // Test environment
   testEnvironment: 'node',
@@ -42,15 +56,34 @@ module.exports = {
     '!**/*.spec.{js,ts}',
   ],
 
-  // Coverage thresholds (disabled for now until we have proper tests)
-  // coverageThreshold: {
-  //   global: {
-  //     branches: 80,
-  //     functions: 80,
-  //     lines: 80,
-  //     statements: 80,
-  //   },
-  // },
+  // Coverage thresholds (Context7 compliance - minimum 80% coverage)
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+    // Service-specific thresholds
+    './services/auth/**/*.{ts,js}': {
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85,
+    },
+    './services/user/**/*.{ts,js}': {
+      branches: 85,
+      functions: 85,
+      lines: 85,
+      statements: 85,
+    },
+    './packages/shared/**/*.{ts,js}': {
+      branches: 90,
+      functions: 90,
+      lines: 90,
+      statements: 90,
+    },
+  },
 
   // Module name mapping for path aliases
   moduleNameMapper: {

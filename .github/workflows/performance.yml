@@ -178,7 +178,7 @@ jobs:
         run: |
           pnpm --filter @soulmatting/web run dev &
           sleep 30
-          curl -f http://localhost:5173 || exit 1
+          curl -f http://localhost:3000 || exit 1
         env:
           CI: true
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
@@ -280,7 +280,7 @@ jobs:
 
       - name: Start API server
         run: |
-          docker-compose up -d rest
+          docker compose up -d rest
           sleep 15
           curl -f http://localhost:3001/ || exit 1
         env:
@@ -374,7 +374,7 @@ jobs:
 
       - name: Start API server
         run: |
-          docker-compose up -d rest
+          docker compose up -d rest
           sleep 15
         env:
           NODE_ENV: test
