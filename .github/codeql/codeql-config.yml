@@ -129,7 +129,7 @@ security:
       severity: "warning"
     
     # Hardcoded secrets patterns
-    - pattern: "(password|secret|key|token)\\s*=\\s*['\\"]*[^'\\"]{8,}['\\"]*"
+    - pattern: "(password|secret|key|token)\\s*=\\s*['\"]?[^'\"\\s]{8,}['\"]?"
       message: "Potential hardcoded secret"
       severity: "error"
 

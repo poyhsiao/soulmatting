@@ -223,9 +223,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-        with:
-          args: '--no-git --config-path=.gitleaks.toml'
-          upload-sarif: false
 
   # Container security scanning
   container-scan:
