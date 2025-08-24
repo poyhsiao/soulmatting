@@ -1,0 +1,49 @@
+# GitLeaks configuration for SoulMatting project
+# Version: 1.0.0
+# Created: 2025-01-24
+# Last Updated: 2025-01-24
+# Author: Kim Hsiao
+
+title = "GitLeaks config for SoulMatting"
+
+[extend]
+# Extend default rules
+path = "https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml"
+
+# Custom rules for this project
+[[rules]]
+id = "soulmatting-api-key"
+description = "SoulMatting API Key"
+regex = '''(?i)(soulmatting[_-]?api[_-]?key)[\s]*[=:][\s]*["']?([a-zA-Z0-9]{32,})["']?'''
+secretGroup = 2
+
+[[rules]]
+id = "database-connection-string"
+description = "Database connection string"
+regex = '''(?i)(database[_-]?url|db[_-]?url|connection[_-]?string)[\s]*[=:][\s]*["']?(postgresql://|mysql://|mongodb://)[^\s"']+["']?'''
+secretGroup = 2
+
+# Allowlist for false positives
+[[allowlist]]
+description = "Ignore test files and examples"
+regexTarget = "match"
+regex = '''(test|spec|example|mock|fixture)'''
+
+[[allowlist]]
+description = "Ignore .env.example files"
+regexTarget = "filename"
+regex = '''\.env\.example$'''
+
+[[allowlist]]
+description = "Ignore documentation files"
+regexTarget = "filename"
+regex = '''\.(md|txt|rst)$'''
+
+[[allowlist]]
+description = "Ignore package-lock.json and similar"
+regexTarget = "filename"
+regex = '''(package-lock\.json|yarn\.lock|pnpm-lock\.yaml)$'''
+
+[[allowlist]]
+description = "Ignore placeholder secrets in config"
+regex = '''(your[_-]?secret[_-]?here|placeholder|example[_-]?key|dummy[_-]?token)'''
