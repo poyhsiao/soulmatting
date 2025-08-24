@@ -1,8 +1,8 @@
 # Multi-stage build for React application
 FROM node:22-alpine AS base
 
-# Install pnpm
-RUN npm install -g pnpm
+# Enable corepack and install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Set working directory
 WORKDIR /app

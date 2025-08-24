@@ -48,7 +48,7 @@ check_docker() {
 check_pnpm() {
     if ! command -v pnpm &> /dev/null; then
         print_warning "pnpm is not installed. Installing pnpm..."
-        npm install -g pnpm
+        corepack enable && corepack prepare pnpm@latest --activate
     fi
     print_success "pnpm is available"
 }

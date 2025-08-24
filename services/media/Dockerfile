@@ -1,8 +1,8 @@
 # Multi-stage build for NestJS application
 FROM node:22-alpine AS base
 
-# Install pnpm
-RUN npm install -g pnpm
+# Enable corepack and install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Set working directory
 WORKDIR /app
@@ -37,10 +37,10 @@ COPY . .
 RUN pnpm --filter media build
 
 # Production stage
-FROM node:18-alpine AS production
+FROM node:22-alpine AS production
 
-# Install pnpm
-RUN npm install -g pnpm
+# Enable corepack and install pnpm
+RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Create app directory
 WORKDIR /app
