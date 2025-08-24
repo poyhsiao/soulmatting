@@ -234,7 +234,7 @@ jobs:
           pnpm run db:migrate:test
           pnpm run db:seed
         env:
-          DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
           REDIS_URL: redis://localhost:6379
 
       - name: Start API server
@@ -244,7 +244,7 @@ jobs:
           curl -f http://localhost:3001/ || exit 1
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
           REDIS_URL: redis://localhost:6379
 
       - name: Install Artillery
@@ -327,7 +327,7 @@ jobs:
           pnpm run db:migrate:test
           pnpm run db:seed
         env:
-          DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
           REDIS_URL: redis://localhost:6379
 
       - name: Start API server
@@ -336,7 +336,7 @@ jobs:
           sleep 15
         env:
           NODE_ENV: test
-          DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
           REDIS_URL: redis://localhost:6379
 
       - name: Run API performance tests
