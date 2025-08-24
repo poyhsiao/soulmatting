@@ -10,7 +10,9 @@ WORKDIR /app
 # Copy package files
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
-COPY packages/*/package.json ./packages/*/
+# Copy packages with package.json files
+COPY packages/database/package.json ./packages/database/
+COPY packages/types/package.json ./packages/types/
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
