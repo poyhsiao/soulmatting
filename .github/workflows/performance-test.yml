@@ -214,9 +214,12 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Install Lighthouse CI
         run: |
-          npm install -g @lhci/cli@${{ env.LIGHTHOUSE_VERSION }}
+          pnpm add -g @lhci/cli@${{ env.LIGHTHOUSE_VERSION }}
 
       - name: Setup page URLs
         id: setup_urls
@@ -341,9 +344,12 @@ EOF
           node-version: ${{ env.NODE_VERSION }}
           cache: 'pnpm'
 
+      - name: Install dependencies
+        run: pnpm install
+
       - name: Install Artillery
         run: |
-          npm install -g artillery@${{ env.ARTILLERY_VERSION }}
+          pnpm add -g artillery@${{ env.ARTILLERY_VERSION }}
 
       - name: Create Artillery test configuration
         run: |

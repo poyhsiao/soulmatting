@@ -177,6 +177,12 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Install pnpm
+        if: matrix.tool == 'eslint-security'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Setup Node.js
         if: matrix.tool == 'eslint-security'
         uses: actions/setup-node@v4
@@ -186,9 +192,13 @@ jobs:
 
       - name: Install dependencies
         if: matrix.tool == 'eslint-security'
+        run: pnpm install
+
+      - name: Install ESLint and plugins
+        if: matrix.tool == 'eslint-security'
         run: |
-          npm install -g eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
-          npm install -g eslint-plugin-security eslint-plugin-node-security
+          pnpm add -g eslint @typescript-eslint/parser @typescript-eslint/eslint-plugin
+          pnpm add -g eslint-plugin-security eslint-plugin-node-security
 
       - name: Run Semgrep SAST
         if: matrix.tool == 'semgrep'
@@ -312,6 +322,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        if: matrix.scanner != 'trivy'
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Setup Node.js
         if: matrix.scanner != 'trivy'
         uses: actions/setup-node@v4
@@ -321,21 +337,21 @@ jobs:
 
       - name: Install dependencies
         if: matrix.scanner != 'trivy'
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Run npm audit
         if: matrix.scanner == 'npm-audit'
         run: |
-          echo "🔍 Running npm audit"
+          echo "🔍 Running pnpm audit"
 
-          # Run npm audit with JSON output
-          npm audit --audit-level=${{ needs.setup.outputs.severity_threshold }} --json > npm-audit-results.json || true
+          # Run pnpm audit with JSON output
+          pnpm audit --audit-level=${{ needs.setup.outputs.severity_threshold }} --json > npm-audit-results.json || true
 
           # Parse results
           if [ -f "npm-audit-results.json" ]; then
             VULNERABILITIES=$(jq '.metadata.vulnerabilities' npm-audit-results.json)
             
-            echo "📊 npm audit results:"
+            echo "📊 pnpm audit results:"
             echo "- Total vulnerabilities: $(jq '.metadata.vulnerabilities.total' npm-audit-results.json)"
             echo "- Critical: $(jq '.metadata.vulnerabilities.critical' npm-audit-results.json)"
             echo "- High: $(jq '.metadata.vulnerabilities.high' npm-audit-results.json)"
@@ -343,7 +359,7 @@ jobs:
             echo "- Low: $(jq '.metadata.vulnerabilities.low' npm-audit-results.json)"
             
             # Generate human-readable report
-            npm audit --audit-level=low > npm-audit-report.txt || true
+            pnpm audit --audit-level=low > npm-audit-report.txt || true
           fi
 
       - name: Run Snyk scan
@@ -354,7 +370,7 @@ jobs:
           echo "🔍 Running Snyk dependency scan"
 
           # Install Snyk CLI
-          npm install -g snyk@${{ env.SNYK_VERSION }}
+          pnpm add -g snyk@${{ env.SNYK_VERSION }}
 
           # Authenticate with Snyk
           snyk auth $SNYK_TOKEN
