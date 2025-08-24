@@ -70,5 +70,9 @@ regexes = [
   "\\{\\{\\s*\\.Values\\.",
   "your_[a-z_]+_here",
   "your-[a-z-]+-here",
-  "REDACTED"
+  "REDACTED",
+  "postgresql://.*\\{\\{.*\\}\\}.*@",
+  "redis://.*\\{\\{.*\\}\\}.*@",
+  "\\$\\(POSTGRES_PASSWORD\\)",
+  "\\$\\(REDIS_PASSWORD\\)"
 ]
