@@ -13,6 +13,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "test:e2e": "vitest run --reporter=verbose",
     "clean": "rm -rf dist .turbo node_modules"
   },
   "dependencies": {

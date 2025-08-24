@@ -30,7 +30,7 @@
     },
     "types": ["vite/client", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "vitest.config.ts"],
   "exclude": ["**/*.d.ts", "dist", "build", "node_modules"],
   "references": [
     {
