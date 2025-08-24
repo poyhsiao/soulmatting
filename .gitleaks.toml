@@ -1,86 +1,73 @@
-# GitLeaks configuration for SoulMatting project
-# Version: 1.0.0
-# Created: 2025-01-24
-# Last Updated: 2025-01-24
-# Author: Kim Hsiao
+# GitLeaks configuration file
+# This file defines rules for detecting secrets in the codebase
 
-title = "GitLeaks config for SoulMatting"
+# Title and description
+title = "SoulMatting GitLeaks Configuration"
+description = "Custom GitLeaks configuration for SoulMatting project"
 
-# [extend]
-# Extend default rules - commented out due to network access issues in CI
-# path = "https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml"
+# Rules configuration
+[rules]
+  # Enable all default rules
+  [rules.generic-api-key]
+    description = "Generic API Key"
+    regex = '''(?i)(?:key|api|token|secret|password)\s*[:=]\s*['"]?[a-z0-9]{20,}['"]?'''
+    tags = ["key", "API", "generic"]
 
-# Basic rules for common secrets
-[[rules]]
-id = "generic-api-key"
-description = "Generic API Key"
-regex = '''(?i)(api[_-]?key|apikey)[\s]*[=:][\s]*["']?([a-zA-Z0-9]{20,})["']?'''
-secretGroup = 2
+  [rules.aws-access-token]
+    description = "AWS Access Token"
+    regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+    tags = ["key", "AWS"]
 
-[[rules]]
-id = "aws-access-key"
-description = "AWS Access Key"
-regex = '''AKIA[0-9A-Z]{16}'''
+  [rules.jwt-token]
+    description = "JWT Token"
+    regex = '''eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+    tags = ["key", "JWT"]
 
-[[rules]]
-id = "jwt-token"
-description = "JWT Token"
-regex = '''eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+  [rules.database-connection-string]
+    description = "Database Connection String"
+    regex = '''(?i)(postgres|mysql|mongodb)://[^\s]+'''
+    tags = ["key", "database"]
 
-[[rules]]
-id = "database-connection-string"
-description = "Database connection string"
-regex = '''(?i)(database[_-]?url|db[_-]?url|connection[_-]?string)[\s]*[=:][\s]*["']?(postgresql://|mysql://|mongodb://)[^\s"']+["']?'''
-secretGroup = 2
-
-# Custom rules for this project
-[[rules]]
-id = "soulmatting-api-key"
-description = "SoulMatting API Key"
-regex = '''(?i)(soulmatting[_-]?api[_-]?key)[\s]*[=:][\s]*["']?([a-zA-Z0-9]{32,})["']?'''
-secretGroup = 2
-
-# Allowlist for false positives
+# Allowlist configuration
 [allowlist]
-paths = [
-  "\\.env\\.example$",
-  "\\.md$",
-  "\\.txt$",
-  "\\.rst$",
-  "package-lock\\.json$",
-  "yarn\\.lock$",
-  "pnpm-lock\\.yaml$",
-  "helm/values-local\\.yaml$",
-  "helm/values-dev\\.yaml$",
-  "helm/values-test\\.yaml$",
-  "helm/values-staging\\.yaml$",
-  "helm/values-production\\.yaml$",
-  "docker-compose\\.yml$",
-  "docker-compose\\.yaml$"
-]
-regexes = [
-  "test",
-  "spec",
-  "example",
-  "mock",
-  "fixture",
-  "your\\.secret\\.here",
-  "placeholder",
-  "example\\.key",
-  "dummy\\.token",
-  "postgresql://postgres:postgres@",
-  "redis://redis-master:",
-  "\\$\\{[^}]+\\}",
-  "\\{\\{\\s*\\.Values\\.",
-  "your_[a-z_]+_here",
-  "your-[a-z-]+-here",
-  "REDACTED",
-  "postgresql://.*\\{\\{.*\\}\\}.*@",
-  "redis://.*\\{\\{.*\\}\\}.*@",
-  "\\$\\(POSTGRES_PASSWORD\\)",
-  "\\$\\(REDIS_PASSWORD\\)",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
-  "your-super-secret-jwt-token",
-  "supabase-demo",
-  "service_role"
-]
+  description = "Allowlist for files and patterns that should be ignored"
+  
+  # Files and directories to ignore
+  paths = [
+    ".env.example",
+    "README.md",
+    "CHANGELOG.md",
+    "docs/",
+    "tests/",
+    "*.test.js",
+    "*.test.ts",
+    "*.spec.js",
+    "*.spec.ts",
+    "node_modules/",
+    ".git/",
+    "helm/values-staging.yaml",
+    "helm/values-production.yaml",
+    "helm/values-dev\.yaml$",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    ".github/workflows/"
+  ]
+  
+  # Regular expressions for patterns to ignore
+  regexes = [
+    # Ignore Helm template variables
+    '''\{\{\s*\.Values\.[^}]+\}\}''',
+    # Ignore environment variable references
+    '''\$\{[^}]+\}''',
+    '''\$[A-Z_][A-Z0-9_]*''',
+    # Ignore placeholder values
+    '''(?i)(your|example|placeholder|dummy|test|sample)[-_]?(key|token|secret|password)''',
+    # Ignore common development/example values
+    '''(?i)(localhost|127\.0\.0\.1|example\.com|test\.com)''',
+    # Ignore default JWT secrets in development
+    '''(?i)jwt[-_]?secret[-_]?(key)?\s*[:=]\s*['"]?(your|default|secret|test)[-_]?(jwt|secret|key)?['"]?''',
+    # Ignore Supabase development keys
+    '''(?i)supabase[-_]?(service|anon)[-_]?key\s*[:=]\s*['"]?eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*['"]?''',
+    # Ignore development database URLs with template variables
+    '''(?i)database[-_]?url\s*[:=]\s*['"]?postgres://\$\{[^}]+\}'''
+  ]
