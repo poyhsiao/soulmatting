@@ -778,6 +778,11 @@ EOF
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -787,7 +792,7 @@ EOF
       - name: Install markdownlint
         run: |
           echo "📦 Installing markdownlint"
-          npm install -g markdownlint-cli
+          pnpm add -g markdownlint-cli
 
       - name: Markdown linting
         run: |

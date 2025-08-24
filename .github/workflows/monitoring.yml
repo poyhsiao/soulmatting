@@ -234,7 +234,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          npm install -g lighthouse artillery
+          pnpm add -g lighthouse artillery
 
       - name: Run Lighthouse performance audit
         id: lighthouse

@@ -279,10 +279,10 @@ jobs:
           NEW_VERSION="${{ needs.pre-release.outputs.new_version }}"
 
           # Update root package.json
-          npm version $NEW_VERSION --no-git-tag-version
+          pnpm version $NEW_VERSION --no-git-tag-version
 
           # Update workspace packages
-          pnpm -r exec npm version $NEW_VERSION --no-git-tag-version
+          pnpm -r exec pnpm version $NEW_VERSION --no-git-tag-version
 
           echo "Updated version to $NEW_VERSION"
 

@@ -324,7 +324,7 @@ jobs:
       - name: Install configuration tools
         run: |
           echo "📦 Installing configuration tools"
-          npm install -g dotenv-cli
+          pnpm add -g dotenv-cli
           pip install pyyaml jinja2
 
       - name: Generate environment configuration

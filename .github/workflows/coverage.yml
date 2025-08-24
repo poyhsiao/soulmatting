@@ -674,7 +674,7 @@ EOF
       - name: Install dependencies
         run: |
           echo "📦 Installing report generation dependencies"
-          npm install -g lcov-result-merger
+          pnpm add -g lcov-result-merger
           pip install coverage[toml]
 
       - name: Merge coverage reports

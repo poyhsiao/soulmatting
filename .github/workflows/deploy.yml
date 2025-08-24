@@ -419,7 +419,7 @@ jobs:
           echo "🔄 Running database migrations for ${{ needs.prepare.outputs.environment }}..."
 
           # Install Supabase CLI
-          npm install -g @supabase/cli
+          pnpm add -g @supabase/cli
 
           # Run migrations
           cd packages/database
