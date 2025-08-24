@@ -31,9 +31,11 @@
     "types": ["vite/client", "@testing-library/jest-dom"]
   },
   "include": [
-    "src",
-    "tests",
-    "vite.config.ts"
+    "src/**/*",
+    "tests/**/*",
+    "vite.config.ts",
+    "*.ts",
+    "*.tsx"
   ],
   "references": [
     {

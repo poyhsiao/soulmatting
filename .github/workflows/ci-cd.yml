@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        service: [auth, user, match, communication, media, notification, search, payment, analytics]
+        service: [auth-service]
     
     steps:
     - name: Checkout code
@@ -46,57 +46,53 @@ jobs:
       with:
         fetch-depth: 0
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
       with:
-        python-version: '3.11'
-        cache: 'pip'
+        node-version: '18'
+        cache: 'pnpm'
+
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r backend/${{ matrix.service }}/requirements.txt
-        pip install -r backend/${{ matrix.service }}/requirements-dev.txt
+        pnpm install
 
-    - name: Code formatting check (Black)
+    - name: Code formatting check (Prettier)
       run: |
-        cd backend/${{ matrix.service }}
-        black --check --diff .
+        pnpm format:check
 
-    - name: Code linting (Flake8)
+    - name: Code linting (ESLint)
       run: |
-        cd backend/${{ matrix.service }}
-        flake8 .
+        pnpm --filter @soulmatting/${{ matrix.service }} lint
 
-    - name: Type checking (MyPy)
+    - name: Type checking (TypeScript)
       run: |
-        cd backend/${{ matrix.service }}
-        mypy .
+        pnpm --filter @soulmatting/${{ matrix.service }} type-check
 
-    - name: Security check (Bandit)
+    - name: Security check (npm audit)
       run: |
-        cd backend/${{ matrix.service }}
-        bandit -r . -f json -o bandit-report.json
+        pnpm audit --audit-level moderate
 
     - name: Dependency vulnerability check
       run: |
-        cd backend/${{ matrix.service }}
-        safety check
+        pnpm audit --audit-level high
 
     - name: Run unit tests
       run: |
-        cd backend/${{ matrix.service }}
-        pytest tests/unit/ -v --cov=. --cov-report=xml --cov-report=html
+        pnpm --filter @soulmatting/${{ matrix.service }} test
 
     - name: Run integration tests
       run: |
-        cd backend/${{ matrix.service }}
-        pytest tests/integration/ -v
+        pnpm --filter @soulmatting/${{ matrix.service }} test:e2e
 
     - name: Upload coverage reports
       uses: codecov/codecov-action@v3
       with:
-        file: backend/${{ matrix.service }}/coverage.xml
+        file: services/${{ matrix.service }}/coverage/lcov.info
         flags: ${{ matrix.service }}
         name: codecov-${{ matrix.service }}
 
@@ -114,40 +110,38 @@ jobs:
       with:
         node-version: '18'
 
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 8
+
     - name: Install dependencies
       run: |
-        cd frontend
-        npm ci
+        pnpm install
 
     - name: Code linting (ESLint)
       run: |
-        cd frontend
-        npm run lint
+        pnpm --filter @soulmatting/web lint
 
     - name: Code formatting check (Prettier)
       run: |
-        cd frontend
-        npm run format:check
+        pnpm format:check
 
     - name: Type checking (TypeScript)
       run: |
-        cd frontend
-        npm run type-check
+        pnpm --filter @soulmatting/web type-check
 
     - name: Run unit tests
       run: |
-        cd frontend
-        npm run test:unit
+        pnpm --filter @soulmatting/web test
 
     - name: Run e2e tests
       run: |
-        cd frontend
-        npm run test:e2e
+        pnpm test:e2e
 
     - name: Build application
       run: |
-        cd frontend
-        npm run build
+        pnpm --filter @soulmatting/web build
 
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
@@ -163,7 +157,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
-        service: [frontend, auth, user, match, communication, media, notification, search, payment, analytics]
+        service: [frontend, auth-service]
     
     steps:
     - name: Checkout code
@@ -193,16 +187,16 @@ jobs:
 
     - name: Download frontend build (for frontend service)
       if: matrix.service == 'frontend'
-      uses: actions/download-artifact@v3
-      with:
-        name: frontend-build
-        path: frontend/dist/
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: apps/web/dist/
 
     - name: Build and push Docker image
       uses: docker/build-push-action@v5
       with:
-        context: ${{ matrix.service == 'frontend' && 'frontend' || format('backend/{0}', matrix.service) }}
-        file: ${{ matrix.service == 'frontend' && 'frontend/Dockerfile' || format('backend/{0}/Dockerfile', matrix.service) }}
+        context: ${{ matrix.service == 'frontend' && 'apps/web' || (matrix.service == 'auth-service' && 'services/auth' || format('services/{0}', matrix.service)) }}
+        file: ${{ matrix.service == 'frontend' && 'apps/web/Dockerfile' || (matrix.service == 'auth-service' && 'services/auth/Dockerfile' || format('services/{0}/Dockerfile', matrix.service)) }}
         push: true
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
