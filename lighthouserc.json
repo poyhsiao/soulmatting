@@ -2,14 +2,14 @@
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:3000",
-        "http://localhost:3000/login",
-        "http://localhost:3000/register",
-        "http://localhost:3000/dashboard",
-        "http://localhost:3000/profile",
-        "http://localhost:3000/matches"
+        "http://localhost:5173",
+        "http://localhost:5173/login",
+        "http://localhost:5173/register",
+        "http://localhost:5173/dashboard",
+        "http://localhost:5173/profile",
+        "http://localhost:5173/matches"
       ],
-      "startServerCommand": "cd apps/web && npm start",
+      "startServerCommand": "pnpm --filter @soulmatting/web run dev",
       "startServerReadyPattern": "ready on",
       "startServerReadyTimeout": 30000,
       "numberOfRuns": 3,

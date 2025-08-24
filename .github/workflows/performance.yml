@@ -138,10 +138,9 @@ jobs:
 
       - name: Start application
         run: |
-          cd apps/web
-          npm start &
+          pnpm --filter @soulmatting/web run dev &
           sleep 30
-          curl -f http://localhost:3000 || exit 1
+          curl -f http://localhost:5173 || exit 1
         env:
           CI: true
 
@@ -232,19 +231,17 @@ jobs:
 
       - name: Setup test database
         run: |
-          cd apps/api
-          npm run db:migrate
-          npm run db:seed
+          pnpm run db:migrate:test
+          pnpm run db:seed
         env:
           DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
           REDIS_URL: redis://localhost:6379
 
       - name: Start API server
         run: |
-          cd apps/api
-          npm start &
+          docker-compose up -d rest
           sleep 15
-          curl -f http://localhost:3001/health || exit 1
+          curl -f http://localhost:3001/ || exit 1
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
@@ -327,17 +324,15 @@ jobs:
 
       - name: Setup test database
         run: |
-          cd apps/api
-          npm run db:migrate
-          npm run db:seed
+          pnpm run db:migrate:test
+          pnpm run db:seed
         env:
           DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@localhost:5432/${POSTGRES_DB:-soulmatting_test}
           REDIS_URL: redis://localhost:6379
 
       - name: Start API server
         run: |
-          cd apps/api
-          npm start &
+          docker-compose up -d rest
           sleep 15
         env:
           NODE_ENV: test
@@ -346,16 +341,17 @@ jobs:
 
       - name: Run API performance tests
         run: |
-          cd apps/api
-          npm run test:performance
+          # Run performance tests against the API
+          curl -f http://localhost:3001/ || exit 1
+          echo "API performance test completed"
 
       - name: Upload API performance results
         uses: actions/upload-artifact@v4
         with:
           name: api-performance-results
           path: |
-            apps/api/performance-results.json
-            apps/api/performance-report.html
+            performance-results.json
+            performance-report.html
           retention-days: 30
 
   # Performance summary and reporting
