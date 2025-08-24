@@ -9,3 +9,6 @@
 
 // Export all controllers here
 // Example: export * from './auth.controller';
+
+// Placeholder export to make this a valid module
+export {};

@@ -9,3 +9,6 @@
 
 // Export all decorators here
 // Example: export * from './auth.decorator';
+
+// Placeholder export to make this a valid module
+export {};

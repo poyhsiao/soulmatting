@@ -9,3 +9,6 @@
 
 // Export all services here
 // Example: export * from './auth.service';
+
+// Placeholder export to make this a valid module
+export {};

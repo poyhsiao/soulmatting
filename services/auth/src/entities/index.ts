@@ -9,3 +9,6 @@
 
 // Export all entities here
 // Example: export * from './user.entity';
+
+// Placeholder export to make this a valid module
+export {};

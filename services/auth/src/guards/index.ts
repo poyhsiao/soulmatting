@@ -8,4 +8,7 @@
  */
 
 // Export all guards here
-// Example: export * from './jwt-auth.guard';
+// Example: export * from './auth.guard';
+
+// Placeholder export to make this a valid module
+export {};

@@ -8,4 +8,7 @@
  */
 
 // Export all filters here
-// Example: export * from './http-exception.filter';
+// Example: export * from './auth.filter';
+
+// Placeholder export to make this a valid module
+export {};

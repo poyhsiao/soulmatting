@@ -8,4 +8,7 @@
  */
 
 // Export all DTOs here
-// Example: export * from './login.dto';
+// Example: export * from './auth.dto';
+
+// Placeholder export to make this a valid module
+export {};

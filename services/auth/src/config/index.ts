@@ -9,3 +9,6 @@
 
 // Export all configuration here
 // Example: export * from './database.config';
+
+// Placeholder export to make this a valid module
+export {};

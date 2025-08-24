@@ -9,3 +9,6 @@
 
 // Export all modules here
 // Example: export * from './auth.module';
+
+// Placeholder export to make this a valid module
+export {};

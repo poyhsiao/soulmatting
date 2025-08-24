@@ -8,4 +8,7 @@
  */
 
 // Export all interceptors here
-// Example: export * from './logging.interceptor';
+// Example: export * from './auth.interceptor';
+
+// Placeholder export to make this a valid module
+export {};
