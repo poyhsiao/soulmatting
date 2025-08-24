@@ -36,7 +36,7 @@ FROM base AS builder
 COPY . .
 
 # Build the application
-RUN pnpm --filter user build
+RUN pnpm --filter @soulmatting/user-service build
 
 # Verify build output
 RUN ls -la /app/services/user/

@@ -36,7 +36,7 @@ FROM base AS builder
 COPY . .
 
 # Build the application
-RUN pnpm --filter match build
+RUN pnpm --filter @soulmatting/match-service build
 RUN ls -la /app/services/match/
 
 # Production stage

@@ -36,7 +36,7 @@ FROM base AS builder
 COPY . .
 
 # Build the application
-RUN pnpm --filter search build
+RUN pnpm --filter @soulmatting/search-service build
 
 # Verify build output
 RUN ls -la /app/services/search/

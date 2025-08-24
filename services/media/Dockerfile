@@ -36,7 +36,7 @@ FROM base AS builder
 COPY . .
 
 # Build the application
-RUN pnpm --filter media build
+RUN pnpm --filter @soulmatting/media-service build
 
 # Production stage
 FROM node:22-alpine AS production
