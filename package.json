@@ -18,6 +18,8 @@
     "dev": "turbo run dev --parallel",
     "lint": "turbo run lint",
     "test": "turbo run test",
+    "test:frontend": "pnpm --filter @soulmatting/web test",
+    "test:backend": "turbo test --filter='./services/*'",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
@@ -39,6 +41,7 @@
     "docker:logs": "docker-compose logs -f",
     "setup": "pnpm install && pnpm run build",
     "db:migrate": "pnpm --filter @soulmatting/database run migrate",
+    "db:migrate:test": "pnpm --filter @soulmatting/database run migrate:test",
     "db:seed": "pnpm --filter @soulmatting/database run seed",
     "db:studio": "pnpm --filter @soulmatting/database run studio"
   },
