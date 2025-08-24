@@ -43,7 +43,10 @@
     "db:migrate": "pnpm --filter @soulmatting/database run migrate",
     "db:migrate:test": "pnpm --filter @soulmatting/database run migrate:test",
     "db:seed": "pnpm --filter @soulmatting/database run seed",
-    "db:studio": "pnpm --filter @soulmatting/database run studio"
+    "db:studio": "pnpm --filter @soulmatting/database run studio",
+    "license-check": "license-checker --excludePrivatePackages --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;CC0-1.0;MPL-2.0'",
+    "security:audit": "pnpm audit --audit-level moderate",
+    "security:audit:fix": "pnpm audit fix"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^10.9.0",
@@ -60,6 +63,7 @@
     "jest": "^29.7.0",
     "jest-watch-typeahead": "^3.0.1",
     "js-yaml": "^4.1.0",
+    "license-checker": "^25.0.1",
     "playwright": "^1.55.0",
     "prettier": "^3.6.2",
     "ts-jest": "^29.4.1",

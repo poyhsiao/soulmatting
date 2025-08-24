@@ -62,7 +62,7 @@ jobs:
           pnpm install
 
       - name: Generate Prisma client
-        run: pnpm --filter @soulmatting/database generate
+        run: pnpm --filter @soulmatting/database run generate
 
       - name: Code formatting check (Prettier)
         run: |

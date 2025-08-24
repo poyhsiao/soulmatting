@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "SoulMatting Communication Service - NestJS Microservice",
+  "license": "MIT",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

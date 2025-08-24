@@ -73,7 +73,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm --filter @soulmatting/database generate
+        run: pnpm --filter @soulmatting/database run generate
 
       - name: Lint code
         run: pnpm lint
@@ -85,11 +85,11 @@ jobs:
         run: pnpm format:check
 
       - name: Security audit
-        run: pnpm audit --audit-level moderate
+        run: pnpm run security:audit
         continue-on-error: true
 
       - name: License check
-        run: pnpm license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC'
+        run: pnpm run license-check
         continue-on-error: true
 
   # =============================================================================
@@ -162,7 +162,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm --filter @soulmatting/database prisma generate
+        run: pnpm --filter @soulmatting/database run generate
 
       - name: Setup test environment
         run: |
@@ -175,15 +175,13 @@ jobs:
         env:
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/soulmatting_test
 
-      - name: Run tests - Frontend
-        if: matrix.test-group == 'frontend'
-        run: pnpm test:frontend -- --coverage
-        env:
-          CI: true
-
-      - name: Run tests - Backend
-        if: matrix.test-group == 'backend'
-        run: pnpm test:backend -- --coverage
+      - name: Run tests
+        run: |
+          if [ "${{ matrix.test-group }}" = "frontend" ]; then
+            pnpm run test:web -- --coverage
+          else
+            pnpm run test:unit -- --coverage
+          fi
         env:
           CI: true
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/soulmatting_test
