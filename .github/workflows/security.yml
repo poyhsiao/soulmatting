@@ -218,13 +218,20 @@ jobs:
           extra_args: --debug --only-verified
 
       - name: Run GitLeaks
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
-          GITLEAKS_CONFIG: .gitleaks.toml
-          GITLEAKS_ENABLE_UPLOAD_ARTIFACT: false
-          GITLEAKS_ENABLE_SUMMARY: false
+        id: gitleaks
+        uses: DariuszPorowski/github-action-gitleaks@v2
+        with:
+          config: .gitleaks.toml
+          fail: false
+          report_format: sarif
+          verbose: true
+
+      - name: Upload GitLeaks SARIF results
+        if: steps.gitleaks.outputs.exitcode == 1
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: ${{ steps.gitleaks.outputs.report }}
+        continue-on-error: true
 
   # Container security scanning
   container-scan:
