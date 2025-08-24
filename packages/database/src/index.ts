@@ -6,8 +6,8 @@
  * @updated 2025-08-24
  */
 
-export { PrismaClient } from '@prisma/client';
-export * from '@prisma/client';
+export { PrismaClient } from './generated/client';
+export * from './generated/client';
 
 // Re-export commonly used types
 export type {
@@ -25,4 +25,4 @@ export type {
   ModerationStatus,
   ProfileVisibility,
   MessagePermission,
-} from '@prisma/client';
+} from './generated/client';

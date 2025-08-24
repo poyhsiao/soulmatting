@@ -1,0 +1,195 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Authentication Models
+model User {
+  id               String    @id @default(cuid())
+  email            String    @unique
+  passwordHash     String    @map("password_hash")
+  emailVerified    Boolean   @default(false) @map("email_verified")
+  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
+  twoFactorSecret  String?   @map("two_factor_secret")
+  lastLoginAt      DateTime? @map("last_login_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  sessions      Session[]
+  oauthAccounts OAuthAccount[]
+  profile       UserProfile?
+
+  @@map("users")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  refreshToken String   @map("refresh_token")
+  expiresAt    DateTime @map("expires_at")
+  ipAddress    String   @map("ip_address")
+  userAgent    String   @map("user_agent")
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model OAuthAccount {
+  id           String    @id @default(cuid())
+  userId       String    @map("user_id")
+  provider     Provider
+  providerId   String    @map("provider_id")
+  accessToken  String    @map("access_token")
+  refreshToken String?   @map("refresh_token")
+  expiresAt    DateTime? @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@map("oauth_accounts")
+}
+
+enum Provider {
+  GOOGLE
+  DISCORD
+}
+
+// Profile Models
+model UserProfile {
+  id     String @id @default(uuid())
+  userId String @unique @map("user_id")
+
+  // Basic Information
+  displayName String   @map("display_name") @db.VarChar(50)
+  firstName   String   @map("first_name") @db.VarChar(30)
+  lastName    String   @map("last_name") @db.VarChar(30)
+  dateOfBirth DateTime @map("date_of_birth")
+  gender      Gender
+  occupation  String?  @db.VarChar(100)
+  education   String?  @db.VarChar(100)
+  bio         String?  @db.VarChar(500)
+  location    Json?
+
+  isVerified Boolean @default(false) @map("is_verified")
+  isActive   Boolean @default(true) @map("is_active")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  photos      Photo[]
+  interests   Interest[]
+  preferences UserPreferences?
+  privacy     PrivacySettings?
+
+  @@map("user_profiles")
+}
+
+enum Gender {
+  male
+  female
+  non_binary @map("non-binary")
+  other
+}
+
+model Photo {
+  id               String           @id @default(uuid())
+  userProfileId    String           @map("user_profile_id")
+  url              String
+  thumbnailUrl     String           @map("thumbnail_url")
+  originalFilename String           @map("original_filename")
+  mimeType         String           @map("mime_type")
+  fileSize         Int              @map("file_size")
+  dimensions       Json
+  isPrimary        Boolean          @default(false) @map("is_primary")
+  isVerified       Boolean          @default(false) @map("is_verified")
+  moderationStatus ModerationStatus @default(pending) @map("moderation_status")
+  uploadedAt       DateTime         @default(now()) @map("uploaded_at")
+
+  // Relations
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@map("photos")
+}
+
+enum ModerationStatus {
+  pending
+  approved
+  rejected
+}
+
+model Interest {
+  id            String   @id @default(uuid())
+  userProfileId String   @map("user_profile_id")
+  category      String
+  name          String
+  weight        Int      @default(5)
+  addedAt       DateTime @default(now()) @map("added_at")
+
+  // Relations
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@map("interests")
+}
+
+model UserPreferences {
+  id                String   @id @default(uuid())
+  userProfileId     String   @unique @map("user_profile_id")
+  ageRange          Json
+  maxDistance       Int      @default(50) @map("max_distance")
+  genderPreference  Json
+  dealBreakers      Json?
+  requiredInterests Json?
+  lifestyle         Json
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@map("user_preferences")
+}
+
+model PrivacySettings {
+  id                 String            @id @default(uuid())
+  userProfileId      String            @unique @map("user_profile_id")
+  profileVisibility  ProfileVisibility @default(members_only) @map("profile_visibility")
+  showAge            Boolean           @default(true) @map("show_age")
+  showLocation       Boolean           @default(true) @map("show_location")
+  showLastActive     Boolean           @default(true) @map("show_last_active")
+  allowMessages      MessagePermission @default(matches_only) @map("allow_messages")
+  allowPhotoRequests Boolean           @default(true) @map("allow_photo_requests")
+  showOnlineStatus   Boolean           @default(true) @map("show_online_status")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  userProfile UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
+
+  @@map("privacy_settings")
+}
+
+enum ProfileVisibility {
+  public
+  members_only @map("members-only")
+  matches_only @map("matches-only")
+}
+
+enum MessagePermission {
+  everyone
+  matches_only  @map("matches-only")
+  verified_only @map("verified-only")
+}
