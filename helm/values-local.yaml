@@ -113,7 +113,7 @@ auth:
   env:
     NODE_ENV: development
     LOG_LEVEL: debug
-    DATABASE_URL: postgresql://postgres:postgres@postgresql:5432/soulmatting
+    DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgresql:5432/${POSTGRES_DB:-soulmatting}
     REDIS_URL: redis://redis-master:6379
 
 # User Service

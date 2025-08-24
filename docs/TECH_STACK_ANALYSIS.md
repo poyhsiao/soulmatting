@@ -349,7 +349,7 @@ services:
   supabase:
     image: supabase/supabase:latest
     environment:
-      DATABASE_URL: postgresql://postgres:password@postgres:5432/soulmatting
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/soulmatting
     ports:
       - '3000:3000'
     depends_on:

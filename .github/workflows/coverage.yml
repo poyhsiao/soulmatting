@@ -557,8 +557,8 @@ EOF
           # Copy test environment file
           cp .env.test .env
           
-          # Update database URL for test
-          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/soulmatting_test" >> .env
+          # Update database URL for test using environment variables
+          echo "DATABASE_URL=postgresql://\${POSTGRES_USER:-postgres}:\${POSTGRES_PASSWORD:-postgres}@localhost:5432/\${POSTGRES_DB:-soulmatting_test}" >> .env
           echo "REDIS_URL=redis://localhost:6379" >> .env
 
       - name: Start backend services
