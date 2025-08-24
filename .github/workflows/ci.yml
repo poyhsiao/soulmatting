@@ -328,7 +328,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ matrix.service == 'web' && './apps/web/Dockerfile' || format('./services/{0}/Dockerfile', matrix.service) }}
+          file: ${{ matrix.service == 'web' && './apps/web/Dockerfile' || matrix.service == 'auth-service' && './services/auth/Dockerfile' || format('./services/{0}/Dockerfile', matrix.service) }}
           platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' }}
           tags: ${{ steps.meta.outputs.tags }}
