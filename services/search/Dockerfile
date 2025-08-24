@@ -38,6 +38,9 @@ COPY . .
 # Build the application
 RUN pnpm --filter search build
 
+# Verify build output
+RUN ls -la /app/services/search/
+
 # Production stage
 FROM node:22-alpine AS production
 
@@ -60,6 +63,9 @@ RUN pnpm install --frozen-lockfile --prod
 # Copy built application
 COPY --from=builder /app/services/search/dist ./services/search/dist
 COPY --from=builder /app/packages ./packages
+
+# Verify copied files
+RUN ls -la /app/services/search/
 
 # Create non-root user
 RUN addgroup -g 1001 -S nodejs
