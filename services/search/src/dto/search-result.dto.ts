@@ -47,5 +47,5 @@ export class SearchResultDto {
    */
   @ApiProperty({ description: 'Additional metadata', required: false })
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
