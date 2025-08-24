@@ -61,6 +61,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Generate Prisma client
+        run: pnpm --filter @soulmatting/database prisma generate
+
       - name: Lint code
         run: pnpm lint
 
@@ -144,6 +147,9 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        run: pnpm --filter @soulmatting/database prisma generate
 
       - name: Setup test environment
         run: |
