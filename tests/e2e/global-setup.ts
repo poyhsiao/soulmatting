@@ -24,7 +24,7 @@ async function globalSetup(config: FullConfig) {
     // Wait for the application to be ready
     const baseURL = config.projects[0].use?.baseURL || 'http://localhost:3000';
     console.log(`⏳ Waiting for application at ${baseURL} to be ready...`);
-    
+
     await page.goto(baseURL, { waitUntil: 'networkidle' });
     console.log('✅ Application is ready!');
 
@@ -37,7 +37,6 @@ async function globalSetup(config: FullConfig) {
     // await page.click('[data-testid="login-button"]');
     // await page.waitForURL('**/dashboard');
     // await context.storageState({ path: 'tests/e2e/auth.json' });
-
   } catch (error) {
     console.error('❌ Global setup failed:', error);
     throw error;

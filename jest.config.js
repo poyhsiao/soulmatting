@@ -76,11 +76,7 @@ module.exports = {
   },
 
   // Ignore patterns
-  testPathIgnorePatterns: [
-    '/node_modules/',
-    '/dist/',
-    '/coverage/',
-  ],
+  testPathIgnorePatterns: ['/node_modules/', '/dist/', '/coverage/'],
 
   // Watch plugins (disabled due to version compatibility)
   // watchPlugins: [

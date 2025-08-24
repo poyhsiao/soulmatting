@@ -27,7 +27,9 @@
 
 ## 🌟 Overview
 
-SoulMatting is a next-generation dating platform that leverages artificial intelligence to create meaningful connections. Built with a modern microservices architecture, it provides a scalable, secure, and user-friendly experience for finding your perfect match.
+SoulMatting is a next-generation dating platform that leverages artificial intelligence to create
+meaningful connections. Built with a modern microservices architecture, it provides a scalable,
+secure, and user-friendly experience for finding your perfect match.
 
 ### Key Highlights
 
@@ -65,11 +67,11 @@ graph TB
         WEB[Web App - React]
         MOBILE[Mobile Apps - React Native]
     end
-    
+
     subgraph "API Gateway"
         KONG[Kong Gateway]
     end
-    
+
     subgraph "Microservices"
         AUTH[Auth Service]
         USER[User Service]
@@ -80,21 +82,21 @@ graph TB
         SEARCH[Search Service]
         ANALYTICS[Analytics Service]
     end
-    
+
     subgraph "Data Layer"
         POSTGRES[(PostgreSQL)]
         REDIS[(Redis)]
         MINIO[(MinIO)]
         ELASTIC[(Elasticsearch)]
     end
-    
+
     subgraph "External Services"
         SUPABASE[Supabase]
         TWILIO[Twilio]
         SENDGRID[SendGrid]
         STRIPE[Stripe]
     end
-    
+
     WEB --> KONG
     MOBILE --> KONG
     KONG --> AUTH
@@ -105,7 +107,7 @@ graph TB
     KONG --> NOTIF
     KONG --> SEARCH
     KONG --> ANALYTICS
-    
+
     AUTH --> POSTGRES
     USER --> POSTGRES
     MATCH --> POSTGRES
@@ -114,7 +116,7 @@ graph TB
     NOTIF --> REDIS
     SEARCH --> ELASTIC
     ANALYTICS --> POSTGRES
-    
+
     AUTH --> SUPABASE
     COMM --> TWILIO
     NOTIF --> SENDGRID
@@ -124,6 +126,7 @@ graph TB
 ## 🛠️ Tech Stack
 
 ### Frontend
+
 - **Framework**: React 18 with TypeScript
 - **State Management**: Zustand + React Query
 - **Styling**: Tailwind CSS + Headless UI
@@ -131,6 +134,7 @@ graph TB
 - **Testing**: Vitest + React Testing Library
 
 ### Backend
+
 - **Runtime**: Node.js 22 LTS
 - **Framework**: Express.js with TypeScript
 - **Authentication**: Supabase Auth
@@ -140,6 +144,7 @@ graph TB
 - **Search**: Elasticsearch 8
 
 ### Infrastructure
+
 - **Containerization**: Docker + Docker Compose
 - **Orchestration**: Kubernetes (production)
 - **API Gateway**: Kong
@@ -148,6 +153,7 @@ graph TB
 - **CI/CD**: GitHub Actions
 
 ### Development Tools
+
 - **Package Manager**: pnpm
 - **Monorepo**: Turborepo
 - **Code Quality**: ESLint + Prettier
@@ -170,28 +176,32 @@ Before you begin, ensure you have the following installed:
 ### Quick Start
 
 1. **Clone the repository**
+
    ```bash
    git clone https://github.com/kimhsiao/soulmatting.git
    cd soulmatting
    ```
 
 2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
 3. **Set up environment variables**
+
    ```bash
    cp .env.example .env
    # Edit .env with your configuration
    ```
 
 4. **Start development environment**
+
    ```bash
    # Using Docker Compose (Recommended)
    chmod +x docker-dev.sh
    ./docker-dev.sh start
-   
+
    # Or using Helm for Kubernetes
    cd helm
    chmod +x deploy.sh
@@ -252,6 +262,7 @@ soulmatting/
 ### Development Workflow
 
 1. **Create a feature branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
@@ -262,12 +273,14 @@ soulmatting/
    - Update documentation as needed
 
 3. **Run tests**
+
    ```bash
    pnpm test
    pnpm test:e2e
    ```
 
 4. **Commit your changes**
+
    ```bash
    git add .
    git commit -m "feat: add your feature description"
@@ -345,23 +358,27 @@ Authorization: Bearer <your-jwt-token>
 ### Core Endpoints
 
 #### Authentication
+
 - `POST /auth/login` - User login
 - `POST /auth/register` - User registration
 - `POST /auth/logout` - User logout
 - `POST /auth/refresh` - Refresh token
 
 #### User Management
+
 - `GET /users/profile` - Get user profile
 - `PUT /users/profile` - Update user profile
 - `POST /users/upload-photo` - Upload profile photo
 
 #### Matching
+
 - `GET /matches/suggestions` - Get match suggestions
 - `POST /matches/like` - Like a user
 - `POST /matches/pass` - Pass on a user
 - `GET /matches/mutual` - Get mutual matches
 
 #### Communication
+
 - `GET /conversations` - Get user conversations
 - `POST /conversations` - Start new conversation
 - `GET /conversations/:id/messages` - Get conversation messages
@@ -370,6 +387,7 @@ Authorization: Bearer <your-jwt-token>
 ### API Documentation
 
 Interactive API documentation is available at:
+
 - Development: http://localhost:8000/docs
 - Staging: https://api-staging.soulmatting.com/docs
 
@@ -433,6 +451,7 @@ tests/
 ### Deployment Process
 
 #### Docker Compose (Development)
+
 ```bash
 # Start development environment
 ./docker-dev.sh start
@@ -442,6 +461,7 @@ tests/
 ```
 
 #### Helm/Kubernetes (Staging/Production)
+
 ```bash
 # Deploy to staging
 cd helm
@@ -458,6 +478,7 @@ make logs           # View logs
 ```
 
 #### CI/CD Pipeline
+
 1. **Automated Deployment**: Push to `main` branch triggers production deployment
 2. **Manual Deployment**: Use GitHub Actions workflow dispatch
 3. **Rollback**: Automatic rollback on deployment failure
@@ -482,7 +503,8 @@ We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) f
 
 ### Code of Conduct
 
-This project adheres to our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
+This project adheres to our [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are
+expected to uphold this code.
 
 ### Development Guidelines
 

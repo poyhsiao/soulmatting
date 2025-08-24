@@ -7,16 +7,20 @@
 
 ## Overview
 
-This is an umbrella Helm chart for the SoulMatting Platform, a comprehensive microservices-based dating application. It manages the deployment of all microservices and their dependencies in a Kubernetes cluster.
+This is an umbrella Helm chart for the SoulMatting Platform, a comprehensive microservices-based
+dating application. It manages the deployment of all microservices and their dependencies in a
+Kubernetes cluster.
 
 ## Architecture
 
 The SoulMatting Platform consists of:
 
 ### Frontend
+
 - **Web Application**: React-based frontend application
 
 ### Backend Microservices
+
 - **Auth Service**: Authentication and authorization
 - **User Service**: User profile management
 - **Match Service**: Matching algorithm and recommendations
@@ -28,6 +32,7 @@ The SoulMatting Platform consists of:
 - **Analytics Service**: User behavior analytics
 
 ### Infrastructure
+
 - **PostgreSQL**: Primary database
 - **Redis**: Caching and session storage
 - **Elasticsearch**: Search indexing and analytics
@@ -214,6 +219,7 @@ helm upgrade soulmatting ./helm/soulmatting \
 ### Health Checks
 
 All services include health check endpoints:
+
 - Liveness probe: `/health`
 - Readiness probe: `/ready`
 
@@ -243,6 +249,7 @@ Network policies are enabled by default to restrict inter-service communication.
 ### Pod Security
 
 All pods run with security contexts:
+
 - Non-root user
 - Read-only root filesystem
 - Dropped capabilities
@@ -252,12 +259,14 @@ All pods run with security contexts:
 ### Common Issues
 
 1. **Pods not starting**
+
    ```bash
    kubectl describe pod <pod-name>
    kubectl logs <pod-name>
    ```
 
 2. **Service connectivity issues**
+
    ```bash
    kubectl get svc
    kubectl get endpoints
@@ -361,7 +370,9 @@ helm install soulmatting ./helm/soulmatting --dry-run
 ## Support
 
 For support and questions:
-- GitHub Issues: [https://github.com/kimhsiao/soulmatting/issues](https://github.com/kimhsiao/soulmatting/issues)
+
+- GitHub Issues:
+  [https://github.com/kimhsiao/soulmatting/issues](https://github.com/kimhsiao/soulmatting/issues)
 - Email: kim@soulmatting.com
 
 ## License

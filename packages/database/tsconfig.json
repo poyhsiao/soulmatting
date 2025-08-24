@@ -9,13 +9,6 @@
     "composite": true,
     "incremental": true
   },
-  "include": [
-    "src/**/*",
-    "prisma/schema.prisma"
-  ],
-  "exclude": [
-    "dist",
-    "node_modules",
-    "tests"
-  ]
+  "include": ["src/**/*", "prisma/schema.prisma"],
+  "exclude": ["dist", "node_modules", "tests"]
 }

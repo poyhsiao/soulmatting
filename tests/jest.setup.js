@@ -99,10 +99,16 @@ jest.mock('redis', () => ({
 jest.mock('@supabase/supabase-js', () => ({
   createClient: jest.fn(() => ({
     auth: {
-      signUp: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
-      signInWithPassword: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      signUp: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
+      signInWithPassword: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
       signOut: jest.fn().mockResolvedValue({ error: null }),
-      getUser: jest.fn().mockResolvedValue({ data: { user: null }, error: null }),
+      getUser: jest
+        .fn()
+        .mockResolvedValue({ data: { user: null }, error: null }),
     },
     from: jest.fn(() => ({
       select: jest.fn().mockReturnThis(),

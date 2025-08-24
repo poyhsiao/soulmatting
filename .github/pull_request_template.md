@@ -1,13 +1,17 @@
 # Pull Request
 
 ## Description
+
 <!-- Provide a brief description of the changes in this PR -->
 
 ## Type of Change
+
 <!-- Mark the relevant option with an "x" -->
+
 - [ ] Bug fix (non-breaking change which fixes an issue)
 - [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
+- [ ] Breaking change (fix or feature that would cause existing functionality to not work as
+      expected)
 - [ ] Documentation update
 - [ ] Performance improvement
 - [ ] Code refactoring
@@ -16,16 +20,21 @@
 - [ ] Security fix
 
 ## Related Issues
+
 <!-- Link to related issues using "Fixes #123" or "Closes #123" -->
 
 ## Changes Made
+
 <!-- List the main changes made in this PR -->
-- 
-- 
-- 
+
+-
+-
+-
 
 ## Testing
+
 <!-- Describe the tests you ran to verify your changes -->
+
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] E2E tests pass
@@ -34,10 +43,13 @@
 - [ ] Security testing (if applicable)
 
 ## Screenshots/Videos
+
 <!-- Add screenshots or videos if applicable -->
 
 ## Checklist
+
 <!-- Mark completed items with an "x" -->
+
 - [ ] My code follows the project's style guidelines
 - [ ] I have performed a self-review of my code
 - [ ] I have commented my code, particularly in hard-to-understand areas
@@ -52,17 +64,21 @@
 - [ ] API documentation is updated (if applicable)
 
 ## Deployment Notes
+
 <!-- Any special deployment considerations -->
 
 ## Breaking Changes
+
 <!-- List any breaking changes and migration steps -->
 
 ## Additional Notes
+
 <!-- Any additional information that reviewers should know -->
 
 ---
 
 **Reviewer Guidelines:**
+
 - [ ] Code quality and style
 - [ ] Test coverage
 - [ ] Documentation completeness

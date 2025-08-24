@@ -1,421 +1,632 @@
-"use strict";
-Object.defineProperty(exports, "__esModule", { value: true });
-const cucumber_1 = require("@cucumber/cucumber");
-const test_1 = require("@playwright/test");
+'use strict';
+Object.defineProperty(exports, '__esModule', { value: true });
+const cucumber_1 = require('@cucumber/cucumber');
+const test_1 = require('@playwright/test');
 // Background Steps
 (0, cucumber_1.Given)('I have mutual matches', async function () {
-    // Create mutual matches for testing
-    this.testData.mutualMatches = [];
-    const matchUsers = [
-        {
-            email: 'match1@test.com',
-            name: 'Alice Johnson',
-            age: 27,
-            bio: 'Love hiking and photography'
-        },
-        {
-            email: 'match2@test.com',
-            name: 'Sarah Wilson',
-            age: 29,
-            bio: 'Yoga instructor and book lover'
-        }
-    ];
-    for (const userData of matchUsers) {
-        // Register the match user
-        const registerResponse = await this.apiRequest('POST', '/api/auth/register', {
-            email: userData.email,
-            password: 'TestPass123!',
-            profile: {
-                name: userData.name,
-                age: userData.age,
-                bio: userData.bio,
-                interests: ['hiking', 'reading'],
-                photos: ['photo1.jpg']
-            }
-        });
-        const matchUser = registerResponse.data.user;
-        // Create mutual likes
-        await this.apiRequest('POST', '/api/matches/like', {
-            targetUserId: matchUser.id
-        });
-        // Simulate the other user liking back
-        await this.apiRequest('POST', '/api/matches/like', {
-            targetUserId: this.testData.currentUser.id
-        }, matchUser.id);
-        this.testData.mutualMatches.push(matchUser);
-    }
-});
-(0, cucumber_1.Given)('I have active conversations', async function () {
-    // Create conversations with mutual matches
-    this.testData.conversations = [];
-    for (const match of this.testData.mutualMatches) {
-        const conversationResponse = await this.apiRequest('POST', '/api/conversations', {
-            participantId: match.id
-        });
-        const conversation = conversationResponse.data.conversation;
-        // Add some sample messages
-        await this.apiRequest('POST', `/api/conversations/${conversation.id}/messages`, {
-            content: `Hello ${match.profile.name}! Nice to meet you.`,
-            type: 'text'
-        });
-        await this.apiRequest('POST', `/api/conversations/${conversation.id}/messages`, {
-            content: 'Hi there! How are you doing?',
-            type: 'text'
-        }, match.id);
-        this.testData.conversations.push(conversation);
-    }
-});
-(0, cucumber_1.Given)('I have a new mutual match', async function () {
-    // Create a new mutual match without existing conversation
-    const registerResponse = await this.apiRequest('POST', '/api/auth/register', {
-        email: 'newmatch@test.com',
+  // Create mutual matches for testing
+  this.testData.mutualMatches = [];
+  const matchUsers = [
+    {
+      email: 'match1@test.com',
+      name: 'Alice Johnson',
+      age: 27,
+      bio: 'Love hiking and photography',
+    },
+    {
+      email: 'match2@test.com',
+      name: 'Sarah Wilson',
+      age: 29,
+      bio: 'Yoga instructor and book lover',
+    },
+  ];
+  for (const userData of matchUsers) {
+    // Register the match user
+    const registerResponse = await this.apiRequest(
+      'POST',
+      '/api/auth/register',
+      {
+        email: userData.email,
         password: 'TestPass123!',
         profile: {
-            name: 'Emma Davis',
-            age: 26,
-            bio: 'Artist and coffee enthusiast',
-            interests: ['art', 'coffee'],
-            photos: ['photo1.jpg']
-        }
-    });
-    this.testData.newMatch = registerResponse.data.user;
+          name: userData.name,
+          age: userData.age,
+          bio: userData.bio,
+          interests: ['hiking', 'reading'],
+          photos: ['photo1.jpg'],
+        },
+      }
+    );
+    const matchUser = registerResponse.data.user;
     // Create mutual likes
     await this.apiRequest('POST', '/api/matches/like', {
-        targetUserId: this.testData.newMatch.id
+      targetUserId: matchUser.id,
     });
-    await this.apiRequest('POST', '/api/matches/like', {
-        targetUserId: this.testData.currentUser.id
-    }, this.testData.newMatch.id);
+    // Simulate the other user liking back
+    await this.apiRequest(
+      'POST',
+      '/api/matches/like',
+      {
+        targetUserId: this.testData.currentUser.id,
+      },
+      matchUser.id
+    );
+    this.testData.mutualMatches.push(matchUser);
+  }
+});
+(0, cucumber_1.Given)('I have active conversations', async function () {
+  // Create conversations with mutual matches
+  this.testData.conversations = [];
+  for (const match of this.testData.mutualMatches) {
+    const conversationResponse = await this.apiRequest(
+      'POST',
+      '/api/conversations',
+      {
+        participantId: match.id,
+      }
+    );
+    const conversation = conversationResponse.data.conversation;
+    // Add some sample messages
+    await this.apiRequest(
+      'POST',
+      `/api/conversations/${conversation.id}/messages`,
+      {
+        content: `Hello ${match.profile.name}! Nice to meet you.`,
+        type: 'text',
+      }
+    );
+    await this.apiRequest(
+      'POST',
+      `/api/conversations/${conversation.id}/messages`,
+      {
+        content: 'Hi there! How are you doing?',
+        type: 'text',
+      },
+      match.id
+    );
+    this.testData.conversations.push(conversation);
+  }
+});
+(0, cucumber_1.Given)('I have a new mutual match', async function () {
+  // Create a new mutual match without existing conversation
+  const registerResponse = await this.apiRequest('POST', '/api/auth/register', {
+    email: 'newmatch@test.com',
+    password: 'TestPass123!',
+    profile: {
+      name: 'Emma Davis',
+      age: 26,
+      bio: 'Artist and coffee enthusiast',
+      interests: ['art', 'coffee'],
+      photos: ['photo1.jpg'],
+    },
+  });
+  this.testData.newMatch = registerResponse.data.user;
+  // Create mutual likes
+  await this.apiRequest('POST', '/api/matches/like', {
+    targetUserId: this.testData.newMatch.id,
+  });
+  await this.apiRequest(
+    'POST',
+    '/api/matches/like',
+    {
+      targetUserId: this.testData.currentUser.id,
+    },
+    this.testData.newMatch.id
+  );
 });
 (0, cucumber_1.Given)('I am in an active conversation', async function () {
-    if (!this.testData.conversations || this.testData.conversations.length === 0) {
-        // Create a conversation if none exists
-        const conversationResponse = await this.apiRequest('POST', '/api/conversations', {
-            participantId: this.testData.mutualMatches[0].id
-        });
-        this.testData.currentConversation = conversationResponse.data.conversation;
-    }
-    else {
-        this.testData.currentConversation = this.testData.conversations[0];
-    }
-    // Navigate to the conversation
-    await this.navigateTo(`/messages/${this.testData.currentConversation.id}`);
-    await this.waitForElement('[data-testid="chat-interface"]');
+  if (
+    !this.testData.conversations ||
+    this.testData.conversations.length === 0
+  ) {
+    // Create a conversation if none exists
+    const conversationResponse = await this.apiRequest(
+      'POST',
+      '/api/conversations',
+      {
+        participantId: this.testData.mutualMatches[0].id,
+      }
+    );
+    this.testData.currentConversation = conversationResponse.data.conversation;
+  } else {
+    this.testData.currentConversation = this.testData.conversations[0];
+  }
+  // Navigate to the conversation
+  await this.navigateTo(`/messages/${this.testData.currentConversation.id}`);
+  await this.waitForElement('[data-testid="chat-interface"]');
 });
 (0, cucumber_1.Given)('I have an active conversation ID', async function () {
-    if (!this.testData.currentConversation) {
-        const conversationResponse = await this.apiRequest('POST', '/api/conversations', {
-            participantId: this.testData.mutualMatches[0].id
-        });
-        this.testData.currentConversation = conversationResponse.data.conversation;
-    }
+  if (!this.testData.currentConversation) {
+    const conversationResponse = await this.apiRequest(
+      'POST',
+      '/api/conversations',
+      {
+        participantId: this.testData.mutualMatches[0].id,
+      }
+    );
+    this.testData.currentConversation = conversationResponse.data.conversation;
+  }
 });
 // Navigation Steps
 (0, cucumber_1.When)('I navigate to the messages page', async function () {
-    await this.navigateTo('/messages');
-    await this.waitForElement('[data-testid="messages-page"]');
+  await this.navigateTo('/messages');
+  await this.waitForElement('[data-testid="messages-page"]');
 });
 (0, cucumber_1.When)('I am on the messages page', async function () {
-    await this.navigateTo('/messages');
-    await this.waitForElement('[data-testid="messages-page"]');
+  await this.navigateTo('/messages');
+  await this.waitForElement('[data-testid="messages-page"]');
 });
-(0, cucumber_1.When)('I click on the new match conversation', async function () {
+(0, cucumber_1.When)(
+  'I click on the new match conversation',
+  async function () {
     const conversationSelector = `[data-testid="conversation-${this.testData.newMatch.id}"]`;
     await this.clickElement(conversationSelector);
-});
+  }
+);
 // Message Interaction Steps
-(0, cucumber_1.When)('I type {string} in the message input', async function (message) {
+(0, cucumber_1.When)(
+  'I type {string} in the message input',
+  async function (message) {
     await this.fillField('[data-testid="message-input"]', message);
     this.testData.lastMessage = message;
-});
+  }
+);
 (0, cucumber_1.When)('I click the send button', async function () {
-    await this.clickElement('[data-testid="send-button"]');
+  await this.clickElement('[data-testid="send-button"]');
 });
 (0, cucumber_1.When)('I click the emoji button', async function () {
-    await this.clickElement('[data-testid="emoji-button"]');
-    await this.waitForElement('[data-testid="emoji-picker"]');
+  await this.clickElement('[data-testid="emoji-button"]');
+  await this.waitForElement('[data-testid="emoji-picker"]');
 });
 (0, cucumber_1.When)('I select a heart emoji', async function () {
-    await this.clickElement('[data-testid="emoji-❤️"]');
+  await this.clickElement('[data-testid="emoji-❤️"]');
 });
 (0, cucumber_1.When)('I click the photo attachment button', async function () {
-    await this.clickElement('[data-testid="photo-attachment-button"]');
+  await this.clickElement('[data-testid="photo-attachment-button"]');
 });
 (0, cucumber_1.When)('I select a photo from my device', async function () {
-    // Simulate file upload
-    const fileInput = this.page.locator('input[type="file"]');
-    await fileInput.setInputFiles({
-        name: 'test-photo.jpg',
-        mimeType: 'image/jpeg',
-        buffer: Buffer.from('fake-image-data')
-    });
+  // Simulate file upload
+  const fileInput = this.page.locator('input[type="file"]');
+  await fileInput.setInputFiles({
+    name: 'test-photo.jpg',
+    mimeType: 'image/jpeg',
+    buffer: Buffer.from('fake-image-data'),
+  });
 });
 (0, cucumber_1.When)('I click the GIF button', async function () {
-    await this.clickElement('[data-testid="gif-button"]');
-    await this.waitForElement('[data-testid="gif-picker"]');
+  await this.clickElement('[data-testid="gif-button"]');
+  await this.waitForElement('[data-testid="gif-picker"]');
 });
 (0, cucumber_1.When)('I search for {string} GIFs', async function (searchTerm) {
-    await this.fillField('[data-testid="gif-search-input"]', searchTerm);
-    await this.page.keyboard.press('Enter');
-    await this.waitForElement('[data-testid="gif-results"]');
+  await this.fillField('[data-testid="gif-search-input"]', searchTerm);
+  await this.page.keyboard.press('Enter');
+  await this.waitForElement('[data-testid="gif-results"]');
 });
 (0, cucumber_1.When)('I select a GIF from the results', async function () {
-    await this.clickElement('[data-testid="gif-result"]');
+  await this.clickElement('[data-testid="gif-result"]');
 });
 // Real-time and Status Steps
 (0, cucumber_1.Given)('the other user is also online', async function () {
-    // Simulate other user being online
-    const otherUserId = this.testData.mutualMatches[0].id;
-    await this.apiRequest('POST', `/api/users/${otherUserId}/status`, {
-        status: 'online'
-    });
+  // Simulate other user being online
+  const otherUserId = this.testData.mutualMatches[0].id;
+  await this.apiRequest('POST', `/api/users/${otherUserId}/status`, {
+    status: 'online',
+  });
 });
 (0, cucumber_1.When)('the other user types a message', async function () {
-    // Simulate typing indicator via WebSocket or API
-    const otherUserId = this.testData.mutualMatches[0].id;
-    await this.apiRequest('POST', `/api/conversations/${this.testData.currentConversation.id}/typing`, {
-        userId: otherUserId,
-        isTyping: true
-    });
+  // Simulate typing indicator via WebSocket or API
+  const otherUserId = this.testData.mutualMatches[0].id;
+  await this.apiRequest(
+    'POST',
+    `/api/conversations/${this.testData.currentConversation.id}/typing`,
+    {
+      userId: otherUserId,
+      isTyping: true,
+    }
+  );
 });
 (0, cucumber_1.When)('the other user sends the message', async function () {
-    const otherUserId = this.testData.mutualMatches[0].id;
-    // Stop typing indicator
-    await this.apiRequest('POST', `/api/conversations/${this.testData.currentConversation.id}/typing`, {
-        userId: otherUserId,
-        isTyping: false
-    });
-    // Send message
-    this.testData.receivedMessage = await this.apiRequest('POST', `/api/conversations/${this.testData.currentConversation.id}/messages`, {
-        content: 'Hey! How are you?',
-        type: 'text'
-    }, otherUserId);
+  const otherUserId = this.testData.mutualMatches[0].id;
+  // Stop typing indicator
+  await this.apiRequest(
+    'POST',
+    `/api/conversations/${this.testData.currentConversation.id}/typing`,
+    {
+      userId: otherUserId,
+      isTyping: false,
+    }
+  );
+  // Send message
+  this.testData.receivedMessage = await this.apiRequest(
+    'POST',
+    `/api/conversations/${this.testData.currentConversation.id}/messages`,
+    {
+      content: 'Hey! How are you?',
+      type: 'text',
+    },
+    otherUserId
+  );
 });
 (0, cucumber_1.Given)('the other user sends me a message', async function () {
-    const otherUserId = this.testData.mutualMatches[0].id;
-    this.testData.receivedMessage = await this.apiRequest('POST', `/api/conversations/${this.testData.currentConversation.id}/messages`, {
-        content: 'Hello! Nice to meet you.',
-        type: 'text'
-    }, otherUserId);
+  const otherUserId = this.testData.mutualMatches[0].id;
+  this.testData.receivedMessage = await this.apiRequest(
+    'POST',
+    `/api/conversations/${this.testData.currentConversation.id}/messages`,
+    {
+      content: 'Hello! Nice to meet you.',
+      type: 'text',
+    },
+    otherUserId
+  );
 });
 (0, cucumber_1.When)('the message is delivered', async function () {
-    // Wait for message to appear in UI
-    await this.waitForElement('[data-testid="message-received"]');
+  // Wait for message to appear in UI
+  await this.waitForElement('[data-testid="message-received"]');
 });
-(0, cucumber_1.When)('the other user opens the conversation', async function () {
+(0, cucumber_1.When)(
+  'the other user opens the conversation',
+  async function () {
     // Simulate read receipt
     const otherUserId = this.testData.mutualMatches[0].id;
-    await this.apiRequest('POST', `/api/conversations/${this.testData.currentConversation.id}/read`, {
-        userId: otherUserId
-    });
-});
+    await this.apiRequest(
+      'POST',
+      `/api/conversations/${this.testData.currentConversation.id}/read`,
+      {
+        userId: otherUserId,
+      }
+    );
+  }
+);
 (0, cucumber_1.When)('reads my message', async function () {
-    // This is typically handled automatically when the conversation is opened
-    // The read receipt should be updated in real-time
-    await this.page.waitForTimeout(1000); // Wait for read receipt to update
+  // This is typically handled automatically when the conversation is opened
+  // The read receipt should be updated in real-time
+  await this.page.waitForTimeout(1000); // Wait for read receipt to update
 });
 // Search Steps
 (0, cucumber_1.When)('I use the search function', async function () {
-    await this.clickElement('[data-testid="search-button"]');
-    await this.waitForElement('[data-testid="search-input"]');
+  await this.clickElement('[data-testid="search-button"]');
+  await this.waitForElement('[data-testid="search-input"]');
 });
-(0, cucumber_1.When)('I search for a match\'s name', async function () {
-    const searchTerm = this.testData.mutualMatches[0].profile.name;
-    await this.fillField('[data-testid="search-input"]', searchTerm);
+(0, cucumber_1.When)("I search for a match's name", async function () {
+  const searchTerm = this.testData.mutualMatches[0].profile.name;
+  await this.fillField('[data-testid="search-input"]', searchTerm);
 });
-(0, cucumber_1.When)('I open the search function within the chat', async function () {
+(0, cucumber_1.When)(
+  'I open the search function within the chat',
+  async function () {
     await this.clickElement('[data-testid="chat-search-button"]');
     await this.waitForElement('[data-testid="chat-search-input"]');
-});
-(0, cucumber_1.When)('I search for a specific word or phrase', async function () {
+  }
+);
+(0, cucumber_1.When)(
+  'I search for a specific word or phrase',
+  async function () {
     await this.fillField('[data-testid="chat-search-input"]', 'hello');
     await this.page.keyboard.press('Enter');
-});
+  }
+);
 // Moderation Steps
 (0, cucumber_1.When)('I receive an inappropriate message', async function () {
-    const otherUserId = this.testData.mutualMatches[0].id;
-    this.testData.inappropriateMessage = await this.apiRequest('POST', `/api/conversations/${this.testData.currentConversation.id}/messages`, {
-        content: 'This is an inappropriate message',
-        type: 'text'
-    }, otherUserId);
-    await this.waitForElement('[data-testid="message-received"]');
+  const otherUserId = this.testData.mutualMatches[0].id;
+  this.testData.inappropriateMessage = await this.apiRequest(
+    'POST',
+    `/api/conversations/${this.testData.currentConversation.id}/messages`,
+    {
+      content: 'This is an inappropriate message',
+      type: 'text',
+    },
+    otherUserId
+  );
+  await this.waitForElement('[data-testid="message-received"]');
 });
 (0, cucumber_1.When)('I long-press on the message', async function () {
-    const messageElement = this.page.locator('[data-testid="message-received"]').last();
-    await messageElement.click({ button: 'right' }); // Right-click to simulate long-press
+  const messageElement = this.page
+    .locator('[data-testid="message-received"]')
+    .last();
+  await messageElement.click({ button: 'right' }); // Right-click to simulate long-press
 });
-(0, cucumber_1.When)('I select {string} from the context menu', async function (action) {
-    await this.clickElement(`[data-testid="context-menu-${action.toLowerCase()}"]`);
-});
+(0, cucumber_1.When)(
+  'I select {string} from the context menu',
+  async function (action) {
+    await this.clickElement(
+      `[data-testid="context-menu-${action.toLowerCase()}"]`
+    );
+  }
+);
 (0, cucumber_1.When)('I choose a reason for reporting', async function () {
-    await this.clickElement('[data-testid="report-reason-inappropriate"]');
+  await this.clickElement('[data-testid="report-reason-inappropriate"]');
 });
 (0, cucumber_1.When)('I submit the report', async function () {
-    await this.clickElement('[data-testid="submit-report-button"]');
+  await this.clickElement('[data-testid="submit-report-button"]');
 });
 (0, cucumber_1.When)('I access the conversation settings', async function () {
-    await this.clickElement('[data-testid="conversation-settings-button"]');
-    await this.waitForElement('[data-testid="conversation-settings-menu"]');
+  await this.clickElement('[data-testid="conversation-settings-button"]');
+  await this.waitForElement('[data-testid="conversation-settings-menu"]');
 });
 (0, cucumber_1.When)('I select {string}', async function (action) {
-    await this.clickElement(`[data-testid="${action.toLowerCase().replace(' ', '-')}"]`);
+  await this.clickElement(
+    `[data-testid="${action.toLowerCase().replace(' ', '-')}"]`
+  );
 });
 (0, cucumber_1.When)('I confirm the blocking action', async function () {
-    await this.clickElement('[data-testid="confirm-block-button"]');
+  await this.clickElement('[data-testid="confirm-block-button"]');
 });
 // API Steps
-(0, cucumber_1.When)('I send a GET request to {string}', async function (endpoint) {
+(0, cucumber_1.When)(
+  'I send a GET request to {string}',
+  async function (endpoint) {
     this.testData.lastApiResponse = await this.apiRequest('GET', endpoint);
-});
-(0, cucumber_1.When)('I send a POST request to {string} with message content', async function (endpoint) {
+  }
+);
+(0, cucumber_1.When)(
+  'I send a POST request to {string} with message content',
+  async function (endpoint) {
     const conversationId = this.testData.currentConversation.id;
     const fullEndpoint = endpoint.replace('{conversationId}', conversationId);
-    this.testData.lastApiResponse = await this.apiRequest('POST', fullEndpoint, {
+    this.testData.lastApiResponse = await this.apiRequest(
+      'POST',
+      fullEndpoint,
+      {
         content: 'Test message via API',
-        type: 'text'
-    });
-});
+        type: 'text',
+      }
+    );
+  }
+);
 // Validation Steps
 (0, cucumber_1.When)('I try to send an empty message', async function () {
-    await this.fillField('[data-testid="message-input"]', '');
-    // Try to click send button
+  await this.fillField('[data-testid="message-input"]', '');
+  // Try to click send button
 });
-(0, cucumber_1.When)('I type a message longer than the character limit', async function () {
+(0, cucumber_1.When)(
+  'I type a message longer than the character limit',
+  async function () {
     const longMessage = 'a'.repeat(1001); // Assuming 1000 character limit
     await this.fillField('[data-testid="message-input"]', longMessage);
-});
+  }
+);
 (0, cucumber_1.When)('I try to send them a message via API', async function () {
-    // Try to send message to unmatched user
-    this.testData.lastApiResponse = await this.apiRequest('POST', '/api/conversations', {
-        participantId: 'unmatched-user-id'
-    });
+  // Try to send message to unmatched user
+  this.testData.lastApiResponse = await this.apiRequest(
+    'POST',
+    '/api/conversations',
+    {
+      participantId: 'unmatched-user-id',
+    }
+  );
 });
 // Condition Steps
 (0, cucumber_1.Given)('I have the app in the background', async function () {
-    // Simulate app being in background
-    await this.page.evaluate(() => {
-        document.dispatchEvent(new Event('visibilitychange'));
-        Object.defineProperty(document, 'hidden', { value: true, writable: true });
-    });
+  // Simulate app being in background
+  await this.page.evaluate(() => {
+    document.dispatchEvent(new Event('visibilitychange'));
+    Object.defineProperty(document, 'hidden', { value: true, writable: true });
+  });
 });
-(0, cucumber_1.Given)('I am using the app but not in the conversation', async function () {
+(0, cucumber_1.Given)(
+  'I am using the app but not in the conversation',
+  async function () {
     await this.navigateTo('/profile'); // Navigate away from conversation
-});
-(0, cucumber_1.Given)('I have a conversation with over 1000 messages', async function () {
+  }
+);
+(0, cucumber_1.Given)(
+  'I have a conversation with over 1000 messages',
+  async function () {
     // Create a conversation with many messages (simulate via API)
-    const conversationResponse = await this.apiRequest('POST', '/api/conversations', {
-        participantId: this.testData.mutualMatches[0].id
-    });
+    const conversationResponse = await this.apiRequest(
+      'POST',
+      '/api/conversations',
+      {
+        participantId: this.testData.mutualMatches[0].id,
+      }
+    );
     this.testData.largeConversation = conversationResponse.data.conversation;
     // Simulate having many messages
-    await this.apiRequest('POST', `/api/conversations/${this.testData.largeConversation.id}/bulk-messages`, {
-        count: 1000
-    });
-});
+    await this.apiRequest(
+      'POST',
+      `/api/conversations/${this.testData.largeConversation.id}/bulk-messages`,
+      {
+        count: 1000,
+      }
+    );
+  }
+);
 (0, cucumber_1.Given)('I lose internet connectivity', async function () {
-    // Simulate offline mode
-    await this.page.context().setOffline(true);
+  // Simulate offline mode
+  await this.page.context().setOffline(true);
 });
 (0, cucumber_1.When)('connectivity is restored', async function () {
-    await this.page.context().setOffline(false);
+  await this.page.context().setOffline(false);
 });
 // Assertion Steps
-(0, cucumber_1.Then)('I should see a list of my conversations', async function () {
+(0, cucumber_1.Then)(
+  'I should see a list of my conversations',
+  async function () {
     await this.waitForElement('[data-testid="conversation-list"]');
-    const conversations = await this.page.locator('[data-testid="conversation-item"]').count();
+    const conversations = await this.page
+      .locator('[data-testid="conversation-item"]')
+      .count();
     (0, test_1.expect)(conversations).toBeGreaterThan(0);
-});
-(0, cucumber_1.Then)('each conversation should show the match\'s name and photo', async function () {
-    const firstConversation = this.page.locator('[data-testid="conversation-item"]').first();
-    await (0, test_1.expect)(firstConversation.locator('[data-testid="match-name"]')).toBeVisible();
-    await (0, test_1.expect)(firstConversation.locator('[data-testid="match-photo"]')).toBeVisible();
-});
-(0, cucumber_1.Then)('each conversation should show the last message preview', async function () {
-    const firstConversation = this.page.locator('[data-testid="conversation-item"]').first();
-    await (0, test_1.expect)(firstConversation.locator('[data-testid="last-message-preview"]')).toBeVisible();
-});
-(0, cucumber_1.Then)('I should be taken to the chat interface', async function () {
+  }
+);
+(0, cucumber_1.Then)(
+  "each conversation should show the match's name and photo",
+  async function () {
+    const firstConversation = this.page
+      .locator('[data-testid="conversation-item"]')
+      .first();
+    await (0, test_1.expect)(
+      firstConversation.locator('[data-testid="match-name"]')
+    ).toBeVisible();
+    await (0, test_1.expect)(
+      firstConversation.locator('[data-testid="match-photo"]')
+    ).toBeVisible();
+  }
+);
+(0, cucumber_1.Then)(
+  'each conversation should show the last message preview',
+  async function () {
+    const firstConversation = this.page
+      .locator('[data-testid="conversation-item"]')
+      .first();
+    await (0, test_1.expect)(
+      firstConversation.locator('[data-testid="last-message-preview"]')
+    ).toBeVisible();
+  }
+);
+(0, cucumber_1.Then)(
+  'I should be taken to the chat interface',
+  async function () {
     await this.waitForElement('[data-testid="chat-interface"]');
-    await (0, test_1.expect)(this.page.locator('[data-testid="chat-interface"]')).toBeVisible();
-});
-(0, cucumber_1.Then)('I should see a welcome message or ice breaker suggestions', async function () {
+    await (0, test_1.expect)(
+      this.page.locator('[data-testid="chat-interface"]')
+    ).toBeVisible();
+  }
+);
+(0, cucumber_1.Then)(
+  'I should see a welcome message or ice breaker suggestions',
+  async function () {
     const welcomeMessage = this.page.locator('[data-testid="welcome-message"]');
-    const iceBreakerSuggestions = this.page.locator('[data-testid="ice-breaker-suggestions"]');
+    const iceBreakerSuggestions = this.page.locator(
+      '[data-testid="ice-breaker-suggestions"]'
+    );
     const welcomeVisible = await welcomeMessage.isVisible();
     const iceBreakersVisible = await iceBreakerSuggestions.isVisible();
     (0, test_1.expect)(welcomeVisible || iceBreakersVisible).toBe(true);
-});
-(0, cucumber_1.Then)('the message should appear in the chat', async function () {
+  }
+);
+(0, cucumber_1.Then)(
+  'the message should appear in the chat',
+  async function () {
     await this.waitForElement('[data-testid="message-sent"]');
-    const lastMessage = this.page.locator('[data-testid="message-sent"]').last();
-    await (0, test_1.expect)(lastMessage).toContainText(this.testData.lastMessage);
-});
+    const lastMessage = this.page
+      .locator('[data-testid="message-sent"]')
+      .last();
+    await (0, test_1.expect)(lastMessage).toContainText(
+      this.testData.lastMessage
+    );
+  }
+);
 (0, cucumber_1.Then)('the message should be marked as sent', async function () {
-    const lastMessage = this.page.locator('[data-testid="message-sent"]').last();
-    await (0, test_1.expect)(lastMessage.locator('[data-testid="message-status-sent"]')).toBeVisible();
+  const lastMessage = this.page.locator('[data-testid="message-sent"]').last();
+  await (0, test_1.expect)(
+    lastMessage.locator('[data-testid="message-status-sent"]')
+  ).toBeVisible();
 });
-(0, cucumber_1.Then)('the other user should receive the message', async function () {
+(0, cucumber_1.Then)(
+  'the other user should receive the message',
+  async function () {
     // Verify via API that the message was delivered
-    const response = await this.apiRequest('GET', `/api/conversations/${this.testData.currentConversation.id}/messages`);
+    const response = await this.apiRequest(
+      'GET',
+      `/api/conversations/${this.testData.currentConversation.id}/messages`
+    );
     (0, test_1.expect)(response.status).toBe(200);
-    (0, test_1.expect)(response.data.messages).toContainEqual(test_1.expect.objectContaining({ content: this.testData.lastMessage }));
-});
-(0, cucumber_1.Then)('I should see the new message in the chat', async function () {
+    (0, test_1.expect)(response.data.messages).toContainEqual(
+      test_1.expect.objectContaining({ content: this.testData.lastMessage })
+    );
+  }
+);
+(0, cucumber_1.Then)(
+  'I should see the new message in the chat',
+  async function () {
     await this.waitForElement('[data-testid="message-received"]');
-    const receivedMessage = this.page.locator('[data-testid="message-received"]').last();
+    const receivedMessage = this.page
+      .locator('[data-testid="message-received"]')
+      .last();
     await (0, test_1.expect)(receivedMessage).toBeVisible();
-});
+  }
+);
 (0, cucumber_1.Then)('I should receive a notification', async function () {
-    // Check for notification (this might be browser notification or in-app)
-    await this.waitForElement('[data-testid="notification"]');
-    const notification = this.page.locator('[data-testid="notification"]');
-    await (0, test_1.expect)(notification).toBeVisible();
+  // Check for notification (this might be browser notification or in-app)
+  await this.waitForElement('[data-testid="notification"]');
+  const notification = this.page.locator('[data-testid="notification"]');
+  await (0, test_1.expect)(notification).toBeVisible();
 });
-(0, cucumber_1.Then)('I should see a {string} indicator', async function (indicatorType) {
+(0, cucumber_1.Then)(
+  'I should see a {string} indicator',
+  async function (indicatorType) {
     await this.waitForElement(`[data-testid="${indicatorType}-indicator"]`);
-    const indicator = this.page.locator(`[data-testid="${indicatorType}-indicator"]`);
+    const indicator = this.page.locator(
+      `[data-testid="${indicatorType}-indicator"]`
+    );
     await (0, test_1.expect)(indicator).toBeVisible();
-});
-(0, cucumber_1.Then)('the emoji should be sent as a message', async function () {
+  }
+);
+(0, cucumber_1.Then)(
+  'the emoji should be sent as a message',
+  async function () {
     await this.waitForElement('[data-testid="message-sent"]');
-    const lastMessage = this.page.locator('[data-testid="message-sent"]').last();
+    const lastMessage = this.page
+      .locator('[data-testid="message-sent"]')
+      .last();
     await (0, test_1.expect)(lastMessage).toContainText('❤️');
-});
+  }
+);
 (0, cucumber_1.Then)('the photo should be uploaded', async function () {
-    await this.waitForElement('[data-testid="message-photo"]');
-    const photoMessage = this.page.locator('[data-testid="message-photo"]').last();
-    await (0, test_1.expect)(photoMessage).toBeVisible();
+  await this.waitForElement('[data-testid="message-photo"]');
+  const photoMessage = this.page
+    .locator('[data-testid="message-photo"]')
+    .last();
+  await (0, test_1.expect)(photoMessage).toBeVisible();
 });
 (0, cucumber_1.Then)('the send button should be disabled', async function () {
-    const sendButton = this.page.locator('[data-testid="send-button"]');
-    await (0, test_1.expect)(sendButton).toBeDisabled();
+  const sendButton = this.page.locator('[data-testid="send-button"]');
+  await (0, test_1.expect)(sendButton).toBeDisabled();
 });
-(0, cucumber_1.Then)('I should see a character count indicator', async function () {
+(0, cucumber_1.Then)(
+  'I should see a character count indicator',
+  async function () {
     await this.waitForElement('[data-testid="character-count"]');
     const charCount = this.page.locator('[data-testid="character-count"]');
     await (0, test_1.expect)(charCount).toBeVisible();
-});
-(0, cucumber_1.Then)('the API should respond with status code {int}', async function (statusCode) {
+  }
+);
+(0, cucumber_1.Then)(
+  'the API should respond with status code {int}',
+  async function (statusCode) {
     (0, test_1.expect)(this.testData.lastApiResponse.status).toBe(statusCode);
-});
-(0, cucumber_1.Then)('the response should contain a list of my conversations', async function () {
-    (0, test_1.expect)(this.testData.lastApiResponse.data).toHaveProperty('conversations');
-    (0, test_1.expect)(Array.isArray(this.testData.lastApiResponse.data.conversations)).toBe(true);
-});
-(0, cucumber_1.Then)('the message should be reported to moderators', async function () {
+  }
+);
+(0, cucumber_1.Then)(
+  'the response should contain a list of my conversations',
+  async function () {
+    (0, test_1.expect)(this.testData.lastApiResponse.data).toHaveProperty(
+      'conversations'
+    );
+    (0, test_1.expect)(
+      Array.isArray(this.testData.lastApiResponse.data.conversations)
+    ).toBe(true);
+  }
+);
+(0, cucumber_1.Then)(
+  'the message should be reported to moderators',
+  async function () {
     // Verify report was created
     const response = await this.apiRequest('GET', '/api/admin/reports');
     (0, test_1.expect)(response.status).toBe(200);
-    (0, test_1.expect)(response.data.reports).toContainEqual(test_1.expect.objectContaining({ type: 'inappropriate_message' }));
-});
+    (0, test_1.expect)(response.data.reports).toContainEqual(
+      test_1.expect.objectContaining({ type: 'inappropriate_message' })
+    );
+  }
+);
 (0, cucumber_1.Then)('the user should be blocked', async function () {
-    // Verify user is blocked
-    const response = await this.apiRequest('GET', '/api/users/blocked');
-    (0, test_1.expect)(response.status).toBe(200);
-    (0, test_1.expect)(response.data.blockedUsers).toContainEqual(test_1.expect.objectContaining({ id: this.testData.mutualMatches[0].id }));
+  // Verify user is blocked
+  const response = await this.apiRequest('GET', '/api/users/blocked');
+  (0, test_1.expect)(response.status).toBe(200);
+  (0, test_1.expect)(response.data.blockedUsers).toContainEqual(
+    test_1.expect.objectContaining({ id: this.testData.mutualMatches[0].id })
+  );
 });
-(0, cucumber_1.Then)('the queued message should be sent automatically', async function () {
+(0, cucumber_1.Then)(
+  'the queued message should be sent automatically',
+  async function () {
     await this.waitForElement('[data-testid="message-sent"]');
-    const lastMessage = this.page.locator('[data-testid="message-sent"]').last();
-    await (0, test_1.expect)(lastMessage.locator('[data-testid="message-status-sent"]')).toBeVisible();
-});
+    const lastMessage = this.page
+      .locator('[data-testid="message-sent"]')
+      .last();
+    await (0, test_1.expect)(
+      lastMessage.locator('[data-testid="message-status-sent"]')
+    ).toBeVisible();
+  }
+);

@@ -1,8 +1,8 @@
 /**
  * Authentication Types
- * 
+ *
  * Type definitions for authentication and authorization
- * 
+ *
  * @version 1.0.0
  * @author Kim Hsiao
  * @created 2025-01-24

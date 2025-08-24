@@ -11,7 +11,7 @@ module.exports = {
       './apps/web/tsconfig.json',
       './services/auth/tsconfig.json',
       './packages/database/tsconfig.json',
-      './packages/types/tsconfig.json'
+      './packages/types/tsconfig.json',
     ],
     tsconfigRootDir: __dirname,
   },

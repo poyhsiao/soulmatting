@@ -29,7 +29,7 @@ export class CustomWorld extends World {
 
   constructor(options: IWorldOptions) {
     super(options);
-    
+
     // Get configuration from world parameters
     this.baseUrl = options.parameters.baseUrl || 'http://localhost:3000';
     this.apiUrl = options.parameters.apiUrl || 'http://localhost:3001';
@@ -78,8 +78,10 @@ export class CustomWorld extends World {
     data?: any,
     headers?: Record<string, string>
   ): Promise<any> {
-    const url = endpoint.startsWith('http') ? endpoint : `${this.apiUrl}${endpoint}`;
-    
+    const url = endpoint.startsWith('http')
+      ? endpoint
+      : `${this.apiUrl}${endpoint}`;
+
     const options: RequestInit = {
       method: method.toUpperCase(),
       headers: {
@@ -179,7 +181,10 @@ export class CustomWorld extends World {
   /**
    * Assert element contains text
    */
-  async assertElementContainsText(selector: string, text: string): Promise<void> {
+  async assertElementContainsText(
+    selector: string,
+    text: string
+  ): Promise<void> {
     await expect(this.page.locator(selector)).toContainText(text);
   }
 

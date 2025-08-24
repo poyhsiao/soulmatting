@@ -26,7 +26,6 @@ async function globalTeardown(config: FullConfig) {
       const files = fs.readdirSync(testResultsDir);
       console.log(`📊 Test artifacts generated: ${files.length} files`);
     }
-
   } catch (error) {
     console.error('❌ Global teardown encountered an error:', error);
     // Don't throw here as it might mask test failures

@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document outlines the self-hosted architecture design for SoulMatting using PostgreSQL + Supabase + MinIO stack deployed via Docker Compose. This approach provides complete control over data, infrastructure, and costs while maintaining scalability and security.
+This document outlines the self-hosted architecture design for SoulMatting using PostgreSQL +
+Supabase + MinIO stack deployed via Docker Compose. This approach provides complete control over
+data, infrastructure, and costs while maintaining scalability and security.
 
 ## Architecture Components
 
@@ -14,11 +16,11 @@ graph TB
         WEB[Web App]
         MOBILE[Mobile App]
     end
-    
+
     subgraph "Load Balancer"
         TRAEFIK[Traefik Proxy]
     end
-    
+
     subgraph "Application Layer"
         SUPABASE[Supabase Stack]
         subgraph "Supabase Services"
@@ -31,19 +33,19 @@ graph TB
             STUDIO[Supabase Studio]
         end
     end
-    
+
     subgraph "Data Layer"
         POSTGRES[(PostgreSQL)]
         REDIS[(Redis Cache)]
         MINIO[(MinIO Object Storage)]
     end
-    
+
     subgraph "Monitoring"
         PROMETHEUS[Prometheus]
         GRAFANA[Grafana]
         LOKI[Loki Logs]
     end
-    
+
     WEB --> TRAEFIK
     MOBILE --> TRAEFIK
     TRAEFIK --> KONG
@@ -53,13 +55,13 @@ graph TB
     KONG --> STORAGE
     KONG --> FUNCTIONS
     KONG --> STUDIO
-    
+
     POSTGREST --> POSTGRES
     GOTRUE --> POSTGRES
     REALTIME --> POSTGRES
     STORAGE --> MINIO
     FUNCTIONS --> POSTGRES
-    
+
     SUPABASE --> REDIS
     SUPABASE --> PROMETHEUS
     PROMETHEUS --> GRAFANA
@@ -108,12 +110,12 @@ postgres:
     - ./volumes/postgres:/var/lib/postgresql/data
     - ./config/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
   ports:
-    - "5432:5432"
+    - '5432:5432'
   networks:
     - soulmatting-network
   restart: unless-stopped
   healthcheck:
-    test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+    test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
     interval: 30s
     timeout: 10s
     retries: 3
@@ -133,13 +135,13 @@ minio:
   volumes:
     - ./volumes/minio:/data
   ports:
-    - "9000:9000"
-    - "9001:9001"
+    - '9000:9000'
+    - '9001:9001'
   networks:
     - soulmatting-network
   restart: unless-stopped
   healthcheck:
-    test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+    test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
     interval: 30s
     timeout: 10s
     retries: 3
@@ -155,12 +157,12 @@ redis:
   volumes:
     - ./volumes/redis:/data
   ports:
-    - "6379:6379"
+    - '6379:6379'
   networks:
     - soulmatting-network
   restart: unless-stopped
   healthcheck:
-    test: ["CMD", "redis-cli", "ping"]
+    test: ['CMD', 'redis-cli', 'ping']
     interval: 30s
     timeout: 10s
     retries: 3
@@ -174,14 +176,14 @@ kong:
   image: kong:2.8-alpine
   container_name: soulmatting-kong
   environment:
-    KONG_DATABASE: "off"
+    KONG_DATABASE: 'off'
     KONG_DECLARATIVE_CONFIG: /var/lib/kong/kong.yml
     KONG_DNS_ORDER: LAST,A,CNAME
     KONG_PLUGINS: request-transformer,cors,key-auth,acl,basic-auth
   volumes:
     - ./config/supabase/kong.yml:/var/lib/kong/kong.yml
   ports:
-    - "8000:8000"
+    - '8000:8000'
   networks:
     - soulmatting-network
   depends_on:
@@ -225,7 +227,7 @@ rest:
     PGRST_DB_SCHEMAS: ${PGRST_DB_SCHEMAS}
     PGRST_DB_ANON_ROLE: anon
     PGRST_JWT_SECRET: ${JWT_SECRET}
-    PGRST_DB_USE_LEGACY_GUCS: "false"
+    PGRST_DB_USE_LEGACY_GUCS: 'false'
   networks:
     - soulmatting-network
   depends_on:
@@ -250,7 +252,7 @@ realtime:
     FLY_APP_NAME: realtime
     SECRET_KEY_BASE: ${SECRET_KEY_BASE}
     ERL_AFLAGS: -proto_dist inet_tcp
-    ENABLE_TAILSCALE: "false"
+    ENABLE_TAILSCALE: 'false'
     DNS_NODES: "'"
   networks:
     - soulmatting-network
@@ -273,7 +275,7 @@ storage:
     GLOBAL_S3_BUCKET: ${STORAGE_S3_BUCKET}
     REGION: ${STORAGE_S3_REGION}
     GLOBAL_S3_ENDPOINT: http://minio:9000
-    GLOBAL_S3_FORCE_PATH_STYLE: "true"
+    GLOBAL_S3_FORCE_PATH_STYLE: 'true'
     AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER}
     AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD}
   networks:
@@ -316,7 +318,7 @@ studio:
     SUPABASE_ANON_KEY: ${ANON_KEY}
     SUPABASE_SERVICE_KEY: ${SERVICE_ROLE_KEY}
   ports:
-    - "3000:3000"
+    - '3000:3000'
   networks:
     - soulmatting-network
   depends_on:
@@ -342,9 +344,9 @@ traefik:
     - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
     - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
   ports:
-    - "80:80"
-    - "443:443"
-    - "8080:8080"
+    - '80:80'
+    - '443:443'
+    - '8080:8080'
   volumes:
     - /var/run/docker.sock:/var/run/docker.sock:ro
     - ./volumes/traefik/letsencrypt:/letsencrypt
@@ -352,9 +354,9 @@ traefik:
     - soulmatting-network
   restart: unless-stopped
   labels:
-    - "traefik.enable=true"
-    - "traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)"
-    - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
+    - 'traefik.enable=true'
+    - 'traefik.http.routers.dashboard.rule=Host(`traefik.${DOMAIN}`)'
+    - 'traefik.http.routers.dashboard.tls.certresolver=letsencrypt'
 ```
 
 ## Environment Configuration
@@ -454,7 +456,7 @@ prometheus:
     - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
     - ./volumes/prometheus:/prometheus
   ports:
-    - "9090:9090"
+    - '9090:9090'
   networks:
     - soulmatting-network
   restart: unless-stopped
@@ -473,7 +475,7 @@ grafana:
     - ./config/grafana/dashboards:/etc/grafana/provisioning/dashboards
     - ./config/grafana/datasources:/etc/grafana/provisioning/datasources
   ports:
-    - "3001:3000"
+    - '3001:3000'
   networks:
     - soulmatting-network
   restart: unless-stopped
@@ -656,12 +658,12 @@ docker-compose up -d --force-recreate
 
 ### Infrastructure Costs (Self-Hosted)
 
-| Component | Minimum Specs | Monthly Cost (VPS) |
-|-----------|---------------|--------------------|
-| Application Server | 4 CPU, 8GB RAM, 100GB SSD | $40-60 |
-| Database Server | 2 CPU, 4GB RAM, 200GB SSD | $25-40 |
-| Storage Server | 2 CPU, 4GB RAM, 1TB HDD | $20-30 |
-| **Total** | | **$85-130** |
+| Component          | Minimum Specs             | Monthly Cost (VPS) |
+| ------------------ | ------------------------- | ------------------ |
+| Application Server | 4 CPU, 8GB RAM, 100GB SSD | $40-60             |
+| Database Server    | 2 CPU, 4GB RAM, 200GB SSD | $25-40             |
+| Storage Server     | 2 CPU, 4GB RAM, 1TB HDD   | $20-30             |
+| **Total**          |                           | **$85-130**        |
 
 ### Operational Costs
 
@@ -711,6 +713,10 @@ docker-compose up -d --force-recreate
 
 ## Conclusion
 
-The self-hosted PostgreSQL + Supabase + MinIO architecture provides a robust, cost-effective, and scalable solution for SoulMatting. This approach offers complete control over the infrastructure while maintaining the developer experience benefits of modern Backend-as-a-Service platforms.
+The self-hosted PostgreSQL + Supabase + MinIO architecture provides a robust, cost-effective, and
+scalable solution for SoulMatting. This approach offers complete control over the infrastructure
+while maintaining the developer experience benefits of modern Backend-as-a-Service platforms.
 
-The Docker Compose setup ensures easy deployment and management, while the comprehensive monitoring and backup strategies provide production-ready reliability. With proper implementation and maintenance, this architecture can support SoulMatting's growth from MVP to enterprise scale.
+The Docker Compose setup ensures easy deployment and management, while the comprehensive monitoring
+and backup strategies provide production-ready reliability. With proper implementation and
+maintenance, this architecture can support SoulMatting's growth from MVP to enterprise scale.

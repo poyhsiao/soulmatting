@@ -1,8 +1,8 @@
 /**
  * Profile Types
- * 
+ *
  * Type definitions for user profiles and related entities
- * 
+ *
  * @version 1.0.0
  * @author Kim Hsiao
  * @created 2025-01-24

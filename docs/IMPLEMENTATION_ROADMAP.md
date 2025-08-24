@@ -2,7 +2,9 @@
 
 ## Overview
 
-This document provides a detailed implementation roadmap for the SoulMatting project based on the PostgreSQL + Supabase + MinIO technology stack, including development phases, scheduling, milestones, and risk management.
+This document provides a detailed implementation roadmap for the SoulMatting project based on the
+PostgreSQL + Supabase + MinIO technology stack, including development phases, scheduling,
+milestones, and risk management.
 
 ## Project Phase Planning
 
@@ -13,6 +15,7 @@ This document provides a detailed implementation roadmap for the SoulMatting pro
 **Objective**: Establish complete development environment and toolchain
 
 **Task List**:
+
 - [ ] Setup Git repository and branching strategy
 - [ ] Configure Docker development environment
 - [ ] Establish CI/CD pipeline (GitHub Actions)
@@ -20,15 +23,16 @@ This document provides a detailed implementation roadmap for the SoulMatting pro
 - [ ] Configure testing frameworks (Jest, Cypress)
 
 **Technical Configuration**:
+
 ```yaml
 # .github/workflows/ci.yml
 name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
 
 jobs:
   test:
@@ -40,21 +44,22 @@ jobs:
         with:
           node-version: '18'
           cache: 'pnpm'
-      
+
       - name: Install dependencies
         run: pnpm install
-      
+
       - name: Run linting
         run: pnpm lint
-      
+
       - name: Run tests
         run: pnpm test:coverage
-      
+
       - name: Build application
         run: pnpm build
 ```
 
 **Deliverables**:
+
 - Complete development environment configuration
 - CI/CD pipeline setup
 - Code standards and quality checking tools
@@ -64,6 +69,7 @@ jobs:
 **Objective**: Establish PostgreSQL database architecture and Supabase configuration
 
 **Task List**:
+
 - [ ] Design database ERD
 - [ ] Create database table structure
 - [ ] Setup Row Level Security (RLS) policies
@@ -72,6 +78,7 @@ jobs:
 - [ ] Setup database backup strategy
 
 **Database Migration Scripts**:
+
 ```sql
 -- migrations/001_initial_schema.sql
 -- Enable necessary extensions
@@ -121,6 +128,7 @@ CREATE POLICY "Users can insert own profile" ON profiles
 ```
 
 **Deliverables**:
+
 - Complete database architecture
 - RLS security policies
 - Data migration and seed scripts
@@ -130,6 +138,7 @@ CREATE POLICY "Users can insert own profile" ON profiles
 **Objective**: Configure Supabase services and authentication system
 
 **Task List**:
+
 - [ ] Setup Supabase project
 - [ ] Configure authentication providers (Google, Facebook, Apple)
 - [ ] Setup Edge Functions
@@ -137,42 +146,44 @@ CREATE POLICY "Users can insert own profile" ON profiles
 - [ ] Setup Storage buckets and policies
 
 **Supabase Configuration**:
+
 ```typescript
 // lib/supabase.ts
-import { createClient } from '@supabase/supabase-js'
-import { Database } from './database.types'
+import { createClient } from '@supabase/supabase-js';
+import { Database } from './database.types';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
   },
   realtime: {
     params: {
-      eventsPerSecond: 10
-    }
-  }
-})
+      eventsPerSecond: 10,
+    },
+  },
+});
 
 // Authentication configuration
 export const authConfig = {
   redirectTo: `${window.location.origin}/auth/callback`,
   providers: {
     google: {
-      scopes: 'email profile'
+      scopes: 'email profile',
     },
     facebook: {
-      scopes: 'email public_profile'
-    }
-  }
-}
+      scopes: 'email public_profile',
+    },
+  },
+};
 ```
 
 **Deliverables**:
+
 - Supabase project configuration
 - Authentication system setup
 - Edge Functions infrastructure
@@ -182,6 +193,7 @@ export const authConfig = {
 **Objective**: Establish MinIO object storage service
 
 **Task List**:
+
 - [ ] Deploy MinIO cluster
 - [ ] Configure storage buckets and policies
 - [ ] Setup CDN integration
@@ -189,14 +201,15 @@ export const authConfig = {
 - [ ] Configure image processing pipeline
 
 **MinIO Configuration**:
+
 ```typescript
 // services/storage.service.ts
-import { Client as MinioClient } from 'minio'
-import sharp from 'sharp'
+import { Client as MinioClient } from 'minio';
+import sharp from 'sharp';
 
 export class StorageService {
-  private minioClient: MinioClient
-  private bucketName: string
+  private minioClient: MinioClient;
+  private bucketName: string;
 
   constructor() {
     this.minioClient = new MinioClient({
@@ -204,9 +217,9 @@ export class StorageService {
       port: parseInt(process.env.MINIO_PORT!),
       useSSL: process.env.MINIO_USE_SSL === 'true',
       accessKey: process.env.MINIO_ACCESS_KEY!,
-      secretKey: process.env.MINIO_SECRET_KEY!
-    })
-    this.bucketName = process.env.MINIO_BUCKET_NAME!
+      secretKey: process.env.MINIO_SECRET_KEY!,
+    });
+    this.bucketName = process.env.MINIO_BUCKET_NAME!;
   }
 
   async uploadProfilePhoto(userId: string, file: Buffer, filename: string): Promise<string> {
@@ -214,10 +227,10 @@ export class StorageService {
     const processedImage = await sharp(file)
       .resize(800, 800, { fit: 'cover' })
       .webp({ quality: 85 })
-      .toBuffer()
+      .toBuffer();
 
-    const objectName = `profiles/${userId}/${Date.now()}-${filename}.webp`
-    
+    const objectName = `profiles/${userId}/${Date.now()}-${filename}.webp`;
+
     await this.minioClient.putObject(
       this.bucketName,
       objectName,
@@ -225,16 +238,17 @@ export class StorageService {
       processedImage.length,
       {
         'Content-Type': 'image/webp',
-        'Cache-Control': 'max-age=31536000'
+        'Cache-Control': 'max-age=31536000',
       }
-    )
+    );
 
-    return `https://${process.env.MINIO_ENDPOINT}/${this.bucketName}/${objectName}`
+    return `https://${process.env.MINIO_ENDPOINT}/${this.bucketName}/${objectName}`;
   }
 }
 ```
 
 **Deliverables**:
+
 - MinIO cluster deployment
 - File upload and processing service
 - CDN integration configuration
@@ -246,6 +260,7 @@ export class StorageService {
 **Objective**: Implement user registration, login and profile management features
 
 **Task List**:
+
 - [ ] User registration flow
 - [ ] Social login integration
 - [ ] User profile editing
@@ -253,6 +268,7 @@ export class StorageService {
 - [ ] Identity verification system
 
 **User Authentication Service**:
+
 ```typescript
 // services/auth.service.ts
 export class AuthService {
@@ -263,46 +279,44 @@ export class AuthService {
       options: {
         data: {
           display_name: userData.displayName,
-          birth_date: userData.birthDate
-        }
-      }
-    })
+          birth_date: userData.birthDate,
+        },
+      },
+    });
 
-    if (error) throw error
+    if (error) throw error;
 
     // Create user profile
     if (data.user) {
-      await this.createUserProfile(data.user.id, userData)
+      await this.createUserProfile(data.user.id, userData);
     }
 
-    return data
+    return data;
   }
 
   async signInWithProvider(provider: 'google' | 'facebook' | 'apple') {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
-      }
-    })
+        redirectTo: `${window.location.origin}/auth/callback`,
+      },
+    });
 
-    if (error) throw error
-    return data
+    if (error) throw error;
+    return data;
   }
 
   private async createUserProfile(userId: string, userData: UserData) {
-    const { error } = await supabase
-      .from('profiles')
-      .insert({
-        user_id: userId,
-        username: userData.username,
-        display_name: userData.displayName,
-        bio: userData.bio,
-        birth_date: userData.birthDate,
-        gender: userData.gender
-      })
+    const { error } = await supabase.from('profiles').insert({
+      user_id: userId,
+      username: userData.username,
+      display_name: userData.displayName,
+      bio: userData.bio,
+      birth_date: userData.birthDate,
+      gender: userData.gender,
+    });
 
-    if (error) throw error
+    if (error) throw error;
   }
 }
 ```
@@ -312,6 +326,7 @@ export class AuthService {
 **Objective**: Develop intelligent matching algorithm and recommendation system
 
 **Task List**:
+
 - [ ] Geographic location matching
 - [ ] Interest and preference matching
 - [ ] Machine learning recommendation model
@@ -319,37 +334,39 @@ export class AuthService {
 - [ ] A/B testing framework
 
 **Matching Algorithm Edge Function**:
+
 ```typescript
 // supabase/functions/matching-algorithm/index.ts
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 interface MatchingRequest {
-  userId: string
-  maxDistance: number
-  ageRange: [number, number]
-  interests: string[]
-  preferences: Record<string, any>
+  userId: string;
+  maxDistance: number;
+  ageRange: [number, number];
+  interests: string[];
+  preferences: Record<string, any>;
 }
 
-serve(async (req) => {
+serve(async req => {
   try {
-    const { userId, maxDistance, ageRange, interests, preferences }: MatchingRequest = await req.json()
-    
+    const { userId, maxDistance, ageRange, interests, preferences }: MatchingRequest =
+      await req.json();
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
+    );
 
     // Get user location
     const { data: userProfile } = await supabase
       .from('profiles')
       .select('location, birth_date')
       .eq('user_id', userId)
-      .single()
+      .single();
 
     if (!userProfile) {
-      throw new Error('User profile not found')
+      throw new Error('User profile not found');
     }
 
     // Geographic location query
@@ -358,81 +375,83 @@ serve(async (req) => {
       max_distance: maxDistance * 1000, // Convert to meters
       exclude_user_id: userId,
       min_age: ageRange[0],
-      max_age: ageRange[1]
-    })
+      max_age: ageRange[1],
+    });
 
     // Calculate match scores
     const matches = await Promise.all(
       nearbyUsers.map(async (candidate: any) => {
-        const score = await calculateMatchScore({
-          interests,
-          preferences,
-          userAge: calculateAge(userProfile.birth_date)
-        }, candidate)
+        const score = await calculateMatchScore(
+          {
+            interests,
+            preferences,
+            userAge: calculateAge(userProfile.birth_date),
+          },
+          candidate
+        );
 
         return {
           userId: candidate.user_id,
           score,
           distance: candidate.distance_meters,
-          profile: candidate
-        }
+          profile: candidate,
+        };
       })
-    )
+    );
 
     // Sort and return top 20 matches
     const topMatches = matches
       .filter(match => match.score > 0.5)
       .sort((a, b) => b.score - a.score)
-      .slice(0, 20)
+      .slice(0, 20);
 
     return new Response(JSON.stringify({ matches: topMatches }), {
-      headers: { 'Content-Type': 'application/json' }
-    })
-
+      headers: { 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json' }
-    })
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
-})
+});
 
 // Match score calculation
 async function calculateMatchScore(user: any, candidate: any): Promise<number> {
-  let score = 0
-  let totalWeight = 0
+  let score = 0;
+  let totalWeight = 0;
 
   // Age compatibility (weight: 0.2)
-  const ageWeight = 0.2
-  const ageScore = calculateAgeCompatibility(user.userAge, candidate.age)
-  score += ageScore * ageWeight
-  totalWeight += ageWeight
+  const ageWeight = 0.2;
+  const ageScore = calculateAgeCompatibility(user.userAge, candidate.age);
+  score += ageScore * ageWeight;
+  totalWeight += ageWeight;
 
   // Interest matching (weight: 0.3)
-  const interestWeight = 0.3
-  const interestScore = calculateInterestSimilarity(user.interests, candidate.interests)
-  score += interestScore * interestWeight
-  totalWeight += interestWeight
+  const interestWeight = 0.3;
+  const interestScore = calculateInterestSimilarity(user.interests, candidate.interests);
+  score += interestScore * interestWeight;
+  totalWeight += interestWeight;
 
   // Lifestyle compatibility (weight: 0.25)
-  const lifestyleWeight = 0.25
-  const lifestyleScore = calculateLifestyleCompatibility(user.preferences, candidate.preferences)
-  score += lifestyleScore * lifestyleWeight
-  totalWeight += lifestyleWeight
+  const lifestyleWeight = 0.25;
+  const lifestyleScore = calculateLifestyleCompatibility(user.preferences, candidate.preferences);
+  score += lifestyleScore * lifestyleWeight;
+  totalWeight += lifestyleWeight;
 
   // Activity level (weight: 0.15)
-  const activityWeight = 0.15
-  const activityScore = calculateActivityScore(candidate.last_active_at)
-  score += activityScore * activityWeight
-  totalWeight += activityWeight
+  const activityWeight = 0.15;
+  const activityScore = calculateActivityScore(candidate.last_active_at);
+  score += activityScore * activityWeight;
+  totalWeight += activityWeight;
 
   // Photo quality (weight: 0.1)
-  const photoWeight = 0.1
-  const photoScore = calculatePhotoScore(candidate.photos)
-  score += photoScore * photoWeight
-  totalWeight += photoWeight
+  const photoWeight = 0.1;
+  const photoScore = calculatePhotoScore(candidate.photos);
+  score += photoScore * photoWeight;
+  totalWeight += photoWeight;
 
-  return totalWeight > 0 ? score / totalWeight : 0
+  return totalWeight > 0 ? score / totalWeight : 0;
 }
 ```
 
@@ -441,6 +460,7 @@ async function calculateMatchScore(user: any, candidate: any): Promise<number> {
 **Objective**: Implement real-time chat and messaging system
 
 **Task List**:
+
 - [ ] WebSocket connection management
 - [ ] Message sending and receiving
 - [ ] Media file sharing
@@ -448,10 +468,11 @@ async function calculateMatchScore(user: any, candidate: any): Promise<number> {
 - [ ] Push notification integration
 
 **Chat Service**:
+
 ```typescript
 // services/chat.service.ts
 export class ChatService {
-  private subscription: RealtimeChannel | null = null
+  private subscription: RealtimeChannel | null = null;
 
   async subscribeToMessages(matchId: string, onMessage: (message: Message) => void) {
     this.subscription = supabase
@@ -462,15 +483,15 @@ export class ChatService {
           event: 'INSERT',
           schema: 'public',
           table: 'messages',
-          filter: `match_id=eq.${matchId}`
+          filter: `match_id=eq.${matchId}`,
         },
-        (payload) => {
-          onMessage(payload.new as Message)
+        payload => {
+          onMessage(payload.new as Message);
         }
       )
-      .subscribe()
+      .subscribe();
 
-    return this.subscription
+    return this.subscription;
   }
 
   async sendMessage(matchId: string, content: string, type: 'text' | 'image' | 'file' = 'text') {
@@ -480,25 +501,25 @@ export class ChatService {
         match_id: matchId,
         sender_id: (await supabase.auth.getUser()).data.user?.id,
         content,
-        message_type: type
+        message_type: type,
       })
       .select()
-      .single()
+      .single();
 
-    if (error) throw error
+    if (error) throw error;
 
     // Send push notification
-    await this.sendPushNotification(matchId, content)
+    await this.sendPushNotification(matchId, content);
 
-    return data
+    return data;
   }
 
   async sendMediaMessage(matchId: string, file: File) {
     // Upload file to MinIO
-    const storageService = new StorageService()
-    const mediaUrl = await storageService.uploadChatMedia(matchId, file)
+    const storageService = new StorageService();
+    const mediaUrl = await storageService.uploadChatMedia(matchId, file);
 
-    return this.sendMessage(matchId, mediaUrl, file.type.startsWith('image/') ? 'image' : 'file')
+    return this.sendMessage(matchId, mediaUrl, file.type.startsWith('image/') ? 'image' : 'file');
   }
 
   private async sendPushNotification(matchId: string, content: string) {
@@ -507,15 +528,15 @@ export class ChatService {
       body: {
         matchId,
         type: 'message',
-        content: content.substring(0, 100)
-      }
-    })
+        content: content.substring(0, 100),
+      },
+    });
   }
 
   unsubscribe() {
     if (this.subscription) {
-      this.subscription.unsubscribe()
-      this.subscription = null
+      this.subscription.unsubscribe();
+      this.subscription = null;
     }
   }
 }
@@ -528,6 +549,7 @@ export class ChatService {
 **Objective**: Establish React frontend application foundation
 
 **Task List**:
+
 - [ ] Next.js project setup
 - [ ] Tailwind CSS and Shadcn UI integration
 - [ ] State management (Zustand)
@@ -535,6 +557,7 @@ export class ChatService {
 - [ ] Responsive design framework
 
 **Project Structure**:
+
 ```
 src/
 ├── app/                    # Next.js App Router
@@ -560,6 +583,7 @@ src/
 **Objective**: Implement main user interfaces and interactions
 
 **Task List**:
+
 - [ ] Login/registration pages
 - [ ] User profile setup
 - [ ] Home page and card swiping
@@ -567,6 +591,7 @@ src/
 - [ ] Chat interface
 
 **Swipe Card Component**:
+
 ```typescript
 // components/features/SwipeCard.tsx
 import { useState, useRef } from 'react'
@@ -586,7 +611,7 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
 
   const handleDragEnd = (event: any, info: PanInfo) => {
     const threshold = 100
-    
+
     if (info.offset.x > threshold) {
       setExitX(1000)
       onSwipe('right')
@@ -614,14 +639,14 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
               alt={profile.displayName}
               className="h-full w-full object-cover"
             />
-            
+
             <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-6 text-white">
               <h3 className="text-2xl font-bold">
                 {profile.displayName}, {calculateAge(profile.birthDate)}
               </h3>
               <p className="text-sm opacity-90">{profile.bio}</p>
             </div>
-            
+
             <div className="absolute bottom-6 right-6 flex gap-4">
               <Button
                 size="lg"
@@ -652,6 +677,7 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
 **Objective**: Optimize mobile experience and performance
 
 **Task List**:
+
 - [ ] Touch gesture optimization
 - [ ] Performance optimization
 - [ ] PWA configuration
@@ -665,6 +691,7 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
 **Objective**: Establish comprehensive test coverage
 
 **Task List**:
+
 - [ ] Unit testing (Jest)
 - [ ] Integration testing (Supertest)
 - [ ] E2E testing (Cypress)
@@ -672,21 +699,22 @@ export function SwipeCard({ profile, onSwipe }: SwipeCardProps) {
 - [ ] Security testing
 
 **Test Configuration**:
+
 ```typescript
 // __tests__/services/auth.service.test.ts
-import { AuthService } from '@/services/auth.service'
-import { createMockSupabaseClient } from '@/test-utils/mocks'
+import { AuthService } from '@/services/auth.service';
+import { createMockSupabaseClient } from '@/test-utils/mocks';
 
-jest.mock('@/lib/supabase')
+jest.mock('@/lib/supabase');
 
 describe('AuthService', () => {
-  let authService: AuthService
-  let mockSupabase: any
+  let authService: AuthService;
+  let mockSupabase: any;
 
   beforeEach(() => {
-    mockSupabase = createMockSupabaseClient()
-    authService = new AuthService()
-  })
+    mockSupabase = createMockSupabaseClient();
+    authService = new AuthService();
+  });
 
   describe('signUpWithEmail', () => {
     it('should create user account and profile', async () => {
@@ -695,25 +723,21 @@ describe('AuthService', () => {
         password: 'password123',
         displayName: 'Test User',
         username: 'testuser',
-        birthDate: '1990-01-01'
-      }
+        birthDate: '1990-01-01',
+      };
 
       mockSupabase.auth.signUp.mockResolvedValue({
         data: { user: { id: 'user-123' } },
-        error: null
-      })
+        error: null,
+      });
 
       mockSupabase.from.mockReturnValue({
         insert: jest.fn().mockReturnValue({
-          error: null
-        })
-      })
+          error: null,
+        }),
+      });
 
-      const result = await authService.signUpWithEmail(
-        userData.email,
-        userData.password,
-        userData
-      )
+      const result = await authService.signUpWithEmail(userData.email, userData.password, userData);
 
       expect(mockSupabase.auth.signUp).toHaveBeenCalledWith({
         email: userData.email,
@@ -721,15 +745,15 @@ describe('AuthService', () => {
         options: {
           data: {
             display_name: userData.displayName,
-            birth_date: userData.birthDate
-          }
-        }
-      })
+            birth_date: userData.birthDate,
+          },
+        },
+      });
 
-      expect(result.user).toBeDefined()
-    })
-  })
-})
+      expect(result.user).toBeDefined();
+    });
+  });
+});
 ```
 
 #### 4.2 Performance Optimization (2 weeks)
@@ -737,6 +761,7 @@ describe('AuthService', () => {
 **Objective**: Optimize application performance and user experience
 
 **Task List**:
+
 - [ ] Image lazy loading and optimization
 - [ ] Code splitting and lazy loading
 - [ ] Cache strategy optimization
@@ -744,6 +769,7 @@ describe('AuthService', () => {
 - [ ] CDN configuration
 
 **Performance Optimization Configuration**:
+
 ```typescript
 // next.config.js
 /** @type {import('next').NextConfig} */
@@ -763,9 +789,9 @@ const nextConfig = {
   httpAgentOptions: {
     keepAlive: true,
   },
-}
+};
 
-module.exports = nextConfig
+module.exports = nextConfig;
 ```
 
 ### Phase 5: Deployment & Monitoring (2-3 weeks)
@@ -775,6 +801,7 @@ module.exports = nextConfig
 **Objective**: Deploy to production environment
 
 **Task List**:
+
 - [ ] Docker containerization
 - [ ] Kubernetes deployment
 - [ ] Domain and SSL configuration
@@ -786,6 +813,7 @@ module.exports = nextConfig
 **Objective**: Establish monitoring and logging system
 
 **Task List**:
+
 - [ ] Prometheus and Grafana setup
 - [ ] Error tracking (Sentry)
 - [ ] Performance monitoring
@@ -796,20 +824,20 @@ module.exports = nextConfig
 
 ### Technical Risks
 
-| Risk | Impact | Probability | Mitigation Strategy |
-|------|--------|-------------|--------------------|
-| Supabase service outage | High | Low | Establish backup authentication system, regular backups |
-| MinIO storage failure | Medium | Medium | Multi-replica deployment, regular backups |
-| Database performance bottleneck | High | Medium | Read-write separation, query optimization, caching strategy |
-| Third-party API limitations | Medium | Medium | Multi-provider strategy, API rate limiting |
+| Risk                            | Impact | Probability | Mitigation Strategy                                         |
+| ------------------------------- | ------ | ----------- | ----------------------------------------------------------- |
+| Supabase service outage         | High   | Low         | Establish backup authentication system, regular backups     |
+| MinIO storage failure           | Medium | Medium      | Multi-replica deployment, regular backups                   |
+| Database performance bottleneck | High   | Medium      | Read-write separation, query optimization, caching strategy |
+| Third-party API limitations     | Medium | Medium      | Multi-provider strategy, API rate limiting                  |
 
 ### Business Risks
 
-| Risk | Impact | Probability | Mitigation Strategy |
-|------|--------|-------------|--------------------|
-| Rapid user growth | High | Medium | Auto-scaling, performance monitoring |
-| Data privacy issues | High | Low | Strict privacy policy, data encryption |
-| Competitors | Medium | High | Differentiated features, user experience optimization |
+| Risk                | Impact | Probability | Mitigation Strategy                                   |
+| ------------------- | ------ | ----------- | ----------------------------------------------------- |
+| Rapid user growth   | High   | Medium      | Auto-scaling, performance monitoring                  |
+| Data privacy issues | High   | Low         | Strict privacy policy, data encryption                |
+| Competitors         | Medium | High        | Differentiated features, user experience optimization |
 
 ## Resource Requirements
 
@@ -823,50 +851,57 @@ module.exports = nextConfig
 
 ### Infrastructure Costs (Monthly)
 
-| Service | Configuration | Cost (USD) |
-|---------|---------------|------------|
-| Supabase Pro | 25GB Database | $25 |
-| MinIO (Self-hosted) | 3-node cluster | $150 |
-| VPS/Cloud Server | 4 vCPU, 8GB RAM | $80 |
-| CDN (Cloudflare) | Pro Plan | $20 |
-| Monitoring Service | Grafana Cloud | $50 |
-| **Total** | | **$325** |
+| Service             | Configuration   | Cost (USD) |
+| ------------------- | --------------- | ---------- |
+| Supabase Pro        | 25GB Database   | $25        |
+| MinIO (Self-hosted) | 3-node cluster  | $150       |
+| VPS/Cloud Server    | 4 vCPU, 8GB RAM | $80        |
+| CDN (Cloudflare)    | Pro Plan        | $20        |
+| Monitoring Service  | Grafana Cloud   | $50        |
+| **Total**           |                 | **$325**   |
 
 ## Milestones and Deliverables
 
 ### Milestone 1: Infrastructure Complete (Week 6)
+
 - ✅ Development environment setup
 - ✅ Database architecture
 - ✅ Supabase configuration
 - ✅ MinIO storage
 
 ### Milestone 2: Core Features Complete (Week 16)
+
 - ✅ User authentication system
 - ✅ Matching algorithm
 - ✅ Real-time chat
 
 ### Milestone 3: Frontend Application Complete (Week 24)
+
 - ✅ React application
 - ✅ User interface
 - ✅ Mobile optimization
 
 ### Milestone 4: Testing Complete (Week 30)
+
 - ✅ Automated testing
 - ✅ Performance optimization
 
 ### Milestone 5: Production Deployment (Week 33)
+
 - ✅ Production environment
 - ✅ Monitoring system
 
 ## Future Planning
 
 ### Phase 6: Feature Expansion (3-6 months)
+
 - Video calling functionality
 - AI chat assistant
 - Advanced matching algorithms
 - Social feature expansion
 
 ### Phase 7: Commercialization (6-12 months)
+
 - Premium membership features
 - Advertising system
 - Data analytics platform
@@ -874,11 +909,13 @@ module.exports = nextConfig
 
 ## Summary
 
-This implementation roadmap provides a complete development plan for the SoulMatting project from concept to production. Through a phased approach, we can:
+This implementation roadmap provides a complete development plan for the SoulMatting project from
+concept to production. Through a phased approach, we can:
 
 1. **Reduce Risk**: Gradually validate technology choices and architectural decisions
 2. **Rapid Iteration**: Get early user feedback and adjust direction
 3. **Control Costs**: Adjust resource investment based on actual needs
 4. **Ensure Quality**: Each phase has clear testing and acceptance criteria
 
-The estimated MVP development cycle is **33 weeks** (approximately 8 months), with total development costs of approximately **$50,000-80,000** (excluding labor costs).
+The estimated MVP development cycle is **33 weeks** (approximately 8 months), with total development
+costs of approximately **$50,000-80,000** (excluding labor costs).

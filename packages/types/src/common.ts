@@ -1,8 +1,8 @@
 /**
  * Common Types
- * 
+ *
  * Shared type definitions used across the application
- * 
+ *
  * @version 1.0.0
  * @author Kim Hsiao
  * @created 2025-01-24
@@ -56,10 +56,12 @@ export const PaginationDtoSchema = z.object({
 
 export type PaginationDto = z.infer<typeof PaginationDtoSchema>;
 
-export const SearchDtoSchema = z.object({
-  query: z.string().min(1, 'Search query is required'),
-  filters: z.record(z.unknown()).optional(),
-}).merge(PaginationDtoSchema);
+export const SearchDtoSchema = z
+  .object({
+    query: z.string().min(1, 'Search query is required'),
+    filters: z.record(z.unknown()).optional(),
+  })
+  .merge(PaginationDtoSchema);
 
 export type SearchDto = z.infer<typeof SearchDtoSchema>;
 

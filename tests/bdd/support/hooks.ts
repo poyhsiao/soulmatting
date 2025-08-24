@@ -8,17 +8,17 @@ import path from 'path';
  */
 BeforeAll(async function () {
   console.log('🚀 Starting BDD test suite...');
-  
+
   // Ensure reports directory exists
   const reportsDir = path.join(process.cwd(), 'reports');
   if (!fs.existsSync(reportsDir)) {
     fs.mkdirSync(reportsDir, { recursive: true });
   }
-  
+
   // Set test environment variables
   process.env.NODE_ENV = 'test';
   process.env.LOG_LEVEL = 'error';
-  
+
   // Wait for services to be ready (if needed)
   await waitForServices();
 });
@@ -28,7 +28,7 @@ BeforeAll(async function () {
  */
 AfterAll(async function () {
   console.log('🏁 BDD test suite completed.');
-  
+
   // Cleanup test data if needed
   await cleanupTestData();
 });
@@ -38,24 +38,24 @@ AfterAll(async function () {
  */
 Before(async function (this: CustomWorld, scenario) {
   console.log(`📝 Starting scenario: ${scenario.pickle.name}`);
-  
+
   // Reset test data
   this.testData = {};
   this.apiResponse = null;
   this.currentUser = null;
-  
+
   // Tag-based setup
   const tags = scenario.pickle.tags.map(tag => tag.name);
-  
+
   if (tags.includes('@ui')) {
     await this.initBrowser();
   }
-  
+
   if (tags.includes('@auth')) {
     // Setup authentication context
     await setupAuthContext.call(this);
   }
-  
+
   if (tags.includes('@database')) {
     // Setup database context
     await setupDatabaseContext.call(this);
@@ -68,9 +68,9 @@ Before(async function (this: CustomWorld, scenario) {
 After(async function (this: CustomWorld, scenario) {
   const scenarioName = scenario.pickle.name;
   const scenarioStatus = scenario.result?.status;
-  
+
   console.log(`📋 Scenario "${scenarioName}" ${scenarioStatus}`);
-  
+
   // Take screenshot on failure for UI tests
   if (scenarioStatus === Status.FAILED && this.page) {
     const screenshotPath = path.join(
@@ -79,29 +79,29 @@ After(async function (this: CustomWorld, scenario) {
       'screenshots',
       `${scenarioName.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.png`
     );
-    
+
     // Ensure screenshots directory exists
     const screenshotsDir = path.dirname(screenshotPath);
     if (!fs.existsSync(screenshotsDir)) {
       fs.mkdirSync(screenshotsDir, { recursive: true });
     }
-    
+
     await this.page.screenshot({ path: screenshotPath, fullPage: true });
     console.log(`📸 Screenshot saved: ${screenshotPath}`);
-    
+
     // Attach screenshot to report
     this.attach(fs.readFileSync(screenshotPath), 'image/png');
   }
-  
+
   // Log API response on failure
   if (scenarioStatus === Status.FAILED && this.apiResponse) {
     console.log('🔍 API Response:', JSON.stringify(this.apiResponse, null, 2));
     this.attach(JSON.stringify(this.apiResponse, null, 2), 'application/json');
   }
-  
+
   // Cleanup browser resources
   await this.cleanup();
-  
+
   // Cleanup test data for this scenario
   await cleanupScenarioData.call(this);
 });
@@ -112,23 +112,23 @@ After(async function (this: CustomWorld, scenario) {
 async function waitForServices(): Promise<void> {
   const maxRetries = 30;
   const retryDelay = 1000;
-  
+
   const services = [
     { name: 'Frontend', url: process.env.BASE_URL || 'http://localhost:3000' },
     { name: 'API', url: process.env.API_URL || 'http://localhost:3001' },
   ];
-  
+
   for (const service of services) {
     let retries = 0;
     let isReady = false;
-    
+
     while (retries < maxRetries && !isReady) {
       try {
         const response = await fetch(`${service.url}/health`, {
           method: 'GET',
           timeout: 5000,
         });
-        
+
         if (response.ok) {
           console.log(`✅ ${service.name} service is ready`);
           isReady = true;
@@ -136,10 +136,14 @@ async function waitForServices(): Promise<void> {
       } catch (error) {
         retries++;
         if (retries < maxRetries) {
-          console.log(`⏳ Waiting for ${service.name} service... (${retries}/${maxRetries})`);
+          console.log(
+            `⏳ Waiting for ${service.name} service... (${retries}/${maxRetries})`
+          );
           await new Promise(resolve => setTimeout(resolve, retryDelay));
         } else {
-          console.warn(`⚠️ ${service.name} service not ready after ${maxRetries} retries`);
+          console.warn(
+            `⚠️ ${service.name} service not ready after ${maxRetries} retries`
+          );
         }
       }
     }
@@ -153,7 +157,7 @@ async function setupAuthContext(this: CustomWorld): Promise<void> {
   // Create a test user for authentication scenarios
   const testUser = this.generateTestUser();
   this.setTestData('testUser', testUser);
-  
+
   // Register the test user via API
   try {
     await this.makeApiRequest('POST', '/api/auth/register', {
@@ -161,7 +165,7 @@ async function setupAuthContext(this: CustomWorld): Promise<void> {
       password: testUser.password,
       name: testUser.name,
     });
-    
+
     console.log(`👤 Test user created: ${testUser.email}`);
   } catch (error) {
     console.warn('⚠️ Failed to create test user:', error);
@@ -174,7 +178,7 @@ async function setupAuthContext(this: CustomWorld): Promise<void> {
 async function setupDatabaseContext(this: CustomWorld): Promise<void> {
   // Setup database-specific test data
   console.log('🗄️ Setting up database context');
-  
+
   // Add any database-specific setup here
   // For example, creating test data, setting up transactions, etc.
 }
@@ -184,7 +188,7 @@ async function setupDatabaseContext(this: CustomWorld): Promise<void> {
  */
 async function cleanupTestData(): Promise<void> {
   console.log('🧹 Cleaning up global test data...');
-  
+
   // Add global cleanup logic here
   // For example, removing test users, clearing test databases, etc.
 }
@@ -204,7 +208,7 @@ async function cleanupScenarioData(this: CustomWorld): Promise<void> {
       console.warn('⚠️ Failed to cleanup test user:', error);
     }
   }
-  
+
   // Add other scenario-specific cleanup logic here
 }
 
@@ -213,7 +217,7 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
 });
 
-process.on('uncaughtException', (error) => {
+process.on('uncaughtException', error => {
   console.error('❌ Uncaught Exception:', error);
   process.exit(1);
 });
