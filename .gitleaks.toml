@@ -69,5 +69,7 @@ description = "Custom GitLeaks configuration for SoulMatting project"
     # Ignore Supabase development keys
     "(?i)supabase[-_]?(service|anon)[-_]?key\\s*[:=]\\s*['\"']?eyJ[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*['\"']?",
     # Ignore development database URLs with template variables
-    "(?i)database[-_]?url\\s*[:=]\\s*['\"']?postgres://\\$\\{[^}]+\\}"
+    "(?i)database[-_]?url\\s*[:=]\\s*['\"']?postgres://\\$\\{[^}]+\\}",
+    # Ignore timezone settings in configuration files
+    "(?i)timezone\\s*[:=]\\s*['\"']?[A-Za-z_/]+['\"']?"
   ]
