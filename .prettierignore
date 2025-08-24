@@ -107,3 +107,8 @@ CHANGELOG.md
 package-lock.json
 yarn.lock
 pnpm-lock.yaml
+
+# Prisma generated files
+packages/database/src/generated/
+**/prisma/generated/
+**/.prisma/
