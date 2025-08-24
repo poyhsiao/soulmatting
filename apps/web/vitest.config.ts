@@ -4,7 +4,7 @@ import path from 'path';
 
 /**
  * Vitest Configuration
- * 
+ *
  * @description Configuration for Vitest testing framework
  * @version 1.0.0
  * @created 2025-01-24
