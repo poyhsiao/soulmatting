@@ -60,6 +60,11 @@ on:
         required: false
         default: '100'
         type: string
+      enable_service_tests:
+        description: 'Enable performance tests for undeveloped services'
+        required: false
+        default: false
+        type: boolean
   
   # Trigger on deployment completion
   workflow_run:

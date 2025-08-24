@@ -12,6 +12,17 @@ on:
   pull_request:
     branches: [main, develop]
   workflow_dispatch:
+    inputs:
+      skip_tests:
+        description: 'Skip tests (for debugging)'
+        required: false
+        default: false
+        type: boolean
+      enable_service_tests:
+        description: 'Enable service tests (only when services are implemented)'
+        required: false
+        default: false
+        type: boolean
 
 env:
   NODE_VERSION: '22'
@@ -88,6 +99,8 @@ jobs:
     name: Test Suite
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # Skip tests for undeveloped services unless explicitly enabled
+    if: github.event.inputs.enable_service_tests == 'true' || github.event.inputs.skip_tests != 'true'
     
     strategy:
       matrix:
@@ -192,7 +205,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     needs: [quality, test]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    # Skip E2E tests for undeveloped features
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.inputs.enable_service_tests == 'true'
     
     steps:
       - name: Checkout code

@@ -32,6 +32,11 @@ on:
           - dependency_scan
           - container_scan
           - infrastructure_scan
+      enable_service_scans:
+        description: 'Enable scans for undeveloped services'
+        required: false
+        default: false
+        type: boolean
       environment:
         description: 'Environment to scan'
         required: true

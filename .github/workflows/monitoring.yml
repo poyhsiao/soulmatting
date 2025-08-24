@@ -50,6 +50,11 @@ on:
         required: false
         default: '5'
         type: string
+      enable_service_monitoring:
+        description: 'Enable monitoring for undeveloped services'
+        required: false
+        default: false
+        type: boolean
 
   # Trigger on deployment completion
   workflow_run:
