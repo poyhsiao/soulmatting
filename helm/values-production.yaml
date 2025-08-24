@@ -162,8 +162,8 @@ auth:
   env:
     NODE_ENV: production
     LOG_LEVEL: warn
-    DATABASE_URL: postgresql://postgres:$(POSTGRES_PASSWORD)@postgresql:5432/auth_service
-    REDIS_URL: redis://:$(REDIS_PASSWORD)@redis-master:6379
+    DATABASE_URL: postgresql://{{ .Values.global.database.username }}:{{ .Values.global.database.passwordSecret }}@{{ .Values.global.database.host }}:{{ .Values.global.database.port }}/auth_service
+    REDIS_URL: redis://:{{ .Values.global.redis.passwordSecret }}@{{ .Values.global.redis.host }}:{{ .Values.global.redis.port }}
 
 # User Service
 user:
