@@ -40,7 +40,7 @@ permissions:
 
 env:
   NODE_VERSION: '22'
-  PNPM_VERSION: '10'
+  PNPM_VERSION: '10.15.0'
 
 jobs:
   # Build and prepare test environment
