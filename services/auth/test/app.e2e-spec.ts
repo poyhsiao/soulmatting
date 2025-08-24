@@ -4,7 +4,7 @@ import * as request from 'supertest';
 
 /**
  * Auth Service E2E Tests
- * 
+ *
  * @description End-to-end tests for the authentication service
  * @version 1.0.0
  * @created 2025-01-24
@@ -32,8 +32,6 @@ describe('AuthService (e2e)', () => {
   });
 
   it('/ (GET) - health check', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(404); // Since no root route is defined, expect 404
+    return request(app.getHttpServer()).get('/').expect(404); // Since no root route is defined, expect 404
   });
 });

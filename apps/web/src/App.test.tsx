@@ -4,7 +4,7 @@ import App from './App';
 
 /**
  * App Component Tests
- * 
+ *
  * @description Basic tests for the main App component
  * @version 1.0.0
  * @created 2025-01-24
