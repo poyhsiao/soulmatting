@@ -4,7 +4,7 @@
 # Created: 2024-01-20
 # Last Updated: 2024-01-20
 
-name: "SoulMatting CodeQL Config"
+name: 'SoulMatting CodeQL Config'
 
 # Disable default queries and use custom query suites
 disable-default-queries: false
@@ -20,37 +20,37 @@ queries:
 
 # Paths to include in analysis
 paths:
-  - "apps/"
-  - "packages/"
-  - "libs/"
+  - 'apps/'
+  - 'packages/'
+  - 'libs/'
 
 # Paths to exclude from analysis
 paths-ignore:
-  - "**/node_modules/"
-  - "**/dist/"
-  - "**/build/"
-  - "**/coverage/"
-  - "**/*.test.ts"
-  - "**/*.test.js"
-  - "**/*.spec.ts"
-  - "**/*.spec.js"
-  - "**/__tests__/"
-  - "**/__mocks__/"
-  - "**/test/"
-  - "**/tests/"
-  - "**/*.d.ts"
-  - "**/generated/"
-  - "**/migrations/"
-  - "**/seeds/"
-  - "tools/"
-  - "scripts/"
-  - "docs/"
-  - "*.md"
-  - "*.json"
-  - "*.yml"
-  - "*.yaml"
-  - "Dockerfile*"
-  - "docker-compose*"
+  - '**/node_modules/'
+  - '**/dist/'
+  - '**/build/'
+  - '**/coverage/'
+  - '**/*.test.ts'
+  - '**/*.test.js'
+  - '**/*.spec.ts'
+  - '**/*.spec.js'
+  - '**/__tests__/'
+  - '**/__mocks__/'
+  - '**/test/'
+  - '**/tests/'
+  - '**/*.d.ts'
+  - '**/generated/'
+  - '**/migrations/'
+  - '**/seeds/'
+  - 'tools/'
+  - 'scripts/'
+  - 'docs/'
+  - '*.md'
+  - '*.json'
+  - '*.yml'
+  - '*.yaml'
+  - 'Dockerfile*'
+  - 'docker-compose*'
 
 # Query filters
 query-filters:
@@ -73,92 +73,92 @@ packs:
 analysis:
   # Increase timeout for large codebases
   timeout: 120
-  
+
   # Memory settings
   memory: 4096
-  
+
   # Thread settings
-  threads: 0  # Use all available threads
+  threads: 0 # Use all available threads
 
 # Language-specific settings
 languages:
   javascript:
     # Include TypeScript files
     extensions:
-      - ".js"
-      - ".jsx"
-      - ".ts"
-      - ".tsx"
-      - ".vue"
-    
+      - '.js'
+      - '.jsx'
+      - '.ts'
+      - '.tsx'
+      - '.vue'
+
     # Extraction settings
     extraction:
       # Include dependencies for better analysis
       include-dependencies: true
-      
+
       # TypeScript configuration
       typescript:
         # Use project's tsconfig.json
         use-project-config: true
-        
+
         # Additional compiler options
         compiler-options:
           strict: true
           noImplicitAny: true
           noImplicitReturns: true
-          noUnusedLocals: false  # Handled by ESLint
-          noUnusedParameters: false  # Handled by ESLint
+          noUnusedLocals: false # Handled by ESLint
+          noUnusedParameters: false # Handled by ESLint
 
 # Security-specific configuration
 security:
   # Enable all security queries
   enable-all: true
-  
+
   # Custom security patterns
   patterns:
     # SQL injection patterns
     - pattern: "SELECT.*\\$\\{.*\\}"
-      message: "Potential SQL injection vulnerability"
-      severity: "error"
-    
+      message: 'Potential SQL injection vulnerability'
+      severity: 'error'
+
     # XSS patterns
     - pattern: "innerHTML.*\\$\\{.*\\}"
-      message: "Potential XSS vulnerability"
-      severity: "warning"
-    
+      message: 'Potential XSS vulnerability'
+      severity: 'warning'
+
     # Hardcoded secrets patterns
     - pattern: "(password|secret|key|token)\\s*=\\s*['\"]?[^'\"\\s]{8,}['\"]?"
-      message: "Potential hardcoded secret"
-      severity: "error"
+      message: 'Potential hardcoded secret'
+      severity: 'error'
 
 # Performance optimization
 optimization:
   # Cache analysis results
   cache: true
-  
+
   # Incremental analysis
   incremental: true
-  
+
   # Parallel processing
   parallel: true
 
 # Reporting configuration
 reporting:
   # SARIF output format
-  format: "sarif-latest"
-  
+  format: 'sarif-latest'
+
   # Include source snippets
   include-source: true
-  
+
   # Severity levels to report
   severity-levels:
-    - "error"
-    - "warning"
-    - "note"
-  
+    - 'error'
+    - 'warning'
+    - 'note'
+
   # Custom metadata
   metadata:
-    project: "SoulMatting Platform"
-    version: "1.0.0"
-    author: "Kim Hsiao"
-    contact: "kim@soulmatting.com"
+    project: 'SoulMatting Platform'
+    version: '1.0.0'
+    author: 'Kim Hsiao'
+    contact: 'kim@soulmatting.com'
