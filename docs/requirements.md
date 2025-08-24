@@ -87,7 +87,7 @@
 #### 2.2.1 Core Framework
 
 - **NestJS:** Enterprise-grade Node.js framework
-- **Node.js 20+:** Latest LTS version
+- **Node.js 22+:** Latest LTS version
 - **TypeScript:** Strict type checking enabled
 - **pnpm:** Package management consistency
 
@@ -102,7 +102,7 @@
 
 #### 2.3.1 Primary Database
 
-- **PostgreSQL 15+:** ACID-compliant relational database
+- **PostgreSQL 16+:** ACID-compliant relational database
 - **Prisma:** Type-safe database ORM
 - **Connection Pooling:** PgBouncer for connection management
 

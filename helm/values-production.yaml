@@ -1,0 +1,736 @@
+# SoulMatting Platform - Production Environment Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# Global configuration for production environment
+global:
+  imageRegistry: ghcr.io
+  imagePullSecrets:
+    - name: ghcr-secret
+  environment: production
+  domain: soulmatting.com
+  debug: false
+  
+  # TLS enabled for production
+  tls:
+    enabled: true
+    secretName: soulmatting-production-tls
+  
+  # Production database settings
+  database:
+    host: postgresql
+    port: 5432
+    username: postgres
+    passwordSecret: postgresql-secret
+    passwordKey: postgres-password
+  
+  # Production Redis settings
+  redis:
+    host: redis-master
+    port: 6379
+    passwordSecret: redis-secret
+    passwordKey: redis-password
+  
+  # Production Elasticsearch settings
+  elasticsearch:
+    host: elasticsearch
+    port: 9200
+    username: elastic
+    passwordSecret: elasticsearch-secret
+    passwordKey: elastic-password
+  
+  # Production security settings
+  security:
+    jwtSecretRef:
+      name: app-secrets
+      key: jwt-secret
+    encryptionKeyRef:
+      name: app-secrets
+      key: encryption-key
+
+# Frontend Web Application
+web:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/web
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3000
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    hosts:
+      - host: soulmatting.com
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: www.soulmatting.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: soulmatting-production-tls
+        hosts:
+          - soulmatting.com
+          - www.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+    targetMemoryUtilizationPercentage: 70
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  
+  env:
+    NODE_ENV: production
+    REACT_APP_API_URL: https://api.soulmatting.com
+    REACT_APP_WS_URL: wss://ws.soulmatting.com
+
+# Authentication Service
+auth:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/auth-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3001
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /auth
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  
+  env:
+    NODE_ENV: production
+    LOG_LEVEL: warn
+    DATABASE_URL: postgresql://postgres:$(POSTGRES_PASSWORD)@postgresql:5432/auth_service
+    REDIS_URL: redis://:$(REDIS_PASSWORD)@redis-master:6379
+
+# User Service
+user:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/user-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3002
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "200"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /users
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Match Service
+match:
+  enabled: true
+  replicaCount: 5
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/match-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3003
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "500"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /matches
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 5
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 3
+
+# Communication Service
+communication:
+  enabled: true
+  replicaCount: 4
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/communication-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3004
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/websocket-services: soulmatting-communication
+    hosts:
+      - host: ws.soulmatting.com
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: api.soulmatting.com
+        paths:
+          - path: /communication
+            pathType: Prefix
+    tls:
+      - secretName: ws-production-tls
+        hosts:
+          - ws.soulmatting.com
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Media Service
+media:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/media-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3005
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "100m"
+      nginx.ingress.kubernetes.io/rate-limit: "50"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /media
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 12
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+  
+  persistence:
+    enabled: true
+    storageClass: "gp3"
+    size: 200Gi
+
+# Notification Service
+notification:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/notification-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3006
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /notifications
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Search Service
+search:
+  enabled: true
+  replicaCount: 4
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/search-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3007
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "300"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /search
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 4
+    maxReplicas: 15
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Payment Service
+payment:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/payment-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3008
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "50"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /payments
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Analytics Service
+analytics:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/analytics-service
+    tag: "v1.0.0"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3009
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+      nginx.ingress.kubernetes.io/ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/rate-limit: "100"
+    hosts:
+      - host: api.soulmatting.com
+        paths:
+          - path: /analytics
+            pathType: Prefix
+    tls:
+      - secretName: api-production-tls
+        hosts:
+          - api.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 1000m
+      memory: 1Gi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 12
+    targetCPUUtilizationPercentage: 60
+  
+  podDisruptionBudget:
+    enabled: true
+    minAvailable: 2
+
+# Shared Infrastructure - Production Configuration
+
+# Redis Configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "production-redis-password"
+    existingSecret: redis-secret
+    existingSecretPasswordKey: redis-password
+  master:
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+  replica:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+  sentinel:
+    enabled: true
+    masterSet: mymaster
+    downAfterMilliseconds: 30000
+    failoverTimeout: 180000
+    parallelSyncs: 1
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "production-postgres-password"
+    database: "soulmatting"
+    existingSecret: postgresql-secret
+    secretKeys:
+      adminPasswordKey: postgres-password
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 100Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+    initdb:
+      scripts:
+        init.sql: |
+          -- Create databases for each service
+          CREATE DATABASE auth_service;
+          CREATE DATABASE user_service;
+          CREATE DATABASE match_service;
+          CREATE DATABASE communication_service;
+          CREATE DATABASE media_service;
+          CREATE DATABASE notification_service;
+          CREATE DATABASE search_service;
+          CREATE DATABASE payment_service;
+          CREATE DATABASE analytics_service;
+          
+          -- Grant permissions
+          GRANT ALL PRIVILEGES ON DATABASE auth_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE user_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE match_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE communication_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE media_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE notification_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE search_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE payment_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE analytics_service TO postgres;
+  readReplicas:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 100Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true
+
+# Elasticsearch Configuration
+elasticsearch:
+  enabled: true
+  auth:
+    enabled: true
+    elasticPassword: "production-elastic-password"
+    existingSecret: elasticsearch-secret
+    secretKeys:
+      elasticPassword: elastic-password
+  master:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+  data:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      storageClass: "gp3"
+      size: 200Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+  coordinating:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+  ingest:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+  metrics:
+    enabled: true
+    serviceMonitor:
+      enabled: true

@@ -1,0 +1,1007 @@
+# =============================================================================
+# SoulMatting Platform - Performance Testing Workflow
+# =============================================================================
+# This workflow performs comprehensive performance testing including load testing,
+# stress testing, endurance testing, and performance monitoring.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 🚀 Performance Test
+
+on:
+  # Scheduled performance tests
+  schedule:
+    - cron: '0 3 * * *'  # Daily at 3 AM UTC
+    - cron: '0 3 * * 0'  # Weekly on Sunday at 3 AM UTC
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of performance test to run'
+        required: true
+        type: choice
+        options:
+          - load_test
+          - stress_test
+          - endurance_test
+          - spike_test
+          - volume_test
+          - full_suite
+      environment:
+        description: 'Environment to test'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      duration:
+        description: 'Test duration in minutes'
+        required: false
+        default: '10'
+        type: string
+      virtual_users:
+        description: 'Number of virtual users'
+        required: false
+        default: '50'
+        type: string
+      ramp_up_time:
+        description: 'Ramp-up time in seconds'
+        required: false
+        default: '60'
+        type: string
+      target_rps:
+        description: 'Target requests per second'
+        required: false
+        default: '100'
+        type: string
+  
+  # Trigger on deployment completion
+  workflow_run:
+    workflows: ["🚀 Deploy"]
+    types:
+      - completed
+    branches: [main, develop]
+  
+  # Trigger on release
+  release:
+    types: [published]
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
+  ARTILLERY_VERSION: 'latest'
+  K6_VERSION: 'latest'
+  LIGHTHOUSE_VERSION: 'latest'
+
+jobs:
+  # =============================================================================
+  # Performance Test Setup
+  # =============================================================================
+  setup:
+    name: Performance Test Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    outputs:
+      test_type: ${{ steps.setup.outputs.test_type }}
+      environment: ${{ steps.setup.outputs.environment }}
+      duration: ${{ steps.setup.outputs.duration }}
+      virtual_users: ${{ steps.setup.outputs.virtual_users }}
+      ramp_up_time: ${{ steps.setup.outputs.ramp_up_time }}
+      target_rps: ${{ steps.setup.outputs.target_rps }}
+      test_id: ${{ steps.setup.outputs.test_id }}
+      app_url: ${{ steps.setup.outputs.app_url }}
+      api_url: ${{ steps.setup.outputs.api_url }}
+    
+    steps:
+      - name: Setup test parameters
+        id: setup
+        run: |
+          # Determine test parameters
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            TEST_TYPE="${{ github.event.inputs.test_type }}"
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            DURATION="${{ github.event.inputs.duration }}"
+            VIRTUAL_USERS="${{ github.event.inputs.virtual_users }}"
+            RAMP_UP_TIME="${{ github.event.inputs.ramp_up_time }}"
+            TARGET_RPS="${{ github.event.inputs.target_rps }}"
+          elif [ "${{ github.event_name }}" == "workflow_run" ]; then
+            TEST_TYPE="load_test"
+            if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+              ENVIRONMENT="production"
+            else
+              ENVIRONMENT="staging"
+            fi
+            DURATION="5"
+            VIRTUAL_USERS="25"
+            RAMP_UP_TIME="30"
+            TARGET_RPS="50"
+          elif [ "${{ github.event_name }}" == "release" ]; then
+            TEST_TYPE="full_suite"
+            ENVIRONMENT="production"
+            DURATION="15"
+            VIRTUAL_USERS="100"
+            RAMP_UP_TIME="120"
+            TARGET_RPS="200"
+          else
+            # Scheduled test
+            TEST_TYPE="load_test"
+            ENVIRONMENT="staging"
+            DURATION="10"
+            VIRTUAL_USERS="50"
+            RAMP_UP_TIME="60"
+            TARGET_RPS="100"
+          fi
+          
+          # Generate test ID
+          TEST_ID="perf_test_$(date -u +%Y%m%d_%H%M%S)_$(echo $RANDOM | md5sum | head -c 8)"
+          
+          # Determine environment URLs
+          case "$ENVIRONMENT" in
+            "development")
+              APP_URL="http://localhost:3000"
+              API_URL="http://localhost:8000"
+              ;;
+            "staging")
+              APP_URL="https://staging.soulmatting.com"
+              API_URL="https://api-staging.soulmatting.com"
+              ;;
+            "production")
+              APP_URL="https://soulmatting.com"
+              API_URL="https://api.soulmatting.com"
+              ;;
+          esac
+          
+          echo "🚀 Performance Test Configuration:"
+          echo "- Test Type: $TEST_TYPE"
+          echo "- Environment: $ENVIRONMENT"
+          echo "- Duration: ${DURATION} minutes"
+          echo "- Virtual Users: $VIRTUAL_USERS"
+          echo "- Ramp-up Time: ${RAMP_UP_TIME} seconds"
+          echo "- Target RPS: $TARGET_RPS"
+          echo "- Test ID: $TEST_ID"
+          echo "- App URL: $APP_URL"
+          echo "- API URL: $API_URL"
+          
+          # Set outputs
+          echo "test_type=$TEST_TYPE" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "duration=$DURATION" >> $GITHUB_OUTPUT
+          echo "virtual_users=$VIRTUAL_USERS" >> $GITHUB_OUTPUT
+          echo "ramp_up_time=$RAMP_UP_TIME" >> $GITHUB_OUTPUT
+          echo "target_rps=$TARGET_RPS" >> $GITHUB_OUTPUT
+          echo "test_id=$TEST_ID" >> $GITHUB_OUTPUT
+          echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
+          echo "api_url=$API_URL" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Frontend Performance Testing
+  # =============================================================================
+  frontend_performance:
+    name: Frontend Performance Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    
+    strategy:
+      matrix:
+        page: [home, login, register, profile, matching, messages]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Lighthouse CI
+        run: |
+          npm install -g @lhci/cli@${{ env.LIGHTHOUSE_VERSION }}
+
+      - name: Setup page URLs
+        id: setup_urls
+        run: |
+          BASE_URL="${{ needs.setup.outputs.app_url }}"
+          
+          case "${{ matrix.page }}" in
+            "home")
+              PAGE_URL="$BASE_URL"
+              ;;
+            "login")
+              PAGE_URL="$BASE_URL/login"
+              ;;
+            "register")
+              PAGE_URL="$BASE_URL/register"
+              ;;
+            "profile")
+              PAGE_URL="$BASE_URL/profile"
+              ;;
+            "matching")
+              PAGE_URL="$BASE_URL/matching"
+              ;;
+            "messages")
+              PAGE_URL="$BASE_URL/messages"
+              ;;
+          esac
+          
+          echo "page_url=$PAGE_URL" >> $GITHUB_OUTPUT
+          echo "🌐 Testing page: $PAGE_URL"
+
+      - name: Run Lighthouse performance audit
+        run: |
+          echo "🔍 Running Lighthouse performance audit for ${{ matrix.page }}"
+          
+          # Create results directory
+          mkdir -p lighthouse-results
+          
+          # Run Lighthouse audit
+          lhci autorun \
+            --upload.target=filesystem \
+            --upload.outputDir=lighthouse-results \
+            --collect.url="${{ steps.setup_urls.outputs.page_url }}" \
+            --collect.numberOfRuns=3 \
+            --collect.settings.chromeFlags="--no-sandbox --headless" \
+            --assert.assertions.performance=0.8 \
+            --assert.assertions.accessibility=0.9 \
+            --assert.assertions.best-practices=0.8 \
+            --assert.assertions.seo=0.8 || true
+          
+          # Generate JSON report
+          if [ -f "lighthouse-results/manifest.json" ]; then
+            echo "📊 Lighthouse audit completed for ${{ matrix.page }}"
+            
+            # Extract key metrics
+            LATEST_REPORT=$(jq -r '.[0].jsonPath' lighthouse-results/manifest.json)
+            
+            if [ -f "lighthouse-results/$LATEST_REPORT" ]; then
+              PERFORMANCE_SCORE=$(jq '.categories.performance.score * 100' "lighthouse-results/$LATEST_REPORT")
+              FCP=$(jq '.audits."first-contentful-paint".numericValue' "lighthouse-results/$LATEST_REPORT")
+              LCP=$(jq '.audits."largest-contentful-paint".numericValue' "lighthouse-results/$LATEST_REPORT")
+              CLS=$(jq '.audits."cumulative-layout-shift".numericValue' "lighthouse-results/$LATEST_REPORT")
+              FID=$(jq '.audits."max-potential-fid".numericValue' "lighthouse-results/$LATEST_REPORT")
+              
+              echo "📈 Performance Metrics for ${{ matrix.page }}:"
+              echo "- Performance Score: ${PERFORMANCE_SCORE}%"
+              echo "- First Contentful Paint: ${FCP}ms"
+              echo "- Largest Contentful Paint: ${LCP}ms"
+              echo "- Cumulative Layout Shift: $CLS"
+              echo "- First Input Delay: ${FID}ms"
+              
+              # Create summary file
+              cat > "lighthouse-results/summary-${{ matrix.page }}.json" << EOF
+{
+  "page": "${{ matrix.page }}",
+  "url": "${{ steps.setup_urls.outputs.page_url }}",
+  "performance_score": $PERFORMANCE_SCORE,
+  "first_contentful_paint": $FCP,
+  "largest_contentful_paint": $LCP,
+  "cumulative_layout_shift": $CLS,
+  "first_input_delay": $FID,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+            fi
+          fi
+
+      - name: Upload Lighthouse results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-results-${{ matrix.page }}
+          path: lighthouse-results/
+          retention-days: 30
+
+  # =============================================================================
+  # API Load Testing
+  # =============================================================================
+  api_load_test:
+    name: API Load Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: setup
+    if: contains(fromJson('["load_test", "stress_test", "endurance_test", "full_suite"]'), needs.setup.outputs.test_type)
+    
+    strategy:
+      matrix:
+        service: [auth, user, matching, messaging, notification]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install Artillery
+        run: |
+          npm install -g artillery@${{ env.ARTILLERY_VERSION }}
+
+      - name: Create Artillery test configuration
+        run: |
+          echo "🔧 Creating Artillery test configuration for ${{ matrix.service }}"
+          
+          # Create test data directory
+          mkdir -p artillery-tests
+          
+          # Determine test duration based on test type
+          case "${{ needs.setup.outputs.test_type }}" in
+            "stress_test")
+              PHASES='[
+                { "duration": ${{ needs.setup.outputs.ramp_up_time }}, "arrivalRate": 1, "rampTo": ${{ needs.setup.outputs.virtual_users }} },
+                { "duration": ${{ needs.setup.outputs.duration }}0, "arrivalRate": ${{ needs.setup.outputs.virtual_users }} },
+                { "duration": 60, "arrivalRate": ${{ needs.setup.outputs.virtual_users }}, "rampTo": 1 }
+              ]'
+              ;;
+            "endurance_test")
+              PHASES='[
+                { "duration": ${{ needs.setup.outputs.ramp_up_time }}, "arrivalRate": 1, "rampTo": 20 },
+                { "duration": $((${{ needs.setup.outputs.duration }} * 60)), "arrivalRate": 20 }
+              ]'
+              ;;
+            *)
+              PHASES='[
+                { "duration": ${{ needs.setup.outputs.ramp_up_time }}, "arrivalRate": 1, "rampTo": ${{ needs.setup.outputs.virtual_users }} },
+                { "duration": $((${{ needs.setup.outputs.duration }} * 60)), "arrivalRate": ${{ needs.setup.outputs.virtual_users }} }
+              ]'
+              ;;
+          esac
+          
+          # Create service-specific test configuration
+          case "${{ matrix.service }}" in
+            "auth")
+              SCENARIOS='[
+                {
+                  "name": "Login Flow",
+                  "weight": 60,
+                  "flow": [
+                    { "post": { "url": "/api/auth/login", "json": { "email": "test@example.com", "password": "password123" } } }
+                  ]
+                },
+                {
+                  "name": "Token Validation",
+                  "weight": 40,
+                  "flow": [
+                    { "get": { "url": "/api/auth/validate", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                }
+              ]'
+              ;;
+            "user")
+              SCENARIOS='[
+                {
+                  "name": "Get User Profile",
+                  "weight": 50,
+                  "flow": [
+                    { "get": { "url": "/api/users/profile", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Update User Profile",
+                  "weight": 30,
+                  "flow": [
+                    { "put": { "url": "/api/users/profile", "json": { "name": "Test User" }, "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Search Users",
+                  "weight": 20,
+                  "flow": [
+                    { "get": { "url": "/api/users/search?q=test", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                }
+              ]'
+              ;;
+            "matching")
+              SCENARIOS='[
+                {
+                  "name": "Get Matches",
+                  "weight": 60,
+                  "flow": [
+                    { "get": { "url": "/api/matching/matches", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Like User",
+                  "weight": 25,
+                  "flow": [
+                    { "post": { "url": "/api/matching/like", "json": { "userId": "test-user-id" }, "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Pass User",
+                  "weight": 15,
+                  "flow": [
+                    { "post": { "url": "/api/matching/pass", "json": { "userId": "test-user-id" }, "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                }
+              ]'
+              ;;
+            "messaging")
+              SCENARIOS='[
+                {
+                  "name": "Get Conversations",
+                  "weight": 40,
+                  "flow": [
+                    { "get": { "url": "/api/messaging/conversations", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Send Message",
+                  "weight": 35,
+                  "flow": [
+                    { "post": { "url": "/api/messaging/send", "json": { "conversationId": "test-conv-id", "message": "Hello!" }, "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Get Messages",
+                  "weight": 25,
+                  "flow": [
+                    { "get": { "url": "/api/messaging/conversations/test-conv-id/messages", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                }
+              ]'
+              ;;
+            "notification")
+              SCENARIOS='[
+                {
+                  "name": "Get Notifications",
+                  "weight": 70,
+                  "flow": [
+                    { "get": { "url": "/api/notifications", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                },
+                {
+                  "name": "Mark as Read",
+                  "weight": 30,
+                  "flow": [
+                    { "put": { "url": "/api/notifications/test-notif-id/read", "headers": { "Authorization": "Bearer test-token" } } }
+                  ]
+                }
+              ]'
+              ;;
+          esac
+          
+          # Create Artillery configuration file
+          cat > "artillery-tests/${{ matrix.service }}-test.yml" << EOF
+config:
+  target: '${{ needs.setup.outputs.api_url }}'
+  phases: $PHASES
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+  processor: './artillery-processor.js'
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    publish-metrics:
+      - type: json
+        path: './artillery-results-${{ matrix.service }}.json'
+scenarios: $SCENARIOS
+EOF
+          
+          echo "✅ Artillery test configuration created for ${{ matrix.service }}"
+
+      - name: Create Artillery processor
+        run: |
+          # Create Artillery processor for custom logic
+          cat > artillery-processor.js << 'EOF'
+module.exports = {
+  setRandomUserId: setRandomUserId,
+  setRandomConversationId: setRandomConversationId,
+  logResponse: logResponse
+};
+
+function setRandomUserId(requestParams, context, ee, next) {
+  context.vars.userId = 'user_' + Math.random().toString(36).substr(2, 9);
+  return next();
+}
+
+function setRandomConversationId(requestParams, context, ee, next) {
+  context.vars.conversationId = 'conv_' + Math.random().toString(36).substr(2, 9);
+  return next();
+}
+
+function logResponse(requestParams, response, context, ee, next) {
+  if (response.statusCode >= 400) {
+    console.log('Error response:', response.statusCode, response.body);
+  }
+  return next();
+}
+EOF
+
+      - name: Run Artillery load test
+        run: |
+          echo "🚀 Running Artillery load test for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p artillery-results
+          
+          # Run Artillery test
+          artillery run \
+            "artillery-tests/${{ matrix.service }}-test.yml" \
+            --output "artillery-results/artillery-${{ matrix.service }}-raw.json" || true
+          
+          # Generate HTML report
+          if [ -f "artillery-results/artillery-${{ matrix.service }}-raw.json" ]; then
+            artillery report \
+              "artillery-results/artillery-${{ matrix.service }}-raw.json" \
+              --output "artillery-results/artillery-${{ matrix.service }}-report.html"
+            
+            echo "📊 Artillery load test completed for ${{ matrix.service }}"
+            
+            # Extract key metrics
+            if [ -f "artillery-results-${{ matrix.service }}.json" ]; then
+              RPS=$(jq '.aggregate.requestsPerSecond.mean' "artillery-results-${{ matrix.service }}.json")
+              LATENCY_P95=$(jq '.aggregate.latency.p95' "artillery-results-${{ matrix.service }}.json")
+              LATENCY_P99=$(jq '.aggregate.latency.p99' "artillery-results-${{ matrix.service }}.json")
+              ERROR_RATE=$(jq '.aggregate.codes."4xx" + .aggregate.codes."5xx"' "artillery-results-${{ matrix.service }}.json")
+              
+              echo "📈 Performance Metrics for ${{ matrix.service }}:"
+              echo "- Requests per Second: $RPS"
+              echo "- 95th Percentile Latency: ${LATENCY_P95}ms"
+              echo "- 99th Percentile Latency: ${LATENCY_P99}ms"
+              echo "- Error Rate: $ERROR_RATE"
+            fi
+          else
+            echo "❌ Artillery load test failed for ${{ matrix.service }}"
+          fi
+
+      - name: Upload Artillery results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: artillery-results-${{ matrix.service }}
+          path: |
+            artillery-results/
+            artillery-results-*.json
+          retention-days: 30
+
+  # =============================================================================
+  # K6 Performance Testing
+  # =============================================================================
+  k6_performance_test:
+    name: K6 Performance Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: contains(fromJson('["spike_test", "volume_test", "full_suite"]'), needs.setup.outputs.test_type)
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install K6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Create K6 test script
+        run: |
+          echo "🔧 Creating K6 test script"
+          
+          # Create K6 test script based on test type
+          case "${{ needs.setup.outputs.test_type }}" in
+            "spike_test")
+              TEST_SCRIPT="spike-test.js"
+              ;;
+            "volume_test")
+              TEST_SCRIPT="volume-test.js"
+              ;;
+            *)
+              TEST_SCRIPT="load-test.js"
+              ;;
+          esac
+          
+          cat > "$TEST_SCRIPT" << 'EOF'
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+import { Rate } from 'k6/metrics';
+
+// Custom metrics
+const errorRate = new Rate('errors');
+
+// Test configuration
+export const options = {
+  stages: [
+    { duration: '${{ needs.setup.outputs.ramp_up_time }}s', target: ${{ needs.setup.outputs.virtual_users }} },
+    { duration: '${{ needs.setup.outputs.duration }}m', target: ${{ needs.setup.outputs.virtual_users }} },
+    { duration: '60s', target: 0 },
+  ],
+  thresholds: {
+    http_req_duration: ['p(95)<2000'], // 95% of requests must complete below 2s
+    http_req_failed: ['rate<0.05'], // Error rate must be below 5%
+    errors: ['rate<0.05'],
+  },
+};
+
+const BASE_URL = '${{ needs.setup.outputs.api_url }}';
+
+// Test scenarios
+const scenarios = {
+  auth_flow: {
+    weight: 30,
+    exec: 'authFlow',
+  },
+  user_operations: {
+    weight: 25,
+    exec: 'userOperations',
+  },
+  matching_flow: {
+    weight: 25,
+    exec: 'matchingFlow',
+  },
+  messaging_flow: {
+    weight: 20,
+    exec: 'messagingFlow',
+  },
+};
+
+export function authFlow() {
+  const loginPayload = {
+    email: 'test@example.com',
+    password: 'password123',
+  };
+  
+  const loginRes = http.post(`${BASE_URL}/api/auth/login`, JSON.stringify(loginPayload), {
+    headers: { 'Content-Type': 'application/json' },
+  });
+  
+  const loginSuccess = check(loginRes, {
+    'login status is 200': (r) => r.status === 200,
+    'login response time < 1000ms': (r) => r.timings.duration < 1000,
+  });
+  
+  errorRate.add(!loginSuccess);
+  
+  if (loginSuccess && loginRes.json('token')) {
+    const token = loginRes.json('token');
+    
+    // Validate token
+    const validateRes = http.get(`${BASE_URL}/api/auth/validate`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    
+    check(validateRes, {
+      'token validation status is 200': (r) => r.status === 200,
+    });
+  }
+  
+  sleep(1);
+}
+
+export function userOperations() {
+  const token = 'test-token'; // In real scenario, get from auth flow
+  
+  // Get user profile
+  const profileRes = http.get(`${BASE_URL}/api/users/profile`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  check(profileRes, {
+    'get profile status is 200': (r) => r.status === 200,
+    'get profile response time < 500ms': (r) => r.timings.duration < 500,
+  });
+  
+  // Update profile
+  const updatePayload = {
+    name: 'Test User',
+    bio: 'Updated bio',
+  };
+  
+  const updateRes = http.put(`${BASE_URL}/api/users/profile`, JSON.stringify(updatePayload), {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  check(updateRes, {
+    'update profile status is 200': (r) => r.status === 200,
+  });
+  
+  sleep(1);
+}
+
+export function matchingFlow() {
+  const token = 'test-token';
+  
+  // Get matches
+  const matchesRes = http.get(`${BASE_URL}/api/matching/matches`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  check(matchesRes, {
+    'get matches status is 200': (r) => r.status === 200,
+    'get matches response time < 1000ms': (r) => r.timings.duration < 1000,
+  });
+  
+  // Like a user
+  const likePayload = {
+    userId: 'test-user-id',
+  };
+  
+  const likeRes = http.post(`${BASE_URL}/api/matching/like`, JSON.stringify(likePayload), {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  check(likeRes, {
+    'like user status is 200': (r) => r.status === 200,
+  });
+  
+  sleep(1);
+}
+
+export function messagingFlow() {
+  const token = 'test-token';
+  
+  // Get conversations
+  const conversationsRes = http.get(`${BASE_URL}/api/messaging/conversations`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  
+  check(conversationsRes, {
+    'get conversations status is 200': (r) => r.status === 200,
+  });
+  
+  // Send message
+  const messagePayload = {
+    conversationId: 'test-conv-id',
+    message: 'Hello from K6 test!',
+  };
+  
+  const messageRes = http.post(`${BASE_URL}/api/messaging/send`, JSON.stringify(messagePayload), {
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  
+  check(messageRes, {
+    'send message status is 200': (r) => r.status === 200,
+  });
+  
+  sleep(1);
+}
+EOF
+          
+          echo "✅ K6 test script created: $TEST_SCRIPT"
+
+      - name: Run K6 performance test
+        run: |
+          echo "🚀 Running K6 performance test"
+          
+          # Create results directory
+          mkdir -p k6-results
+          
+          # Determine test script
+          case "${{ needs.setup.outputs.test_type }}" in
+            "spike_test")
+              TEST_SCRIPT="spike-test.js"
+              ;;
+            "volume_test")
+              TEST_SCRIPT="volume-test.js"
+              ;;
+            *)
+              TEST_SCRIPT="load-test.js"
+              ;;
+          esac
+          
+          # Run K6 test
+          k6 run \
+            --out json=k6-results/k6-results.json \
+            --summary-export=k6-results/k6-summary.json \
+            "$TEST_SCRIPT" || true
+          
+          # Generate human-readable summary
+          if [ -f "k6-results/k6-summary.json" ]; then
+            echo "📊 K6 performance test completed"
+            
+            # Extract key metrics
+            HTTP_REQ_DURATION_P95=$(jq '.metrics.http_req_duration.values."p(95)"' k6-results/k6-summary.json)
+            HTTP_REQ_DURATION_P99=$(jq '.metrics.http_req_duration.values."p(99)"' k6-results/k6-summary.json)
+            HTTP_REQ_FAILED_RATE=$(jq '.metrics.http_req_failed.values.rate' k6-results/k6-summary.json)
+            ITERATIONS_RATE=$(jq '.metrics.iterations.values.rate' k6-results/k6-summary.json)
+            
+            echo "📈 K6 Performance Metrics:"
+            echo "- 95th Percentile Response Time: ${HTTP_REQ_DURATION_P95}ms"
+            echo "- 99th Percentile Response Time: ${HTTP_REQ_DURATION_P99}ms"
+            echo "- HTTP Request Failure Rate: ${HTTP_REQ_FAILED_RATE}%"
+            echo "- Iterations per Second: $ITERATIONS_RATE"
+          else
+            echo "❌ K6 performance test failed"
+          fi
+
+      - name: Upload K6 results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: k6-results
+          path: k6-results/
+          retention-days: 30
+
+  # =============================================================================
+  # Performance Report Generation
+  # =============================================================================
+  generate_performance_report:
+    name: Generate Performance Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup, frontend_performance, api_load_test, k6_performance_test]
+    if: always() && !cancelled()
+    
+    steps:
+      - name: Download all test results
+        uses: actions/download-artifact@v4
+        with:
+          path: test-results
+
+      - name: Generate consolidated performance report
+        run: |
+          echo "📊 Generating consolidated performance report"
+          
+          # Create report directory
+          mkdir -p performance-report
+          
+          # Initialize report
+          REPORT_FILE="performance-report/performance-report-${{ needs.setup.outputs.test_id }}.md"
+          
+          cat > "$REPORT_FILE" << 'EOF'
+# 🚀 Performance Test Report
+
+**Test ID:** ${{ needs.setup.outputs.test_id }}
+**Test Type:** ${{ needs.setup.outputs.test_type }}
+**Environment:** ${{ needs.setup.outputs.environment }}
+**Duration:** ${{ needs.setup.outputs.duration }} minutes
+**Virtual Users:** ${{ needs.setup.outputs.virtual_users }}
+**Target RPS:** ${{ needs.setup.outputs.target_rps }}
+**Test Date:** $(date -u)
+**Triggered By:** ${{ github.actor }}
+
+## 📋 Test Summary
+
+EOF
+          
+          # Add frontend performance results
+          if [ "${{ needs.frontend_performance.result }}" == "success" ]; then
+            echo "✅ **Frontend Performance Test:** Completed successfully" >> "$REPORT_FILE"
+          elif [ "${{ needs.frontend_performance.result }}" == "skipped" ]; then
+            echo "⏭️ **Frontend Performance Test:** Skipped" >> "$REPORT_FILE"
+          else
+            echo "❌ **Frontend Performance Test:** Failed or had issues" >> "$REPORT_FILE"
+          fi
+          
+          # Add API load test results
+          if [ "${{ needs.api_load_test.result }}" == "success" ]; then
+            echo "✅ **API Load Test:** Completed successfully" >> "$REPORT_FILE"
+          elif [ "${{ needs.api_load_test.result }}" == "skipped" ]; then
+            echo "⏭️ **API Load Test:** Skipped" >> "$REPORT_FILE"
+          else
+            echo "❌ **API Load Test:** Failed or had issues" >> "$REPORT_FILE"
+          fi
+          
+          # Add K6 test results
+          if [ "${{ needs.k6_performance_test.result }}" == "success" ]; then
+            echo "✅ **K6 Performance Test:** Completed successfully" >> "$REPORT_FILE"
+          elif [ "${{ needs.k6_performance_test.result }}" == "skipped" ]; then
+            echo "⏭️ **K6 Performance Test:** Skipped" >> "$REPORT_FILE"
+          else
+            echo "❌ **K6 Performance Test:** Failed or had issues" >> "$REPORT_FILE"
+          fi
+          
+          echo "" >> "$REPORT_FILE"
+          echo "## 📊 Detailed Metrics" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          # Process Lighthouse results
+          if [ -d "test-results" ]; then
+            echo "### 🌐 Frontend Performance (Lighthouse)" >> "$REPORT_FILE"
+            echo "" >> "$REPORT_FILE"
+            
+            for lighthouse_dir in test-results/lighthouse-results-*/; do
+              if [ -d "$lighthouse_dir" ]; then
+                PAGE=$(basename "$lighthouse_dir" | sed 's/lighthouse-results-//')
+                SUMMARY_FILE="$lighthouse_dir/summary-$PAGE.json"
+                
+                if [ -f "$SUMMARY_FILE" ]; then
+                  PERF_SCORE=$(jq -r '.performance_score' "$SUMMARY_FILE")
+                  FCP=$(jq -r '.first_contentful_paint' "$SUMMARY_FILE")
+                  LCP=$(jq -r '.largest_contentful_paint' "$SUMMARY_FILE")
+                  
+                  echo "**$PAGE Page:**" >> "$REPORT_FILE"
+                  echo "- Performance Score: ${PERF_SCORE}%" >> "$REPORT_FILE"
+                  echo "- First Contentful Paint: ${FCP}ms" >> "$REPORT_FILE"
+                  echo "- Largest Contentful Paint: ${LCP}ms" >> "$REPORT_FILE"
+                  echo "" >> "$REPORT_FILE"
+                fi
+              fi
+            done
+          fi
+          
+          echo "### 🔧 API Performance (Artillery)" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Detailed API performance metrics are available in the Artillery reports." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          echo "### ⚡ Load Testing (K6)" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Detailed load testing metrics are available in the K6 reports." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          echo "## 📁 Detailed Results" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Detailed test results are available in the workflow artifacts." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "---" >> "$REPORT_FILE"
+          echo "*Report generated at $(date -u)*" >> "$REPORT_FILE"
+          
+          echo "✅ Performance report generated: $REPORT_FILE"
+
+      - name: Upload performance report
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-report-${{ needs.setup.outputs.test_id }}
+          path: performance-report/
+          retention-days: 90
+
+      - name: Generate GitHub step summary
+        run: |
+          echo "# 🚀 Performance Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Test ID:** ${{ needs.setup.outputs.test_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Test Type:** ${{ needs.setup.outputs.test_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Duration:** ${{ needs.setup.outputs.duration }} minutes" >> $GITHUB_STEP_SUMMARY
+          echo "**Virtual Users:** ${{ needs.setup.outputs.virtual_users }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📊 Test Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Frontend performance results
+          if [ "${{ needs.frontend_performance.result }}" == "success" ]; then
+            echo "✅ Frontend Performance Test completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.frontend_performance.result }}" == "skipped" ]; then
+            echo "⏭️ Frontend Performance Test skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend Performance Test failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # API load test results
+          if [ "${{ needs.api_load_test.result }}" == "success" ]; then
+            echo "✅ API Load Test completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.api_load_test.result }}" == "skipped" ]; then
+            echo "⏭️ API Load Test skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ API Load Test failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # K6 test results
+          if [ "${{ needs.k6_performance_test.result }}" == "success" ]; then
+            echo "✅ K6 Performance Test completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.k6_performance_test.result }}" == "skipped" ]; then
+            echo "⏭️ K6 Performance Test skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ K6 Performance Test failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed results are available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,279 @@
+# SoulMatting Web Frontend - Default Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# =============================================================================
+# Application Configuration
+# =============================================================================
+app:
+  name: soulmatting-web
+  version: "1.0.0"
+  environment: development
+
+# =============================================================================
+# Image Configuration
+# =============================================================================
+image:
+  repository: ghcr.io/kimhsiao/soulmatting/web
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# =============================================================================
+# Deployment Configuration
+# =============================================================================
+deployment:
+  replicaCount: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  
+  annotations: {}
+  labels: {}
+  
+  podAnnotations: {}
+  podLabels: {}
+  
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+  
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1001
+    capabilities:
+      drop:
+        - ALL
+
+# =============================================================================
+# Service Configuration
+# =============================================================================
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3000
+  annotations: {}
+  labels: {}
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+  hosts:
+    - host: soulmatting.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: soulmatting-web-tls
+      hosts:
+        - soulmatting.local
+
+# =============================================================================
+# Resource Management
+# =============================================================================
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# =============================================================================
+# Auto Scaling
+# =============================================================================
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# =============================================================================
+# Health Checks
+# =============================================================================
+healthChecks:
+  livenessProbe:
+    httpGet:
+      path: /api/health
+      port: 3000
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  
+  readinessProbe:
+    httpGet:
+      path: /api/ready
+      port: 3000
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+env:
+  NODE_ENV: production
+  PORT: "3000"
+  NEXT_TELEMETRY_DISABLED: "1"
+  
+# Environment variables from secrets
+envFrom:
+  - secretRef:
+      name: soulmatting-web-secrets
+  - configMapRef:
+      name: soulmatting-web-config
+
+# =============================================================================
+# ConfigMap Data
+# =============================================================================
+configMap:
+  data:
+    NEXT_PUBLIC_APP_NAME: "SoulMatting"
+    NEXT_PUBLIC_APP_VERSION: "1.0.0"
+    NEXT_PUBLIC_API_URL: "https://api.soulmatting.com"
+    NEXT_PUBLIC_WS_URL: "wss://ws.soulmatting.com"
+    NEXT_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co"
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: "your-anon-key"
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: "your-google-maps-key"
+    NEXT_PUBLIC_SENTRY_DSN: "your-sentry-dsn"
+    NEXT_PUBLIC_ANALYTICS_ID: "your-analytics-id"
+
+# =============================================================================
+# Secrets (will be created separately)
+# =============================================================================
+secrets:
+  enabled: true
+  data:
+    example_secret: "test_value"
+    # SUPABASE_SERVICE_ROLE_KEY: "your-service-role-key"
+    # JWT_SECRET: "your-jwt-secret"
+    # ENCRYPTION_KEY: "your-encryption-key"
+    # REDIS_PASSWORD: "your-redis-password"
+    # DATABASE_URL: "your-database-url"
+
+# =============================================================================
+# Persistent Volume Claims
+# =============================================================================
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  annotations: {}
+
+# =============================================================================
+# Node Selection
+# =============================================================================
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - soulmatting-web
+          topologyKey: kubernetes.io/hostname
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /api/metrics
+    port: 3000
+  
+  prometheusRule:
+    enabled: true
+    rules:
+      - alert: WebAppDown
+        expr: up{job="soulmatting-web"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "SoulMatting Web App is down"
+          description: "SoulMatting Web App has been down for more than 5 minutes."
+      
+      - alert: WebAppHighErrorRate
+        expr: rate(http_requests_total{job="soulmatting-web",status=~"5.."}[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in SoulMatting Web App"
+          description: "Error rate is above 10% for more than 5 minutes."
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+redis:
+  enabled: false
+  auth:
+    enabled: true
+    password: "redis-password"
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+postgresql:
+  enabled: false
+  auth:
+    postgresPassword: "postgres-password"
+    database: "soulmatting"
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi

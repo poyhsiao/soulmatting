@@ -1,0 +1,172 @@
+name: Feature Request
+description: Suggest an idea for this project
+title: "[FEATURE]: "
+labels: ["enhancement", "triage"]
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to suggest a new feature!
+        
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
+      
+  - type: textarea
+    id: problem
+    attributes:
+      label: Is your feature request related to a problem?
+      description: A clear and concise description of what the problem is
+      placeholder: I'm always frustrated when...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: solution
+    attributes:
+      label: Describe the solution you'd like
+      description: A clear and concise description of what you want to happen
+      placeholder: I would like to see...
+    validations:
+      required: true
+      
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Describe alternatives you've considered
+      description: A clear and concise description of any alternative solutions or features you've considered
+      placeholder: Alternative approaches could be...
+    validations:
+      required: false
+      
+  - type: dropdown
+    id: feature-type
+    attributes:
+      label: Feature Type
+      description: What type of feature is this?
+      options:
+        - User Interface Enhancement
+        - New Functionality
+        - Performance Improvement
+        - Developer Experience
+        - API Enhancement
+        - Security Feature
+        - Accessibility Improvement
+        - Mobile Feature
+        - Integration
+        - Other
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Priority
+      description: How important is this feature to you?
+      options:
+        - Low - Nice to have
+        - Medium - Would improve my workflow
+        - High - Critical for my use case
+        - Critical - Blocking my adoption
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: user-type
+    attributes:
+      label: User Type
+      description: Which type of user would benefit from this feature?
+      multiple: true
+      options:
+        - End Users
+        - Developers
+        - Administrators
+        - Content Creators
+        - API Consumers
+        - Mobile Users
+        - All Users
+        
+  - type: textarea
+    id: use-cases
+    attributes:
+      label: Use Cases
+      description: Describe specific use cases where this feature would be helpful
+      placeholder: |
+        1. As a [user type], I want to [action] so that [benefit]
+        2. When [scenario], I need [feature] to [outcome]
+    validations:
+      required: true
+      
+  - type: textarea
+    id: acceptance-criteria
+    attributes:
+      label: Acceptance Criteria
+      description: What would need to be true for this feature to be considered complete?
+      placeholder: |
+        - [ ] Feature does X
+        - [ ] Feature handles Y scenario
+        - [ ] Feature is accessible
+        - [ ] Feature is tested
+    validations:
+      required: false
+      
+  - type: textarea
+    id: mockups
+    attributes:
+      label: Mockups/Wireframes
+      description: If applicable, add mockups, wireframes, or visual examples
+      placeholder: Drag and drop images here or paste URLs
+    validations:
+      required: false
+      
+  - type: textarea
+    id: technical-considerations
+    attributes:
+      label: Technical Considerations
+      description: Any technical constraints, dependencies, or implementation thoughts?
+      placeholder: |
+        - Dependencies: 
+        - Performance considerations:
+        - Security implications:
+        - Breaking changes:
+    validations:
+      required: false
+      
+  - type: textarea
+    id: additional-context
+    attributes:
+      label: Additional Context
+      description: Add any other context, screenshots, or examples about the feature request
+      placeholder: Any additional information that might be helpful
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: research
+    attributes:
+      label: Research
+      description: Have you done any research on this feature?
+      options:
+        - label: I have searched for existing feature requests
+          required: true
+        - label: I have checked the documentation
+          required: true
+        - label: I have considered the impact on existing functionality
+          required: false
+        - label: I am willing to help implement this feature
+          required: false
+          
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true

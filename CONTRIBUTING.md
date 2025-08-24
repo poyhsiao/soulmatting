@@ -58,8 +58,8 @@ This project adopts the [Contributor Covenant](https://www.contributor-covenant.
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
+- Node.js >= 22.0.0
+- pnpm >= 10.0.0
 - Docker >= 20.0.0
 - Docker Compose >= 2.0.0
 - Git >= 2.30.0

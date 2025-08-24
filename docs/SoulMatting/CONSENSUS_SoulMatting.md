@@ -135,7 +135,7 @@ Create a secure, intuitive, and engaging online dating platform specifically des
 - **Testing:** Jest + React Testing Library
 
 #### Backend
-- **Runtime:** Node.js 20+ LTS
+- **Runtime:** Node.js 22+ LTS
 - **Framework:** Express.js with TypeScript
 - **API Gateway:** Express-based with middleware
 - **Authentication:** JWT with refresh tokens
@@ -143,7 +143,7 @@ Create a secure, intuitive, and engaging online dating platform specifically des
 - **Testing:** Jest + Supertest
 
 #### Database
-- **Primary Database:** PostgreSQL 15+
+- **Primary Database:** PostgreSQL 16+
 - **Caching:** Redis 7+
 - **ORM:** Prisma
 - **Migration:** Prisma Migrate

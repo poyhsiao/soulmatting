@@ -1,0 +1,209 @@
+# SoulMatting Platform - Dependabot Configuration
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+version: 2
+updates:
+  # Frontend dependencies (React/TypeScript)
+  - package-ecosystem: "npm"
+    directory: "/apps/web"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "feat(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "frontend"
+    ignore:
+      # Ignore major version updates for critical dependencies
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    groups:
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "jest*"
+          - "vitest*"
+      build-tools:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+          - "rollup*"
+          - "esbuild*"
+
+  # Backend dependencies (NestJS/Node.js)
+  - package-ecosystem: "npm"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "feat(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "backend"
+    ignore:
+      # Ignore major version updates for critical dependencies
+      - dependency-name: "@nestjs/core"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
+    groups:
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+      database:
+        patterns:
+          - "prisma*"
+          - "@prisma/*"
+          - "pg*"
+          - "redis*"
+      testing:
+        patterns:
+          - "jest*"
+          - "@types/jest*"
+          - "supertest*"
+
+  # Auth Service dependencies
+  - package-ecosystem: "npm"
+    directory: "/apps/auth-service"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "feat(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "auth-service"
+
+  # Shared packages dependencies
+  - package-ecosystem: "npm"
+    directory: "/packages/shared"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "feat(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "shared"
+
+  # Root workspace dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "workspace"
+    groups:
+      workspace-tools:
+        patterns:
+          - "pnpm*"
+          - "turbo*"
+          - "lerna*"
+          - "nx*"
+
+  # Docker dependencies
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "chore(docker)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "docker"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+      time: "09:00"
+      timezone: "Asia/Taipei"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "kimhsiao"
+    assignees:
+      - "kimhsiao"
+    commit-message:
+      prefix: "chore(ci)"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    groups:
+      actions:
+        patterns:
+          - "actions/*"
+          - "github/*"

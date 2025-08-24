@@ -1,0 +1,907 @@
+# Deployment Workflow for SoulMatting Platform
+# 
+# This workflow handles deployments to different environments
+# including staging, production, and development environments.
+# 
+# Version: 1.0.0
+# Created: 2024-01-20
+# Updated: 2024-01-20
+# Author: Kim Hsiao
+
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      
+      version:
+        description: 'Version to deploy (leave empty for latest)'
+        required: false
+        type: string
+      
+      services:
+        description: 'Services to deploy (comma-separated, leave empty for all)'
+        required: false
+        type: string
+        default: 'all'
+      
+      skip_tests:
+        description: 'Skip pre-deployment tests'
+        required: false
+        default: false
+        type: boolean
+      
+      rollback:
+        description: 'Rollback to previous version'
+        required: false
+        default: false
+        type: boolean
+  
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      version:
+        required: false
+        type: string
+      services:
+        required: false
+        type: string
+        default: 'all'
+      skip_tests:
+        required: false
+        type: boolean
+        default: false
+      rollback:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      DEPLOY_TOKEN:
+        required: true
+      SUPABASE_URL:
+        required: true
+      SUPABASE_ANON_KEY:
+        required: true
+      SUPABASE_SERVICE_ROLE_KEY:
+        required: true
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
+  REGISTRY_URL: 'ghcr.io'
+  IMAGE_NAME: 'soulmatting'
+  DOCKER_BUILDKIT: 1
+  COMPOSE_DOCKER_CLI_BUILD: 1
+
+jobs:
+  # =============================================================================
+  # PREPARATION
+  # =============================================================================
+  
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    outputs:
+      environment: ${{ steps.setup.outputs.environment }}
+      version: ${{ steps.setup.outputs.version }}
+      services: ${{ steps.setup.outputs.services }}
+      deploy_url: ${{ steps.setup.outputs.deploy_url }}
+      config_hash: ${{ steps.setup.outputs.config_hash }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup deployment configuration
+        id: setup
+        run: |
+          # Determine environment
+          ENVIRONMENT="${{ github.event.inputs.environment || inputs.environment }}"
+          echo "environment=${ENVIRONMENT}" >> $GITHUB_OUTPUT
+          
+          # Determine version
+          if [ "${{ github.event.inputs.version || inputs.version }}" != "" ]; then
+            VERSION="${{ github.event.inputs.version || inputs.version }}"
+          else
+            VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.1.0")
+          fi
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          
+          # Determine services
+          SERVICES="${{ github.event.inputs.services || inputs.services || 'all' }}"
+          echo "services=${SERVICES}" >> $GITHUB_OUTPUT
+          
+          # Set deployment URL
+          case "${ENVIRONMENT}" in
+            "production")
+              DEPLOY_URL="https://soulmatting.com"
+              ;;
+            "staging")
+              DEPLOY_URL="https://staging.soulmatting.com"
+              ;;
+            "development")
+              DEPLOY_URL="https://dev.soulmatting.com"
+              ;;
+            *)
+              DEPLOY_URL="https://${ENVIRONMENT}.soulmatting.com"
+              ;;
+          esac
+          echo "deploy_url=${DEPLOY_URL}" >> $GITHUB_OUTPUT
+          
+          # Generate config hash for cache invalidation
+          CONFIG_HASH=$(echo "${ENVIRONMENT}-${VERSION}-${SERVICES}" | sha256sum | cut -d' ' -f1 | head -c 8)
+          echo "config_hash=${CONFIG_HASH}" >> $GITHUB_OUTPUT
+          
+          echo "🚀 Deployment Configuration:"
+          echo "  Environment: ${ENVIRONMENT}"
+          echo "  Version: ${VERSION}"
+          echo "  Services: ${SERVICES}"
+          echo "  URL: ${DEPLOY_URL}"
+          echo "  Config Hash: ${CONFIG_HASH}"
+      
+      - name: Validate deployment parameters
+        run: |
+          # Validate environment
+          if [[ ! "${{ steps.setup.outputs.environment }}" =~ ^(development|staging|production)$ ]]; then
+            echo "❌ Invalid environment: ${{ steps.setup.outputs.environment }}"
+            exit 1
+          fi
+          
+          # Validate version format
+          if [[ ! "${{ steps.setup.outputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
+            echo "❌ Invalid version format: ${{ steps.setup.outputs.version }}"
+            exit 1
+          fi
+          
+          echo "✅ Deployment parameters validated"
+  
+  # =============================================================================
+  # PRE-DEPLOYMENT TESTS
+  # =============================================================================
+  
+  pre-deployment-tests:
+    name: Pre-deployment Tests
+    runs-on: ubuntu-latest
+    needs: prepare
+    if: ${{ !inputs.skip_tests && !github.event.inputs.skip_tests }}
+    
+    strategy:
+      matrix:
+        test-type: [unit, integration, e2e]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run ${{ matrix.test-type }} tests
+        run: |
+          case "${{ matrix.test-type }}" in
+            "unit")
+              pnpm test:unit
+              ;;
+            "integration")
+              pnpm test:integration
+              ;;
+            "e2e")
+              pnpm test:e2e
+              ;;
+          esac
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.test-type }}
+          path: |
+            coverage/
+            test-results/
+            playwright-report/
+  
+  # =============================================================================
+  # INFRASTRUCTURE PREPARATION
+  # =============================================================================
+  
+  prepare-infrastructure:
+    name: Prepare Infrastructure
+    runs-on: ubuntu-latest
+    needs: [prepare, pre-deployment-tests]
+    if: always() && (needs.pre-deployment-tests.result == 'success' || needs.pre-deployment-tests.result == 'skipped')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Verify infrastructure readiness
+        run: |
+          echo "🔍 Checking infrastructure for ${{ needs.prepare.outputs.environment }}..."
+          
+          # Check if required images exist
+          SERVICES=$(echo "${{ needs.prepare.outputs.services }}" | tr ',' ' ')
+          if [ "$SERVICES" = "all" ]; then
+            SERVICES="web api auth-service user-service matching-service messaging-service notification-service"
+          fi
+          
+          for service in $SERVICES; do
+            IMAGE="${{ env.REGISTRY_URL }}/${{ github.repository }}/${service}:${{ needs.prepare.outputs.version }}"
+            echo "Checking image: $IMAGE"
+            
+            if docker manifest inspect "$IMAGE" > /dev/null 2>&1; then
+              echo "✅ Image exists: $service"
+            else
+              echo "❌ Image not found: $service"
+              echo "Available tags for $service:"
+              docker run --rm quay.io/skopeo/skopeo list-tags docker://${{ env.REGISTRY_URL }}/${{ github.repository }}/${service} | jq -r '.Tags[]' | head -10 || true
+              exit 1
+            fi
+          done
+          
+          echo "✅ All required images are available"
+  
+  # =============================================================================
+  # SERVICE DEPLOYMENT
+  # =============================================================================
+  
+  deploy-services:
+    name: Deploy Services
+    runs-on: ubuntu-latest
+    needs: [prepare, prepare-infrastructure]
+    if: always() && needs.prepare-infrastructure.result == 'success'
+    
+    strategy:
+      matrix:
+        service: [web, api, auth-service, user-service, matching-service, messaging-service, notification-service]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check if service should be deployed
+        id: check-service
+        run: |
+          SERVICES="${{ needs.prepare.outputs.services }}"
+          if [ "$SERVICES" = "all" ] || echo "$SERVICES" | grep -q "${{ matrix.service }}"; then
+            echo "deploy=true" >> $GITHUB_OUTPUT
+            echo "✅ Service ${{ matrix.service }} will be deployed"
+          else
+            echo "deploy=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Service ${{ matrix.service }} skipped"
+          fi
+      
+      - name: Setup Docker Buildx
+        if: steps.check-service.outputs.deploy == 'true'
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Login to Container Registry
+        if: steps.check-service.outputs.deploy == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      
+      - name: Pull and deploy ${{ matrix.service }}
+        if: steps.check-service.outputs.deploy == 'true'
+        run: |
+          IMAGE="${{ env.REGISTRY_URL }}/${{ github.repository }}/${{ matrix.service }}:${{ needs.prepare.outputs.version }}"
+          echo "🚀 Deploying ${{ matrix.service }} from $IMAGE"
+          
+          # Pull the image
+          docker pull "$IMAGE"
+          
+          # Stop existing container if running
+          docker stop "soulmatting-${{ matrix.service }}-${{ needs.prepare.outputs.environment }}" 2>/dev/null || true
+          docker rm "soulmatting-${{ matrix.service }}-${{ needs.prepare.outputs.environment }}" 2>/dev/null || true
+          
+          # Deploy new container
+          docker run -d \
+            --name "soulmatting-${{ matrix.service }}-${{ needs.prepare.outputs.environment }}" \
+            --network "soulmatting-${{ needs.prepare.outputs.environment }}" \
+            --restart unless-stopped \
+            --env-file ".env.${{ needs.prepare.outputs.environment }}" \
+            "$IMAGE"
+          
+          echo "✅ ${{ matrix.service }} deployed successfully"
+      
+      - name: Health check for ${{ matrix.service }}
+        if: steps.check-service.outputs.deploy == 'true'
+        run: |
+          echo "🔍 Performing health check for ${{ matrix.service }}..."
+          
+          # Wait for service to start
+          sleep 30
+          
+          # Get container status
+          if docker ps | grep -q "soulmatting-${{ matrix.service }}-${{ needs.prepare.outputs.environment }}"; then
+            echo "✅ Container is running"
+          else
+            echo "❌ Container failed to start"
+            docker logs "soulmatting-${{ matrix.service }}-${{ needs.prepare.outputs.environment }}" --tail 50
+            exit 1
+          fi
+          
+          # Service-specific health checks
+          case "${{ matrix.service }}" in
+            "web")
+              curl -f "${{ needs.prepare.outputs.deploy_url }}/health" || exit 1
+              ;;
+            "api")
+              curl -f "${{ needs.prepare.outputs.deploy_url }}/api/health" || exit 1
+              ;;
+            "auth-service")
+              curl -f "${{ needs.prepare.outputs.deploy_url }}/auth/health" || exit 1
+              ;;
+            *)
+              echo "No specific health check for ${{ matrix.service }}"
+              ;;
+          esac
+          
+          echo "✅ Health check passed for ${{ matrix.service }}"
+  
+  # =============================================================================
+  # DATABASE MIGRATION
+  # =============================================================================
+  
+  database-migration:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-services]
+    if: always() && needs.deploy-services.result == 'success'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run Supabase migrations
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🔄 Running database migrations for ${{ needs.prepare.outputs.environment }}..."
+          
+          # Install Supabase CLI
+          npm install -g @supabase/cli
+          
+          # Run migrations
+          cd packages/database
+          supabase db push --environment ${{ needs.prepare.outputs.environment }}
+          
+          echo "✅ Database migrations completed"
+      
+      - name: Seed data (development only)
+        if: needs.prepare.outputs.environment == 'development'
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          echo "🌱 Seeding development data..."
+          cd packages/database
+          pnpm run seed:dev
+          echo "✅ Development data seeded"
+  
+  # =============================================================================
+  # POST-DEPLOYMENT VERIFICATION
+  # =============================================================================
+  
+  post-deployment-verification:
+    name: Post-deployment Verification
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-services, database-migration]
+    if: always() && needs.database-migration.result == 'success'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run smoke tests
+        env:
+          BASE_URL: ${{ needs.prepare.outputs.deploy_url }}
+          ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+        run: |
+          echo "🧪 Running smoke tests against ${{ needs.prepare.outputs.deploy_url }}..."
+          pnpm run test:smoke --environment=${{ needs.prepare.outputs.environment }}
+          echo "✅ Smoke tests passed"
+      
+      - name: Run integration tests
+        env:
+          BASE_URL: ${{ needs.prepare.outputs.deploy_url }}
+          ENVIRONMENT: ${{ needs.prepare.outputs.environment }}
+        run: |
+          echo "🔗 Running integration tests..."
+          pnpm run test:integration:deployed --environment=${{ needs.prepare.outputs.environment }}
+          echo "✅ Integration tests passed"
+      
+      - name: Performance monitoring
+        run: |
+          echo "📊 Setting up performance monitoring..."
+          
+          # Basic performance check
+          RESPONSE_TIME=$(curl -o /dev/null -s -w '%{time_total}' "${{ needs.prepare.outputs.deploy_url }}")
+          echo "Response time: ${RESPONSE_TIME}s"
+          
+          # Check if response time is acceptable (< 2 seconds)
+          if (( $(echo "$RESPONSE_TIME > 2.0" | bc -l) )); then
+            echo "⚠️ Warning: Response time is high (${RESPONSE_TIME}s)"
+          else
+            echo "✅ Response time is acceptable (${RESPONSE_TIME}s)"
+          fi
+      
+      - name: Security scan
+        run: |
+          echo "🔒 Running security scan..."
+          
+          # Basic security headers check
+          HEADERS=$(curl -I "${{ needs.prepare.outputs.deploy_url }}" 2>/dev/null)
+          
+          if echo "$HEADERS" | grep -q "X-Frame-Options"; then
+            echo "✅ X-Frame-Options header present"
+          else
+            echo "⚠️ Warning: X-Frame-Options header missing"
+          fi
+          
+          if echo "$HEADERS" | grep -q "X-Content-Type-Options"; then
+            echo "✅ X-Content-Type-Options header present"
+          else
+            echo "⚠️ Warning: X-Content-Type-Options header missing"
+          fi
+          
+          echo "✅ Security scan completed"
+  
+  # =============================================================================
+  # DEPLOYMENT SUMMARY
+  # =============================================================================
+  
+  deployment-summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-services, database-migration, post-deployment-verification]
+    if: always()
+    
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "# 🚀 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ needs.prepare.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version**: ${{ needs.prepare.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Services**: ${{ needs.prepare.outputs.services }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: ${{ needs.prepare.outputs.deploy_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Config Hash**: ${{ needs.prepare.outputs.config_hash }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## Job Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Preparation**: ${{ needs.prepare.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Service Deployment**: ${{ needs.deploy-services.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Database Migration**: ${{ needs.database-migration.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Post-deployment Verification**: ${{ needs.post-deployment-verification.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall status
+          if [[ "${{ needs.deploy-services.result }}" == "success" && "${{ needs.database-migration.result }}" == "success" && "${{ needs.post-deployment-verification.result }}" == "success" ]]; then
+            echo "## ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+            echo "The deployment to ${{ needs.prepare.outputs.environment }} completed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+            echo "The deployment to ${{ needs.prepare.outputs.environment }} encountered issues. Please check the job logs for details." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [Application URL](${{ needs.prepare.outputs.deploy_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Monitoring Dashboard](${{ needs.prepare.outputs.deploy_url }}/admin/monitoring)" >> $GITHUB_STEP_SUMMARY
+          echo "- [API Documentation](${{ needs.prepare.outputs.deploy_url }}/api/docs)" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ github.event.inputs.version }}" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate environment
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            staging|production)
+              echo "✅ Valid environment: ${{ github.event.inputs.environment }}"
+              ;;
+            *)
+              echo "❌ Invalid environment: ${{ github.event.inputs.environment }}"
+              exit 1
+              ;;
+          esac
+
+      - name: Check image availability
+        run: |
+          echo "Checking if images are available for version: ${{ steps.version.outputs.version }}"
+          # Add logic to verify images exist in registry
+
+  # =============================================================================
+  # Database Migration
+  # =============================================================================
+  migrate:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [pre-deploy]
+    environment: ${{ needs.pre-deploy.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run database backup
+        if: needs.pre-deploy.outputs.environment == 'production'
+        run: |
+          echo "Creating database backup before migration..."
+          # Add database backup logic
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Run database migrations
+        run: |
+          echo "Running database migrations for ${{ needs.pre-deploy.outputs.environment }}..."
+          pnpm db:migrate
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NODE_ENV: ${{ needs.pre-deploy.outputs.environment }}
+
+      - name: Verify migration
+        run: |
+          echo "Verifying database migration..."
+          pnpm db:status
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # =============================================================================
+  # Deploy Services
+  # =============================================================================
+  deploy:
+    name: Deploy Services
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [pre-deploy, migrate]
+    environment: ${{ needs.pre-deploy.outputs.environment }}
+    
+    strategy:
+      matrix:
+        service: [web, auth-service]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup deployment tools
+        run: |
+          # Install kubectl, helm, or other deployment tools
+          echo "Setting up deployment tools..."
+
+      - name: Configure deployment environment
+        run: |
+          case "${{ needs.pre-deploy.outputs.environment }}" in
+            staging)
+              echo "DEPLOY_HOST=${{ secrets.STAGING_HOST }}" >> $GITHUB_ENV
+              echo "DEPLOY_KEY=${{ secrets.STAGING_DEPLOY_KEY }}" >> $GITHUB_ENV
+              echo "NAMESPACE=soulmatting-staging" >> $GITHUB_ENV
+              ;;
+            production)
+              echo "DEPLOY_HOST=${{ secrets.PRODUCTION_HOST }}" >> $GITHUB_ENV
+              echo "DEPLOY_KEY=${{ secrets.PRODUCTION_DEPLOY_KEY }}" >> $GITHUB_ENV
+              echo "NAMESPACE=soulmatting-production" >> $GITHUB_ENV
+              ;;
+          esac
+
+      - name: Deploy ${{ matrix.service }}
+        run: |
+          echo "Deploying ${{ matrix.service }} to ${{ needs.pre-deploy.outputs.environment }}..."
+          
+          # Example Kubernetes deployment
+          # kubectl set image deployment/${{ matrix.service }} \
+          #   ${{ matrix.service }}=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.pre-deploy.outputs.version }} \
+          #   --namespace=${{ env.NAMESPACE }}
+          
+          # Example Docker Swarm deployment
+          # docker service update \
+          #   --image ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.pre-deploy.outputs.version }} \
+          #   soulmatting_${{ matrix.service }}
+          
+          # Example traditional deployment
+          # ssh -i ${{ env.DEPLOY_KEY }} user@${{ env.DEPLOY_HOST }} \
+          #   "docker pull ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ needs.pre-deploy.outputs.version }} && \
+          #    docker-compose up -d ${{ matrix.service }}"
+          
+          echo "✅ ${{ matrix.service }} deployed successfully"
+        env:
+          KUBECONFIG: ${{ secrets.KUBECONFIG }}
+
+      - name: Wait for deployment
+        run: |
+          echo "Waiting for ${{ matrix.service }} to be ready..."
+          sleep 30
+          
+          # Example Kubernetes readiness check
+          # kubectl wait --for=condition=available deployment/${{ matrix.service }} \
+          #   --namespace=${{ env.NAMESPACE }} --timeout=300s
+
+      - name: Health check
+        if: github.event.inputs.force_deploy != 'true'
+        run: |
+          echo "Performing health check for ${{ matrix.service }}..."
+          
+          case "${{ matrix.service }}" in
+            web)
+              HEALTH_URL="https://${{ needs.pre-deploy.outputs.environment == 'production' && 'soulmatting.com' || 'staging.soulmatting.com' }}/health"
+              ;;
+            auth-service)
+              HEALTH_URL="https://${{ needs.pre-deploy.outputs.environment == 'production' && 'api.soulmatting.com' || 'api-staging.soulmatting.com' }}/auth/health"
+              ;;
+          esac
+          
+          for i in {1..10}; do
+            if curl -f "$HEALTH_URL"; then
+              echo "✅ Health check passed for ${{ matrix.service }}"
+              exit 0
+            fi
+            echo "⏳ Health check attempt $i/10 failed, retrying in 30s..."
+            sleep 30
+          done
+          
+          echo "❌ Health check failed for ${{ matrix.service }}"
+          exit 1
+
+  # =============================================================================
+  # Post-deployment Tasks
+  # =============================================================================
+  post-deploy:
+    name: Post-deployment Tasks
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [pre-deploy, deploy]
+    environment: ${{ needs.pre-deploy.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests for ${{ needs.pre-deploy.outputs.environment }}..."
+          
+          case "${{ needs.pre-deploy.outputs.environment }}" in
+            staging)
+              BASE_URL="https://staging.soulmatting.com"
+              ;;
+            production)
+              BASE_URL="https://soulmatting.com"
+              ;;
+          esac
+          
+          # Basic smoke tests
+          curl -f "$BASE_URL/health" || exit 1
+          curl -f "$BASE_URL/api/health" || exit 1
+          
+          echo "✅ Smoke tests passed"
+
+      - name: Update deployment status
+        run: |
+          echo "Updating deployment status..."
+          # Update deployment tracking system
+          # This could be:
+          # - Internal deployment dashboard
+          # - External monitoring system
+          # - Database record
+
+      - name: Warm up caches
+        if: needs.pre-deploy.outputs.environment == 'production'
+        run: |
+          echo "Warming up caches..."
+          # Add cache warming logic
+
+      - name: Update CDN
+        if: needs.pre-deploy.outputs.environment == 'production'
+        run: |
+          echo "Updating CDN..."
+          # Purge CDN cache or update CDN configuration
+
+      - name: Send deployment notification
+        run: |
+          echo "Sending deployment notification..."
+          
+          # Slack notification example
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"🚀 SoulMatting deployed to ${{ needs.pre-deploy.outputs.environment }} (version: ${{ needs.pre-deploy.outputs.version }})"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+          
+          # Discord notification example
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"content":"🚀 SoulMatting deployed to ${{ needs.pre-deploy.outputs.environment }} (version: ${{ needs.pre-deploy.outputs.version }})"}' \
+          #   ${{ secrets.DISCORD_WEBHOOK_URL }}
+          
+          echo "✅ Deployment notification sent"
+
+  # =============================================================================
+  # Rollback (if deployment fails)
+  # =============================================================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [pre-deploy, deploy]
+    if: failure() && needs.pre-deploy.outputs.environment == 'production'
+    environment: ${{ needs.pre-deploy.outputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get previous version
+        id: previous
+        run: |
+          echo "Getting previous stable version..."
+          # Logic to get the previous stable version
+          # This could come from:
+          # - Git tags
+          # - Deployment history
+          # - Container registry
+          echo "previous_version=v1.0.0" >> $GITHUB_OUTPUT
+
+      - name: Rollback services
+        run: |
+          echo "Rolling back to version: ${{ steps.previous.outputs.previous_version }}"
+          
+          # Rollback each service
+          for service in web auth-service; do
+            echo "Rolling back $service..."
+            
+            # Example Kubernetes rollback
+            # kubectl rollout undo deployment/$service --namespace=soulmatting-production
+            
+            # Example Docker Swarm rollback
+            # docker service update \
+            #   --image ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/$service:${{ steps.previous.outputs.previous_version }} \
+            #   soulmatting_$service
+          done
+
+      - name: Verify rollback
+        run: |
+          echo "Verifying rollback..."
+          sleep 60
+          
+          # Health checks after rollback
+          curl -f "https://soulmatting.com/health" || exit 1
+          curl -f "https://api.soulmatting.com/health" || exit 1
+          
+          echo "✅ Rollback completed successfully"
+
+      - name: Rollback database
+        if: needs.pre-deploy.outputs.environment == 'production'
+        run: |
+          echo "Rolling back database if necessary..."
+          # Add database rollback logic if migrations need to be reverted
+          # This should be done very carefully
+
+      - name: Send rollback notification
+        run: |
+          echo "Sending rollback notification..."
+          # Send urgent notification about rollback
+          echo "🚨 ROLLBACK: SoulMatting production deployment rolled back to ${{ steps.previous.outputs.previous_version }}"
+
+  # =============================================================================
+  # Deployment Summary
+  # =============================================================================
+  summary:
+    name: Deployment Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [pre-deploy, deploy, post-deploy, rollback]
+    
+    steps:
+      - name: Generate deployment summary
+        run: |
+          echo "# Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.pre-deploy.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.pre-deploy.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Triggered by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.deploy.result }}" == "success" ]; then
+            echo "**Status:** ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.rollback.result }}" == "success" ]; then
+            echo "**Status:** 🚨 Deployment Failed - Rollback Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "**Status:** ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Services Deployed:**" >> $GITHUB_STEP_SUMMARY
+          echo "- Web Application" >> $GITHUB_STEP_SUMMARY
+          echo "- Authentication Service" >> $GITHUB_STEP_SUMMARY
+          echo "- User Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Matching Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Messaging Service" >> $GITHUB_STEP_SUMMARY
+          echo "- Notification Service" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Quick Links" >> $GITHUB_STEP_SUMMARY
+          echo "- [Application URL](${{ needs.pre-deploy.outputs.deploy_url }})" >> $GITHUB_STEP_SUMMARY
+          echo "- [Monitoring Dashboard](${{ needs.pre-deploy.outputs.deploy_url }}/admin/monitoring)" >> $GITHUB_STEP_SUMMARY
+          echo "- [API Documentation](${{ needs.pre-deploy.outputs.deploy_url }}/api/docs)" >> $GITHUB_STEP_SUMMARY

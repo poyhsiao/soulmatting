@@ -7,7 +7,7 @@ This document analyzes the feasibility, pros and cons, architecture design, and 
 ## Technology Stack Components
 
 ### 1. PostgreSQL (Core Database)
-- **Version**: PostgreSQL 15+
+- **Version**: PostgreSQL 16+
 - **Role**: Primary relational database
 - **Usage**: User data, matching records, chat logs, system configuration
 

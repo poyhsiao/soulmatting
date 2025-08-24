@@ -1,0 +1,355 @@
+# SoulMatting Platform - Umbrella Helm Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# Global configuration
+global:
+  # Image registry settings
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+  
+  # Environment settings
+  environment: development
+  
+  # Domain settings
+  domain: soulmatting.local
+  
+  # TLS settings
+  tls:
+    enabled: true
+    secretName: soulmatting-tls
+  
+  # Database settings
+  database:
+    host: postgresql
+    port: 5432
+    username: postgres
+    password: postgres
+  
+  # Redis settings
+  redis:
+    host: redis-master
+    port: 6379
+    password: ""
+  
+  # Elasticsearch settings
+  elasticsearch:
+    host: elasticsearch
+    port: 9200
+    username: ""
+    password: ""
+  
+  # Security settings
+  security:
+    jwtSecret: "your-jwt-secret-here"
+    encryptionKey: "your-encryption-key-here"
+
+# Frontend Web Application
+web:
+  enabled: true
+  app:
+    name: soulmatting-web
+    port: 3000
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/web
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  secrets:
+    enabled: true
+    data:
+      example_secret: "test_value"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Authentication Service
+auth:
+  enabled: true
+  app:
+    name: soulmatting-auth
+    port: 3001
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/auth-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: auth.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# User Service
+user:
+  enabled: true
+  app:
+    name: soulmatting-user
+    port: 3002
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/user-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: user.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Match Service
+match:
+  enabled: true
+  app:
+    name: soulmatting-match
+    port: 3003
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/match-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: match.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Communication Service
+communication:
+  enabled: true
+  app:
+    name: soulmatting-communication
+    port: 3004
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/communication-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: communication.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Media Service
+media:
+  enabled: true
+  app:
+    name: soulmatting-media
+    port: 3005
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/media-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: media.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 10Gi
+
+# Notification Service
+notification:
+  enabled: true
+  app:
+    name: soulmatting-notification
+    port: 3006
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/notification-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: notification.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Search Service
+search:
+  enabled: true
+  app:
+    name: soulmatting-search
+    port: 3007
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/search-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: search.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+# Payment Service
+payment:
+  enabled: true
+  app:
+    name: soulmatting-payment
+    port: 3008
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/payment-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: payment.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+
+# Analytics Service
+analytics:
+  enabled: true
+  app:
+    name: soulmatting-analytics
+    port: 3009
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/analytics-service
+    tag: "latest"
+  ingress:
+    enabled: true
+    hosts:
+      - host: analytics.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+
+# Shared Infrastructure
+
+# Redis Configuration
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "postgres"
+    database: "soulmatting"
+  primary:
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+
+# Elasticsearch Configuration
+elasticsearch:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+  data:
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi

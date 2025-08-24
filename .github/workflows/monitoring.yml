@@ -1,0 +1,667 @@
+# =============================================================================
+# SoulMatting Platform - Monitoring and Alerting Workflow
+# =============================================================================
+# This workflow handles monitoring setup, health checks, and alerting
+# for the SoulMatting platform across different environments.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 🔍 Monitoring & Alerting
+
+on:
+  # Scheduled monitoring checks
+  schedule:
+    # Every 5 minutes during business hours (UTC)
+    - cron: '*/5 8-20 * * 1-5'
+    # Every 15 minutes during off-hours
+    - cron: '*/15 0-7,21-23 * * *'
+    # Every 30 minutes on weekends
+    - cron: '*/30 * * * 0,6'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to monitor'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+          - all
+      check_type:
+        description: 'Type of monitoring check'
+        required: true
+        default: 'health'
+        type: choice
+        options:
+          - health
+          - performance
+          - security
+          - full
+      alert_threshold:
+        description: 'Alert threshold (seconds for response time)'
+        required: false
+        default: '5'
+        type: string
+
+  # Trigger on deployment completion
+  workflow_run:
+    workflows: ["🚀 Deploy"]
+    types:
+      - completed
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
+  MONITORING_TIMEOUT: 30
+  ALERT_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+jobs:
+  # =============================================================================
+  # Environment Setup
+  # =============================================================================
+  setup:
+    name: Setup Monitoring
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    outputs:
+      environments: ${{ steps.config.outputs.environments }}
+      check_type: ${{ steps.config.outputs.check_type }}
+      alert_threshold: ${{ steps.config.outputs.alert_threshold }}
+      timestamp: ${{ steps.config.outputs.timestamp }}
+    
+    steps:
+      - name: Configure monitoring parameters
+        id: config
+        run: |
+          # Determine environments to monitor
+          if [ "${{ github.event.inputs.environment }}" == "all" ] || [ -z "${{ github.event.inputs.environment }}" ]; then
+            echo "environments=[\"development\",\"staging\",\"production\"]" >> $GITHUB_OUTPUT
+          else
+            echo "environments=[\"${{ github.event.inputs.environment }}\"]" >> $GITHUB_OUTPUT
+          fi
+          
+          # Set check type
+          echo "check_type=${{ github.event.inputs.check_type || 'health' }}" >> $GITHUB_OUTPUT
+          
+          # Set alert threshold
+          echo "alert_threshold=${{ github.event.inputs.alert_threshold || '5' }}" >> $GITHUB_OUTPUT
+          
+          # Set timestamp
+          echo "timestamp=$(date -u +%Y%m%d_%H%M%S)" >> $GITHUB_OUTPUT
+          
+          echo "🔍 Monitoring configuration:"
+          echo "- Environments: ${{ github.event.inputs.environment || 'all' }}"
+          echo "- Check Type: ${{ github.event.inputs.check_type || 'health' }}"
+          echo "- Alert Threshold: ${{ github.event.inputs.alert_threshold || '5' }}s"
+
+  # =============================================================================
+  # Health Checks
+  # =============================================================================
+  health_check:
+    name: Health Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup
+    if: contains(fromJson('["health", "full"]'), needs.setup.outputs.check_type)
+    
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+        service: 
+          - web
+          - api
+          - auth-service
+          - user-service
+          - matching-service
+          - messaging-service
+          - notification-service
+      fail-fast: false
+    
+    steps:
+      - name: Health check for ${{ matrix.service }} in ${{ matrix.environment }}
+        id: health
+        run: |
+          # Set environment-specific URLs
+          case "${{ matrix.environment }}" in
+            "development")
+              BASE_URL="http://localhost:3000"
+              ;;
+            "staging")
+              BASE_URL="https://staging.soulmatting.com"
+              ;;
+            "production")
+              BASE_URL="https://soulmatting.com"
+              ;;
+          esac
+          
+          # Set service-specific endpoints
+          case "${{ matrix.service }}" in
+            "web")
+              ENDPOINT="$BASE_URL/health"
+              ;;
+            "api")
+              ENDPOINT="$BASE_URL/api/health"
+              ;;
+            "auth-service")
+              ENDPOINT="$BASE_URL/api/auth/health"
+              ;;
+            "user-service")
+              ENDPOINT="$BASE_URL/api/users/health"
+              ;;
+            "matching-service")
+              ENDPOINT="$BASE_URL/api/matching/health"
+              ;;
+            "messaging-service")
+              ENDPOINT="$BASE_URL/api/messages/health"
+              ;;
+            "notification-service")
+              ENDPOINT="$BASE_URL/api/notifications/health"
+              ;;
+          esac
+          
+          echo "🔍 Checking health: $ENDPOINT"
+          
+          # Perform health check with timeout
+          START_TIME=$(date +%s.%N)
+          
+          if curl -f -s --max-time ${{ env.MONITORING_TIMEOUT }} "$ENDPOINT" > /dev/null; then
+            END_TIME=$(date +%s.%N)
+            RESPONSE_TIME=$(echo "$END_TIME - $START_TIME" | bc)
+            
+            echo "✅ Health check passed for ${{ matrix.service }}"
+            echo "⏱️ Response time: ${RESPONSE_TIME}s"
+            echo "status=healthy" >> $GITHUB_OUTPUT
+            echo "response_time=$RESPONSE_TIME" >> $GITHUB_OUTPUT
+            
+            # Check if response time exceeds threshold
+            if (( $(echo "$RESPONSE_TIME > ${{ needs.setup.outputs.alert_threshold }}" | bc -l) )); then
+              echo "⚠️ Response time exceeds threshold (${{ needs.setup.outputs.alert_threshold }}s)"
+              echo "slow_response=true" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "❌ Health check failed for ${{ matrix.service }}"
+            echo "status=unhealthy" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+
+      - name: Report health status
+        if: always()
+        run: |
+          if [ "${{ steps.health.outputs.status }}" == "healthy" ]; then
+            echo "✅ ${{ matrix.service }} (${{ matrix.environment }}): Healthy (${response_time}s)"
+          else
+            echo "❌ ${{ matrix.service }} (${{ matrix.environment }}): Unhealthy"
+          fi
+
+  # =============================================================================
+  # Performance Monitoring
+  # =============================================================================
+  performance_check:
+    name: Performance Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    if: contains(fromJson('["performance", "full"]'), needs.setup.outputs.check_type)
+    
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          npm install -g lighthouse artillery
+
+      - name: Run Lighthouse performance audit
+        id: lighthouse
+        run: |
+          # Set environment URL
+          case "${{ matrix.environment }}" in
+            "development")
+              URL="http://localhost:3000"
+              ;;
+            "staging")
+              URL="https://staging.soulmatting.com"
+              ;;
+            "production")
+              URL="https://soulmatting.com"
+              ;;
+          esac
+          
+          echo "🚀 Running Lighthouse audit for: $URL"
+          
+          # Run Lighthouse audit
+          lighthouse "$URL" \
+            --output=json \
+            --output-path=./lighthouse-report.json \
+            --chrome-flags="--headless --no-sandbox" \
+            --quiet
+          
+          # Extract key metrics
+          PERFORMANCE_SCORE=$(cat lighthouse-report.json | jq '.categories.performance.score * 100')
+          FCP=$(cat lighthouse-report.json | jq '.audits."first-contentful-paint".numericValue')
+          LCP=$(cat lighthouse-report.json | jq '.audits."largest-contentful-paint".numericValue')
+          CLS=$(cat lighthouse-report.json | jq '.audits."cumulative-layout-shift".numericValue')
+          
+          echo "📊 Performance Metrics:"
+          echo "- Performance Score: ${PERFORMANCE_SCORE}%"
+          echo "- First Contentful Paint: ${FCP}ms"
+          echo "- Largest Contentful Paint: ${LCP}ms"
+          echo "- Cumulative Layout Shift: $CLS"
+          
+          echo "performance_score=$PERFORMANCE_SCORE" >> $GITHUB_OUTPUT
+          echo "fcp=$FCP" >> $GITHUB_OUTPUT
+          echo "lcp=$LCP" >> $GITHUB_OUTPUT
+          echo "cls=$CLS" >> $GITHUB_OUTPUT
+
+      - name: Run load testing
+        id: load_test
+        run: |
+          # Set environment URL
+          case "${{ matrix.environment }}" in
+            "development")
+              URL="http://localhost:3000"
+              ;;
+            "staging")
+              URL="https://staging.soulmatting.com"
+              ;;
+            "production")
+              URL="https://soulmatting.com"
+              ;;
+          esac
+          
+          echo "🔥 Running load test for: $URL"
+          
+          # Create Artillery configuration
+          cat > artillery-config.yml << EOF
+          config:
+            target: '$URL'
+            phases:
+              - duration: 60
+                arrivalRate: 5
+                name: "Warm up"
+              - duration: 120
+                arrivalRate: 10
+                name: "Sustained load"
+          scenarios:
+            - name: "Homepage load"
+              weight: 50
+              flow:
+                - get:
+                    url: "/"
+            - name: "API health check"
+              weight: 30
+              flow:
+                - get:
+                    url: "/api/health"
+            - name: "User profile"
+              weight: 20
+              flow:
+                - get:
+                    url: "/api/users/profile"
+          EOF
+          
+          # Run Artillery load test
+          artillery run artillery-config.yml --output artillery-report.json
+          
+          # Extract metrics
+          AVG_RESPONSE_TIME=$(cat artillery-report.json | jq '.aggregate.latency.mean')
+          P95_RESPONSE_TIME=$(cat artillery-report.json | jq '.aggregate.latency.p95')
+          ERROR_RATE=$(cat artillery-report.json | jq '.aggregate.counters."http.codes.200" / .aggregate.counters."http.requests" * 100')
+          
+          echo "📈 Load Test Results:"
+          echo "- Average Response Time: ${AVG_RESPONSE_TIME}ms"
+          echo "- 95th Percentile: ${P95_RESPONSE_TIME}ms"
+          echo "- Success Rate: ${ERROR_RATE}%"
+          
+          echo "avg_response_time=$AVG_RESPONSE_TIME" >> $GITHUB_OUTPUT
+          echo "p95_response_time=$P95_RESPONSE_TIME" >> $GITHUB_OUTPUT
+          echo "success_rate=$ERROR_RATE" >> $GITHUB_OUTPUT
+
+      - name: Upload performance reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-reports-${{ matrix.environment }}-${{ needs.setup.outputs.timestamp }}
+          path: |
+            lighthouse-report.json
+            artillery-report.json
+          retention-days: 30
+
+  # =============================================================================
+  # Security Monitoring
+  # =============================================================================
+  security_check:
+    name: Security Check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup
+    if: contains(fromJson('["security", "full"]'), needs.setup.outputs.check_type)
+    
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+    
+    steps:
+      - name: Security headers check
+        id: security
+        run: |
+          # Set environment URL
+          case "${{ matrix.environment }}" in
+            "development")
+              URL="http://localhost:3000"
+              ;;
+            "staging")
+              URL="https://staging.soulmatting.com"
+              ;;
+            "production")
+              URL="https://soulmatting.com"
+              ;;
+          esac
+          
+          echo "🔒 Checking security headers for: $URL"
+          
+          # Check security headers
+          HEADERS=$(curl -I -s "$URL")
+          
+          # Check for required security headers
+          SECURITY_SCORE=0
+          TOTAL_CHECKS=6
+          
+          if echo "$HEADERS" | grep -i "x-frame-options" > /dev/null; then
+            echo "✅ X-Frame-Options header present"
+            SECURITY_SCORE=$((SECURITY_SCORE + 1))
+          else
+            echo "❌ X-Frame-Options header missing"
+          fi
+          
+          if echo "$HEADERS" | grep -i "x-content-type-options" > /dev/null; then
+            echo "✅ X-Content-Type-Options header present"
+            SECURITY_SCORE=$((SECURITY_SCORE + 1))
+          else
+            echo "❌ X-Content-Type-Options header missing"
+          fi
+          
+          if echo "$HEADERS" | grep -i "strict-transport-security" > /dev/null; then
+            echo "✅ Strict-Transport-Security header present"
+            SECURITY_SCORE=$((SECURITY_SCORE + 1))
+          else
+            echo "❌ Strict-Transport-Security header missing"
+          fi
+          
+          if echo "$HEADERS" | grep -i "content-security-policy" > /dev/null; then
+            echo "✅ Content-Security-Policy header present"
+            SECURITY_SCORE=$((SECURITY_SCORE + 1))
+          else
+            echo "❌ Content-Security-Policy header missing"
+          fi
+          
+          if echo "$HEADERS" | grep -i "x-xss-protection" > /dev/null; then
+            echo "✅ X-XSS-Protection header present"
+            SECURITY_SCORE=$((SECURITY_SCORE + 1))
+          else
+            echo "❌ X-XSS-Protection header missing"
+          fi
+          
+          if echo "$HEADERS" | grep -i "referrer-policy" > /dev/null; then
+            echo "✅ Referrer-Policy header present"
+            SECURITY_SCORE=$((SECURITY_SCORE + 1))
+          else
+            echo "❌ Referrer-Policy header missing"
+          fi
+          
+          SECURITY_PERCENTAGE=$((SECURITY_SCORE * 100 / TOTAL_CHECKS))
+          echo "🔒 Security Score: $SECURITY_SCORE/$TOTAL_CHECKS ($SECURITY_PERCENTAGE%)"
+          
+          echo "security_score=$SECURITY_SCORE" >> $GITHUB_OUTPUT
+          echo "security_percentage=$SECURITY_PERCENTAGE" >> $GITHUB_OUTPUT
+
+      - name: SSL/TLS check
+        if: matrix.environment != 'development'
+        run: |
+          # Set environment URL
+          case "${{ matrix.environment }}" in
+            "staging")
+              DOMAIN="staging.soulmatting.com"
+              ;;
+            "production")
+              DOMAIN="soulmatting.com"
+              ;;
+          esac
+          
+          echo "🔐 Checking SSL/TLS for: $DOMAIN"
+          
+          # Check SSL certificate
+          SSL_INFO=$(echo | openssl s_client -servername "$DOMAIN" -connect "$DOMAIN:443" 2>/dev/null | openssl x509 -noout -dates)
+          
+          echo "📜 SSL Certificate Info:"
+          echo "$SSL_INFO"
+          
+          # Check certificate expiry
+          EXPIRY_DATE=$(echo "$SSL_INFO" | grep "notAfter" | cut -d= -f2)
+          EXPIRY_TIMESTAMP=$(date -d "$EXPIRY_DATE" +%s)
+          CURRENT_TIMESTAMP=$(date +%s)
+          DAYS_UNTIL_EXPIRY=$(( (EXPIRY_TIMESTAMP - CURRENT_TIMESTAMP) / 86400 ))
+          
+          echo "📅 Certificate expires in $DAYS_UNTIL_EXPIRY days"
+          
+          if [ $DAYS_UNTIL_EXPIRY -lt 30 ]; then
+            echo "⚠️ Certificate expires soon!"
+          fi
+
+  # =============================================================================
+  # Alert Generation
+  # =============================================================================
+  alert:
+    name: Generate Alerts
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: [setup, health_check, performance_check, security_check]
+    if: always() && (failure() || contains(needs.*.outputs.slow_response, 'true'))
+    
+    steps:
+      - name: Prepare alert data
+        id: alert_data
+        run: |
+          # Collect failed jobs
+          FAILED_JOBS=""
+          
+          if [ "${{ needs.health_check.result }}" == "failure" ]; then
+            FAILED_JOBS="$FAILED_JOBS Health Check,"
+          fi
+          
+          if [ "${{ needs.performance_check.result }}" == "failure" ]; then
+            FAILED_JOBS="$FAILED_JOBS Performance Check,"
+          fi
+          
+          if [ "${{ needs.security_check.result }}" == "failure" ]; then
+            FAILED_JOBS="$FAILED_JOBS Security Check,"
+          fi
+          
+          # Remove trailing comma
+          FAILED_JOBS=${FAILED_JOBS%,}
+          
+          echo "failed_jobs=$FAILED_JOBS" >> $GITHUB_OUTPUT
+          
+          # Determine alert severity
+          if [ "${{ needs.health_check.result }}" == "failure" ]; then
+            echo "severity=critical" >> $GITHUB_OUTPUT
+          elif [ "${{ needs.security_check.result }}" == "failure" ]; then
+            echo "severity=high" >> $GITHUB_OUTPUT
+          else
+            echo "severity=medium" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Send Slack alert
+        if: env.ALERT_WEBHOOK_URL != ''
+        run: |
+          # Prepare Slack message
+          SEVERITY_EMOJI=""
+          case "${{ steps.alert_data.outputs.severity }}" in
+            "critical") SEVERITY_EMOJI="🚨" ;;
+            "high") SEVERITY_EMOJI="⚠️" ;;
+            "medium") SEVERITY_EMOJI="⚡" ;;
+          esac
+          
+          MESSAGE="{
+            \"text\": \"$SEVERITY_EMOJI SoulMatting Monitoring Alert\",
+            \"blocks\": [
+              {
+                \"type\": \"header\",
+                \"text\": {
+                  \"type\": \"plain_text\",
+                  \"text\": \"$SEVERITY_EMOJI SoulMatting Monitoring Alert\"
+                }
+              },
+              {
+                \"type\": \"section\",
+                \"fields\": [
+                  {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Severity:* ${{ steps.alert_data.outputs.severity }}\"
+                  },
+                  {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Environment:* ${{ needs.setup.outputs.environments }}\"
+                  },
+                  {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Failed Jobs:* ${{ steps.alert_data.outputs.failed_jobs }}\"
+                  },
+                  {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Timestamp:* $(date -u)\"
+                  }
+                ]
+              },
+              {
+                \"type\": \"actions\",
+                \"elements\": [
+                  {
+                    \"type\": \"button\",
+                    \"text\": {
+                      \"type\": \"plain_text\",
+                      \"text\": \"View Workflow\"
+                    },
+                    \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+                  }
+                ]
+              }
+            ]
+          }"
+          
+          # Send to Slack
+          curl -X POST -H 'Content-type: application/json' \
+            --data "$MESSAGE" \
+            "${{ env.ALERT_WEBHOOK_URL }}"
+
+      - name: Create GitHub issue
+        if: steps.alert_data.outputs.severity == 'critical'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Critical Monitoring Alert - ${new Date().toISOString()}`,
+              body: `## Critical Monitoring Alert
+              
+              **Severity:** ${{ steps.alert_data.outputs.severity }}
+              **Environment:** ${{ needs.setup.outputs.environments }}
+              **Failed Jobs:** ${{ steps.alert_data.outputs.failed_jobs }}
+              **Timestamp:** ${new Date().toISOString()}
+              
+              **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+              
+              Please investigate and resolve the issues immediately.
+              
+              ---
+              *This issue was automatically created by the monitoring workflow.*`,
+              labels: ['monitoring', 'critical', 'alert']
+            });
+            
+            console.log(`Created issue #${issue.data.number}`);
+
+  # =============================================================================
+  # Monitoring Summary
+  # =============================================================================
+  summary:
+    name: Monitoring Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [setup, health_check, performance_check, security_check, alert]
+    
+    steps:
+      - name: Generate monitoring summary
+        run: |
+          echo "# 🔍 Monitoring Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "**Check Type:** ${{ needs.setup.outputs.check_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environments:** ${{ needs.setup.outputs.environments }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Health Check Results
+          if [ "${{ needs.health_check.result }}" != "skipped" ]; then
+            echo "## 🏥 Health Check Results" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.health_check.result }}" == "success" ]; then
+              echo "✅ All services are healthy" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Some services are unhealthy" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Performance Check Results
+          if [ "${{ needs.performance_check.result }}" != "skipped" ]; then
+            echo "## 🚀 Performance Check Results" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.performance_check.result }}" == "success" ]; then
+              echo "✅ Performance metrics within acceptable range" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Performance issues detected" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Security Check Results
+          if [ "${{ needs.security_check.result }}" != "skipped" ]; then
+            echo "## 🔒 Security Check Results" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ needs.security_check.result }}" == "success" ]; then
+              echo "✅ Security checks passed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ Security issues detected" >> $GITHUB_STEP_SUMMARY
+            fi
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Alert Status
+          if [ "${{ needs.alert.result }}" == "success" ]; then
+            echo "## 🚨 Alerts Generated" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ Alerts have been sent due to monitoring failures" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ No Alerts" >> $GITHUB_STEP_SUMMARY
+            echo "🎉 All monitoring checks passed successfully" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Monitoring completed at $(date -u)*" >> $GITHUB_STEP_SUMMARY

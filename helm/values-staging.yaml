@@ -1,0 +1,649 @@
+# SoulMatting Platform - Staging Environment Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# Global configuration for staging environment
+global:
+  imageRegistry: ghcr.io
+  imagePullSecrets:
+    - name: ghcr-secret
+  environment: staging
+  domain: staging.soulmatting.com
+  debug: false
+  
+  # TLS enabled for staging
+  tls:
+    enabled: true
+    secretName: soulmatting-staging-tls
+  
+  # Staging database settings
+  database:
+    host: postgresql
+    port: 5432
+    username: postgres
+    passwordSecret: postgresql-secret
+    passwordKey: postgres-password
+  
+  # Staging Redis settings
+  redis:
+    host: redis-master
+    port: 6379
+    passwordSecret: redis-secret
+    passwordKey: redis-password
+  
+  # Staging Elasticsearch settings
+  elasticsearch:
+    host: elasticsearch
+    port: 9200
+    username: elastic
+    passwordSecret: elasticsearch-secret
+    passwordKey: elastic-password
+  
+  # Staging security settings
+  security:
+    jwtSecretRef:
+      name: app-secrets
+      key: jwt-secret
+    encryptionKeyRef:
+      name: app-secrets
+      key: encryption-key
+
+# Frontend Web Application
+web:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/web
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3000
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: staging.soulmatting.com
+        paths:
+          - path: /
+            pathType: Prefix
+    tls:
+      - secretName: soulmatting-staging-tls
+        hosts:
+          - staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  
+  env:
+    NODE_ENV: staging
+    REACT_APP_API_URL: https://api-staging.soulmatting.com
+    REACT_APP_WS_URL: wss://ws-staging.soulmatting.com
+
+# Authentication Service
+auth:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/auth-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3001
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /auth
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+  
+  env:
+    NODE_ENV: staging
+    LOG_LEVEL: info
+    DATABASE_URL: postgresql://postgres:$(POSTGRES_PASSWORD)@postgresql:5432/auth_service
+    REDIS_URL: redis://:$(REDIS_PASSWORD)@redis-master:6379
+
+# User Service
+user:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/user-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3002
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /users
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Match Service
+match:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/match-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3003
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /matches
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 8
+    targetCPUUtilizationPercentage: 70
+
+# Communication Service
+communication:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/communication-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3004
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/websocket-services: soulmatting-communication
+    hosts:
+      - host: ws-staging.soulmatting.com
+        paths:
+          - path: /
+            pathType: Prefix
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /communication
+            pathType: Prefix
+    tls:
+      - secretName: ws-staging-tls
+        hosts:
+          - ws-staging.soulmatting.com
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Media Service
+media:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/media-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3005
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /media
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  
+  persistence:
+    enabled: true
+    storageClass: "gp2"
+    size: 50Gi
+
+# Notification Service
+notification:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/notification-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3006
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /notifications
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Search Service
+search:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/search-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3007
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /search
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Payment Service
+payment:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/payment-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3008
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /payments
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 250m
+      memory: 256Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 70
+
+# Analytics Service
+analytics:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/analytics-service
+    tag: "staging"
+    pullPolicy: IfNotPresent
+  
+  service:
+    type: ClusterIP
+    port: 3009
+  
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-staging
+    hosts:
+      - host: api-staging.soulmatting.com
+        paths:
+          - path: /analytics
+            pathType: Prefix
+    tls:
+      - secretName: api-staging-tls
+        hosts:
+          - api-staging.soulmatting.com
+  
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  
+  autoscaling:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+
+# Shared Infrastructure - Staging Configuration
+
+# Redis Configuration
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: "staging-redis-password"
+    existingSecret: redis-secret
+    existingSecretPasswordKey: redis-password
+  master:
+    persistence:
+      enabled: true
+      storageClass: "gp2"
+      size: 8Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  replica:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      storageClass: "gp2"
+      size: 8Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "staging-postgres-password"
+    database: "soulmatting"
+    existingSecret: postgresql-secret
+    secretKeys:
+      adminPasswordKey: postgres-password
+  primary:
+    persistence:
+      enabled: true
+      storageClass: "gp2"
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    initdb:
+      scripts:
+        init.sql: |
+          -- Create databases for each service
+          CREATE DATABASE auth_service;
+          CREATE DATABASE user_service;
+          CREATE DATABASE match_service;
+          CREATE DATABASE communication_service;
+          CREATE DATABASE media_service;
+          CREATE DATABASE notification_service;
+          CREATE DATABASE search_service;
+          CREATE DATABASE payment_service;
+          CREATE DATABASE analytics_service;
+          
+          -- Grant permissions
+          GRANT ALL PRIVILEGES ON DATABASE auth_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE user_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE match_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE communication_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE media_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE notification_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE search_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE payment_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE analytics_service TO postgres;
+  readReplicas:
+    replicaCount: 1
+    persistence:
+      enabled: true
+      storageClass: "gp2"
+      size: 20Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+
+# Elasticsearch Configuration
+elasticsearch:
+  enabled: true
+  auth:
+    enabled: true
+    elasticPassword: "staging-elastic-password"
+    existingSecret: elasticsearch-secret
+    secretKeys:
+      elasticPassword: elastic-password
+  master:
+    replicaCount: 3
+    persistence:
+      enabled: true
+      storageClass: "gp2"
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 500m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 512Mi
+  data:
+    replicaCount: 2
+    persistence:
+      enabled: true
+      storageClass: "gp2"
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+  coordinating:
+    replicaCount: 2
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi
+  ingest:
+    replicaCount: 1
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 250m
+        memory: 256Mi

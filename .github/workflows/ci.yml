@@ -1,0 +1,451 @@
+# SoulMatting Platform - Continuous Integration Workflow
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2025-01-21
+
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+  PNPM_VERSION: '10'
+  REGISTRY_URL: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # =============================================================================
+  # Code Quality & Security Checks
+  # =============================================================================
+  quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint code
+        run: pnpm lint
+
+      - name: Check TypeScript
+        run: pnpm type-check
+
+      - name: Check code formatting
+        run: pnpm format:check
+
+      - name: Security audit
+        run: pnpm audit --audit-level moderate
+        continue-on-error: true
+
+      - name: License check
+        run: pnpm license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC'
+        continue-on-error: true
+
+  # =============================================================================
+  # Unit & Integration Tests
+  # =============================================================================
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    strategy:
+      matrix:
+        test-group: [frontend, backend]
+    
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: soulmatting_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Get pnpm store directory
+        shell: bash
+        run: |
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+
+      - name: Setup pnpm cache
+        uses: actions/cache@v3
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup test environment
+        run: |
+          cp .env.example .env.test
+          echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/soulmatting_test" >> .env.test
+          echo "REDIS_URL=redis://localhost:6379/1" >> .env.test
+
+      - name: Run database migrations
+        run: pnpm db:migrate:test
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/soulmatting_test
+
+      - name: Run tests - Frontend
+        if: matrix.test-group == 'frontend'
+        run: pnpm test:frontend --coverage
+        env:
+          CI: true
+
+      - name: Run tests - Backend
+        if: matrix.test-group == 'backend'
+        run: pnpm test:backend --coverage
+        env:
+          CI: true
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/soulmatting_test
+          REDIS_URL: redis://localhost:6379/1
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: ./coverage/lcov.info
+          flags: ${{ matrix.test-group }}
+          name: codecov-${{ matrix.test-group }}
+          fail_ci_if_error: false
+
+  # =============================================================================
+  # End-to-End Tests
+  # =============================================================================
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: [quality, test]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Start services with Docker Compose
+        run: |
+          cp .env.example .env
+          docker-compose -f docker-compose.yml -f docker-compose.dev.yml up -d
+          sleep 30
+
+      - name: Wait for services to be ready
+        run: |
+          timeout 300 bash -c 'until curl -f http://localhost:3000/health; do sleep 5; done'
+          timeout 300 bash -c 'until curl -f http://localhost:8000/health; do sleep 5; done'
+
+      - name: Run E2E tests
+        run: pnpm test:e2e
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: Upload E2E test artifacts
+        uses: actions/upload-artifact@v3
+        if: failure()
+        with:
+          name: e2e-artifacts
+          path: |
+            tests/e2e/screenshots/
+            tests/e2e/videos/
+          retention-days: 7
+
+      - name: Stop services
+        if: always()
+        run: docker-compose down -v
+
+  # =============================================================================
+  # Build & Package
+  # =============================================================================
+  build:
+    name: Build & Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [quality, test]
+    
+    strategy:
+      matrix:
+        service: [web, auth-service, user, match, communication, media, notification, search]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+          run_install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build application
+        run: pnpm build:${{ matrix.service }}
+        env:
+          NODE_ENV: production
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Container Registry
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY_URL }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ${{ matrix.service == 'web' && './apps/web/Dockerfile' || format('./services/{0}/Dockerfile', matrix.service) }}
+          platforms: linux/amd64,linux/arm64
+          push: ${{ github.event_name == 'push' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_DATE=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VCS_REF=${{ github.sha }}
+
+  # =============================================================================
+  # Security Scanning
+  # =============================================================================
+  security:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    if: github.event_name == 'push'
+    
+    strategy:
+      matrix:
+        service: [web, auth-service, user, match, communication, media, notification, search]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+
+  # =============================================================================
+  # Deployment (Production)
+  # =============================================================================
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [e2e, build, security]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment:
+      name: production
+      url: https://soulmatting.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to production
+        run: |
+          echo "Deploying to production environment..."
+          # Add your deployment logic here
+          # This could be:
+          # - Kubernetes deployment
+          # - Docker Swarm deployment
+          # - Cloud provider deployment (AWS ECS, Google Cloud Run, etc.)
+          # - Traditional server deployment
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          PRODUCTION_HOST: ${{ secrets.PRODUCTION_HOST }}
+
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f https://soulmatting.com/health || exit 1
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Production deployment successful!"
+          # Add notification logic (Slack, Discord, email, etc.)
+
+      - name: Notify deployment failure
+        if: failure()
+        run: |
+          echo "❌ Production deployment failed!"
+          # Add notification logic (Slack, Discord, email, etc.)
+
+  # =============================================================================
+  # Deployment (Staging)
+  # =============================================================================
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: [test, build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment:
+      name: staging
+      url: https://staging.soulmatting.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Deploy to staging
+        run: |
+          echo "Deploying to staging environment..."
+          # Add your staging deployment logic here
+        env:
+          DEPLOY_KEY: ${{ secrets.STAGING_DEPLOY_KEY }}
+          STAGING_HOST: ${{ secrets.STAGING_HOST }}
+
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f https://staging.soulmatting.com/health || exit 1
+
+      - name: Run smoke tests
+        run: |
+          echo "Running smoke tests on staging..."
+          # Add smoke test logic here
+
+  # =============================================================================
+  # Cleanup
+  # =============================================================================
+  cleanup:
+    name: Cleanup
+    runs-on: ubuntu-latest
+    if: always()
+    needs: [deploy-production, deploy-staging]
+    
+    steps:
+      - name: Clean up old images
+        run: |
+          echo "Cleaning up old container images..."
+          # Add cleanup logic for old images
+
+      - name: Clean up artifacts
+        run: |
+          echo "Cleaning up build artifacts..."
+          # Add cleanup logic for build artifacts

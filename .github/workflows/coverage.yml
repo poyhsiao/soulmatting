@@ -1,0 +1,935 @@
+# =============================================================================
+# SoulMatting Platform - Code Coverage Workflow
+# =============================================================================
+# This workflow performs comprehensive code coverage analysis for both frontend
+# and backend services, generating detailed coverage reports and enforcing
+# coverage thresholds.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 📊 Code Coverage
+
+on:
+  # Trigger on pull requests
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.py'
+      - '**/*.test.*'
+      - '**/*.spec.*'
+      - 'package*.json'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'jest.config.*'
+      - 'vitest.config.*'
+      - 'pytest.ini'
+      - 'coverage.ini'
+  
+  # Trigger on pushes to main branches
+  push:
+    branches: [main, develop]
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.py'
+      - '**/*.test.*'
+      - '**/*.spec.*'
+      - 'package*.json'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'jest.config.*'
+      - 'vitest.config.*'
+      - 'pytest.ini'
+      - 'coverage.ini'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      coverage_type:
+        description: 'Type of coverage analysis to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - frontend
+          - backend
+          - unit
+          - integration
+          - e2e
+      threshold:
+        description: 'Minimum coverage threshold (%)'
+        required: false
+        type: number
+        default: 80
+      generate_badge:
+        description: 'Generate coverage badge'
+        required: false
+        type: boolean
+        default: true
+      upload_codecov:
+        description: 'Upload to Codecov'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
+  PNPM_VERSION: '10'
+  COVERAGE_THRESHOLD: 80
+
+jobs:
+  # =============================================================================
+  # Coverage Setup
+  # =============================================================================
+  setup:
+    name: Coverage Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    outputs:
+      coverage_type: ${{ steps.setup.outputs.coverage_type }}
+      threshold: ${{ steps.setup.outputs.threshold }}
+      generate_badge: ${{ steps.setup.outputs.generate_badge }}
+      upload_codecov: ${{ steps.setup.outputs.upload_codecov }}
+      has_frontend_changes: ${{ steps.changes.outputs.frontend }}
+      has_backend_changes: ${{ steps.changes.outputs.backend }}
+      has_test_changes: ${{ steps.changes.outputs.tests }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'apps/web/**'
+              - 'packages/**'
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.jsx'
+              - 'package*.json'
+              - 'jest.config.*'
+              - 'vitest.config.*'
+            backend:
+              - 'services/**'
+              - '**/*.py'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+              - 'pytest.ini'
+              - 'coverage.ini'
+            tests:
+              - '**/*.test.*'
+              - '**/*.spec.*'
+              - 'tests/**'
+              - '__tests__/**'
+
+      - name: Setup parameters
+        id: setup
+        run: |
+          # Determine coverage type
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            COVERAGE_TYPE="${{ github.event.inputs.coverage_type }}"
+            THRESHOLD="${{ github.event.inputs.threshold }}"
+            GENERATE_BADGE="${{ github.event.inputs.generate_badge }}"
+            UPLOAD_CODECOV="${{ github.event.inputs.upload_codecov }}"
+          else
+            COVERAGE_TYPE="all"
+            THRESHOLD="${{ env.COVERAGE_THRESHOLD }}"
+            GENERATE_BADGE="true"
+            UPLOAD_CODECOV="true"
+          fi
+          
+          echo "📊 Code Coverage Configuration:"
+          echo "- Coverage Type: $COVERAGE_TYPE"
+          echo "- Threshold: $THRESHOLD%"
+          echo "- Generate Badge: $GENERATE_BADGE"
+          echo "- Upload to Codecov: $UPLOAD_CODECOV"
+          echo "- Frontend Changes: ${{ steps.changes.outputs.frontend }}"
+          echo "- Backend Changes: ${{ steps.changes.outputs.backend }}"
+          echo "- Test Changes: ${{ steps.changes.outputs.tests }}"
+          
+          # Set outputs
+          echo "coverage_type=$COVERAGE_TYPE" >> $GITHUB_OUTPUT
+          echo "threshold=$THRESHOLD" >> $GITHUB_OUTPUT
+          echo "generate_badge=$GENERATE_BADGE" >> $GITHUB_OUTPUT
+          echo "upload_codecov=$UPLOAD_CODECOV" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Frontend Coverage
+  # =============================================================================
+  frontend_coverage:
+    name: Frontend Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: |
+      (needs.setup.outputs.has_frontend_changes == 'true' || needs.setup.outputs.has_test_changes == 'true') &&
+      (needs.setup.outputs.coverage_type == 'all' || needs.setup.outputs.coverage_type == 'frontend')
+    
+    strategy:
+      matrix:
+        test_type: [unit, integration]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing frontend dependencies"
+          pnpm install --frozen-lockfile
+
+      - name: Run unit tests with coverage
+        if: matrix.test_type == 'unit'
+        run: |
+          echo "🧪 Running unit tests with coverage"
+          
+          # Create coverage directory
+          mkdir -p coverage/frontend/unit
+          
+          # Run Jest tests with coverage
+          pnpm run test:unit \
+            --coverage \
+            --coverageDirectory=coverage/frontend/unit \
+            --coverageReporters=json,lcov,html,text \
+            --coverageThreshold='{
+              "global": {
+                "branches": ${{ needs.setup.outputs.threshold }},
+                "functions": ${{ needs.setup.outputs.threshold }},
+                "lines": ${{ needs.setup.outputs.threshold }},
+                "statements": ${{ needs.setup.outputs.threshold }}
+              }
+            }' || {
+            echo "❌ Unit tests failed or coverage threshold not met"
+            exit 1
+          }
+          
+          echo "✅ Unit tests with coverage completed"
+
+      - name: Run integration tests with coverage
+        if: matrix.test_type == 'integration'
+        run: |
+          echo "🧪 Running integration tests with coverage"
+          
+          # Create coverage directory
+          mkdir -p coverage/frontend/integration
+          
+          # Run Vitest integration tests with coverage
+          pnpm run test:integration \
+            --coverage \
+            --coverage.reporter=json,lcov,html,text \
+            --coverage.reportsDirectory=coverage/frontend/integration \
+            --coverage.thresholds.lines=${{ needs.setup.outputs.threshold }} \
+            --coverage.thresholds.functions=${{ needs.setup.outputs.threshold }} \
+            --coverage.thresholds.branches=${{ needs.setup.outputs.threshold }} \
+            --coverage.thresholds.statements=${{ needs.setup.outputs.threshold }} || {
+            echo "❌ Integration tests failed or coverage threshold not met"
+            exit 1
+          }
+          
+          echo "✅ Integration tests with coverage completed"
+
+      - name: Generate coverage summary
+        run: |
+          echo "📊 Generating coverage summary for ${{ matrix.test_type }}"
+          
+          COVERAGE_DIR="coverage/frontend/${{ matrix.test_type }}"
+          
+          if [ -f "$COVERAGE_DIR/coverage-summary.json" ]; then
+            # Extract coverage metrics
+            LINES_PCT=$(jq -r '.total.lines.pct' "$COVERAGE_DIR/coverage-summary.json")
+            FUNCTIONS_PCT=$(jq -r '.total.functions.pct' "$COVERAGE_DIR/coverage-summary.json")
+            BRANCHES_PCT=$(jq -r '.total.branches.pct' "$COVERAGE_DIR/coverage-summary.json")
+            STATEMENTS_PCT=$(jq -r '.total.statements.pct' "$COVERAGE_DIR/coverage-summary.json")
+            
+            echo "📊 Frontend ${{ matrix.test_type }} Coverage Results:"
+            echo "- Lines: ${LINES_PCT}%"
+            echo "- Functions: ${FUNCTIONS_PCT}%"
+            echo "- Branches: ${BRANCHES_PCT}%"
+            echo "- Statements: ${STATEMENTS_PCT}%"
+            
+            # Create detailed summary
+            cat > "$COVERAGE_DIR/summary.json" << EOF
+{
+  "test_type": "${{ matrix.test_type }}",
+  "platform": "frontend",
+  "coverage": {
+    "lines": $LINES_PCT,
+    "functions": $FUNCTIONS_PCT,
+    "branches": $BRANCHES_PCT,
+    "statements": $STATEMENTS_PCT
+  },
+  "threshold": ${{ needs.setup.outputs.threshold }},
+  "passed": $(echo "$LINES_PCT >= ${{ needs.setup.outputs.threshold }}" | bc -l),
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+          fi
+
+      - name: Upload coverage to Codecov
+        if: needs.setup.outputs.upload_codecov == 'true'
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/frontend/${{ matrix.test_type }}/lcov.info
+          flags: frontend,${{ matrix.test_type }}
+          name: frontend-${{ matrix.test_type }}-coverage
+          fail_ci_if_error: false
+
+      - name: Upload frontend coverage results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage-${{ matrix.test_type }}
+          path: coverage/frontend/${{ matrix.test_type }}/
+          retention-days: 30
+
+  # =============================================================================
+  # Backend Coverage
+  # =============================================================================
+  backend_coverage:
+    name: Backend Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: |
+      (needs.setup.outputs.has_backend_changes == 'true' || needs.setup.outputs.has_test_changes == 'true') &&
+      (needs.setup.outputs.coverage_type == 'all' || needs.setup.outputs.coverage_type == 'backend')
+    
+    strategy:
+      matrix:
+        service: [auth-service, user-service, matching-service, messaging-service, notification-service]
+        test_type: [unit, integration]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          echo "📦 Installing Python dependencies for ${{ matrix.service }}"
+          
+          # Navigate to service directory
+          cd services/${{ matrix.service }}
+          
+          # Install dependencies
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          
+          if [ -f "requirements-dev.txt" ]; then
+            pip install -r requirements-dev.txt
+          fi
+          
+          # Install coverage tools
+          pip install pytest-cov coverage[toml]
+
+      - name: Run unit tests with coverage
+        if: matrix.test_type == 'unit'
+        run: |
+          echo "🧪 Running unit tests with coverage for ${{ matrix.service }}"
+          
+          # Create coverage directory
+          mkdir -p coverage/backend/${{ matrix.service }}/unit
+          
+          cd services/${{ matrix.service }}
+          
+          # Run pytest with coverage
+          pytest tests/unit/ \
+            --cov=. \
+            --cov-report=json:../../coverage/backend/${{ matrix.service }}/unit/coverage.json \
+            --cov-report=lcov:../../coverage/backend/${{ matrix.service }}/unit/lcov.info \
+            --cov-report=html:../../coverage/backend/${{ matrix.service }}/unit/html \
+            --cov-report=term \
+            --cov-fail-under=${{ needs.setup.outputs.threshold }} \
+            --junitxml=../../coverage/backend/${{ matrix.service }}/unit/junit.xml || {
+            echo "❌ Unit tests failed or coverage threshold not met for ${{ matrix.service }}"
+            exit 1
+          }
+          
+          echo "✅ Unit tests with coverage completed for ${{ matrix.service }}"
+
+      - name: Run integration tests with coverage
+        if: matrix.test_type == 'integration'
+        run: |
+          echo "🧪 Running integration tests with coverage for ${{ matrix.service }}"
+          
+          # Create coverage directory
+          mkdir -p coverage/backend/${{ matrix.service }}/integration
+          
+          cd services/${{ matrix.service }}
+          
+          # Run pytest with coverage
+          pytest tests/integration/ \
+            --cov=. \
+            --cov-report=json:../../coverage/backend/${{ matrix.service }}/integration/coverage.json \
+            --cov-report=lcov:../../coverage/backend/${{ matrix.service }}/integration/lcov.info \
+            --cov-report=html:../../coverage/backend/${{ matrix.service }}/integration/html \
+            --cov-report=term \
+            --cov-fail-under=${{ needs.setup.outputs.threshold }} \
+            --junitxml=../../coverage/backend/${{ matrix.service }}/integration/junit.xml || {
+            echo "❌ Integration tests failed or coverage threshold not met for ${{ matrix.service }}"
+            exit 1
+          }
+          
+          echo "✅ Integration tests with coverage completed for ${{ matrix.service }}"
+
+      - name: Generate coverage summary
+        run: |
+          echo "📊 Generating coverage summary for ${{ matrix.service }} ${{ matrix.test_type }}"
+          
+          COVERAGE_DIR="coverage/backend/${{ matrix.service }}/${{ matrix.test_type }}"
+          
+          if [ -f "$COVERAGE_DIR/coverage.json" ]; then
+            # Extract coverage metrics
+            LINES_PCT=$(jq -r '.totals.percent_covered' "$COVERAGE_DIR/coverage.json")
+            MISSING_LINES=$(jq -r '.totals.missing_lines' "$COVERAGE_DIR/coverage.json")
+            COVERED_LINES=$(jq -r '.totals.covered_lines' "$COVERAGE_DIR/coverage.json")
+            TOTAL_LINES=$(jq -r '.totals.num_statements' "$COVERAGE_DIR/coverage.json")
+            
+            echo "📊 Backend ${{ matrix.service }} ${{ matrix.test_type }} Coverage Results:"
+            echo "- Coverage: ${LINES_PCT}%"
+            echo "- Covered Lines: $COVERED_LINES"
+            echo "- Missing Lines: $MISSING_LINES"
+            echo "- Total Lines: $TOTAL_LINES"
+            
+            # Create detailed summary
+            cat > "$COVERAGE_DIR/summary.json" << EOF
+{
+  "service": "${{ matrix.service }}",
+  "test_type": "${{ matrix.test_type }}",
+  "platform": "backend",
+  "coverage": {
+    "percent": $LINES_PCT,
+    "covered_lines": $COVERED_LINES,
+    "missing_lines": $MISSING_LINES,
+    "total_lines": $TOTAL_LINES
+  },
+  "threshold": ${{ needs.setup.outputs.threshold }},
+  "passed": $(echo "$LINES_PCT >= ${{ needs.setup.outputs.threshold }}" | bc -l),
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+          fi
+
+      - name: Upload coverage to Codecov
+        if: needs.setup.outputs.upload_codecov == 'true'
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage/backend/${{ matrix.service }}/${{ matrix.test_type }}/lcov.info
+          flags: backend,${{ matrix.service }},${{ matrix.test_type }}
+          name: backend-${{ matrix.service }}-${{ matrix.test_type }}-coverage
+          fail_ci_if_error: false
+
+      - name: Upload backend coverage results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage-${{ matrix.service }}-${{ matrix.test_type }}
+          path: coverage/backend/${{ matrix.service }}/${{ matrix.test_type }}/
+          retention-days: 30
+
+  # =============================================================================
+  # E2E Coverage
+  # =============================================================================
+  e2e_coverage:
+    name: E2E Coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: setup
+    if: |
+      (needs.setup.outputs.has_frontend_changes == 'true' || needs.setup.outputs.has_test_changes == 'true') &&
+      (needs.setup.outputs.coverage_type == 'all' || needs.setup.outputs.coverage_type == 'e2e')
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: soulmatting_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing all dependencies"
+          
+          # Install frontend dependencies
+          pnpm install --frozen-lockfile
+          
+          # Install backend dependencies
+          for service in auth-service user-service matching-service messaging-service notification-service; do
+            cd services/$service
+            if [ -f "requirements.txt" ]; then
+              pip install -r requirements.txt
+            fi
+            if [ -f "requirements-dev.txt" ]; then
+              pip install -r requirements-dev.txt
+            fi
+            cd ../..
+          done
+          
+          # Install Playwright
+          pnpm exec playwright install --with-deps
+
+      - name: Setup test environment
+        run: |
+          echo "🔧 Setting up test environment"
+          
+          # Copy test environment file
+          cp .env.test .env
+          
+          # Update database URL for test
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/soulmatting_test" >> .env
+          echo "REDIS_URL=redis://localhost:6379" >> .env
+
+      - name: Start backend services
+        run: |
+          echo "🚀 Starting backend services"
+          
+          # Start all backend services in background
+          for service in auth-service user-service matching-service messaging-service notification-service; do
+            cd services/$service
+            python -m uvicorn main:app --host 0.0.0.0 --port $(echo $service | cut -d'-' -f1 | tr -d 'a-z' | wc -c)000 &
+            cd ../..
+          done
+          
+          # Wait for services to start
+          sleep 30
+
+      - name: Build frontend
+        run: |
+          echo "🏗️ Building frontend"
+          pnpm run build
+
+      - name: Start frontend server
+        run: |
+          echo "🚀 Starting frontend server"
+          pnpm run preview --port 3000 &
+          
+          # Wait for frontend to start
+          sleep 10
+
+      - name: Run E2E tests with coverage
+        run: |
+          echo "🧪 Running E2E tests with coverage"
+          
+          # Create coverage directory
+          mkdir -p coverage/e2e
+          
+          # Run Playwright tests with coverage
+          pnpm run test:e2e \
+            --reporter=html,json \
+            --output-dir=coverage/e2e/playwright-report \
+            --coverage || {
+            echo "❌ E2E tests failed"
+            exit 1
+          }
+          
+          echo "✅ E2E tests with coverage completed"
+
+      - name: Generate E2E coverage summary
+        run: |
+          echo "📊 Generating E2E coverage summary"
+          
+          COVERAGE_DIR="coverage/e2e"
+          
+          # Create summary from Playwright results
+          if [ -f "$COVERAGE_DIR/playwright-report/results.json" ]; then
+            TOTAL_TESTS=$(jq '.suites | map(.specs | length) | add' "$COVERAGE_DIR/playwright-report/results.json")
+            PASSED_TESTS=$(jq '.suites | map(.specs | map(select(.tests[0].results[0].status == "passed")) | length) | add' "$COVERAGE_DIR/playwright-report/results.json")
+            FAILED_TESTS=$(jq '.suites | map(.specs | map(select(.tests[0].results[0].status == "failed")) | length) | add' "$COVERAGE_DIR/playwright-report/results.json")
+            
+            PASS_RATE=$(echo "scale=2; $PASSED_TESTS * 100 / $TOTAL_TESTS" | bc)
+            
+            echo "📊 E2E Test Results:"
+            echo "- Total Tests: $TOTAL_TESTS"
+            echo "- Passed Tests: $PASSED_TESTS"
+            echo "- Failed Tests: $FAILED_TESTS"
+            echo "- Pass Rate: ${PASS_RATE}%"
+            
+            # Create detailed summary
+            cat > "$COVERAGE_DIR/summary.json" << EOF
+{
+  "test_type": "e2e",
+  "platform": "full-stack",
+  "results": {
+    "total_tests": $TOTAL_TESTS,
+    "passed_tests": $PASSED_TESTS,
+    "failed_tests": $FAILED_TESTS,
+    "pass_rate": $PASS_RATE
+  },
+  "threshold": ${{ needs.setup.outputs.threshold }},
+  "passed": $(echo "$PASS_RATE >= ${{ needs.setup.outputs.threshold }}" | bc -l),
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+          fi
+
+      - name: Upload E2E coverage results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-coverage
+          path: coverage/e2e/
+          retention-days: 30
+
+  # =============================================================================
+  # Coverage Report Generation
+  # =============================================================================
+  generate_coverage_report:
+    name: Generate Coverage Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup, frontend_coverage, backend_coverage, e2e_coverage]
+    if: always() && !cancelled()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all coverage results
+        uses: actions/download-artifact@v4
+        with:
+          path: coverage-results
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing report generation dependencies"
+          npm install -g lcov-result-merger
+          pip install coverage[toml]
+
+      - name: Merge coverage reports
+        run: |
+          echo "🔗 Merging coverage reports"
+          
+          # Create merged coverage directory
+          mkdir -p coverage-merged
+          
+          # Find all LCOV files
+          FRONTEND_LCOV_FILES=$(find coverage-results -name "lcov.info" -path "*/frontend/*" | tr '\n' ' ')
+          BACKEND_LCOV_FILES=$(find coverage-results -name "lcov.info" -path "*/backend/*" | tr '\n' ' ')
+          
+          # Merge frontend coverage
+          if [ -n "$FRONTEND_LCOV_FILES" ]; then
+            echo "🔗 Merging frontend coverage reports"
+            lcov-result-merger $FRONTEND_LCOV_FILES coverage-merged/frontend-merged.lcov
+          fi
+          
+          # Merge backend coverage
+          if [ -n "$BACKEND_LCOV_FILES" ]; then
+            echo "🔗 Merging backend coverage reports"
+            lcov-result-merger $BACKEND_LCOV_FILES coverage-merged/backend-merged.lcov
+          fi
+          
+          # Merge all coverage
+          ALL_LCOV_FILES=$(find coverage-results -name "lcov.info" | tr '\n' ' ')
+          if [ -n "$ALL_LCOV_FILES" ]; then
+            echo "🔗 Merging all coverage reports"
+            lcov-result-merger $ALL_LCOV_FILES coverage-merged/all-merged.lcov
+          fi
+
+      - name: Generate consolidated coverage report
+        run: |
+          echo "📊 Generating consolidated coverage report"
+          
+          # Create report directory
+          mkdir -p coverage-report
+          
+          # Initialize report
+          REPORT_FILE="coverage-report/coverage-report-$(date -u +%Y%m%d_%H%M%S).md"
+          
+          cat > "$REPORT_FILE" << 'EOF'
+# 📊 Code Coverage Report
+
+**Coverage Type:** ${{ needs.setup.outputs.coverage_type }}
+**Threshold:** ${{ needs.setup.outputs.threshold }}%
+**Report Date:** $(date -u)
+**Triggered By:** ${{ github.actor }}
+
+## 📋 Coverage Summary
+
+EOF
+          
+          # Add frontend coverage results
+          if [ "${{ needs.frontend_coverage.result }}" == "success" ]; then
+            echo "✅ **Frontend Coverage:** All tests passed threshold" >> "$REPORT_FILE"
+          elif [ "${{ needs.frontend_coverage.result }}" == "skipped" ]; then
+            echo "⏭️ **Frontend Coverage:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **Frontend Coverage:** Below threshold or tests failed" >> "$REPORT_FILE"
+          fi
+          
+          # Add backend coverage results
+          if [ "${{ needs.backend_coverage.result }}" == "success" ]; then
+            echo "✅ **Backend Coverage:** All tests passed threshold" >> "$REPORT_FILE"
+          elif [ "${{ needs.backend_coverage.result }}" == "skipped" ]; then
+            echo "⏭️ **Backend Coverage:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **Backend Coverage:** Below threshold or tests failed" >> "$REPORT_FILE"
+          fi
+          
+          # Add E2E coverage results
+          if [ "${{ needs.e2e_coverage.result }}" == "success" ]; then
+            echo "✅ **E2E Coverage:** All tests passed threshold" >> "$REPORT_FILE"
+          elif [ "${{ needs.e2e_coverage.result }}" == "skipped" ]; then
+            echo "⏭️ **E2E Coverage:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **E2E Coverage:** Below threshold or tests failed" >> "$REPORT_FILE"
+          fi
+          
+          echo "" >> "$REPORT_FILE"
+          echo "## 📊 Detailed Coverage Metrics" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          
+          # Add detailed metrics from summary files
+          find coverage-results -name "summary.json" | while read summary_file; do
+            if [ -f "$summary_file" ]; then
+              PLATFORM=$(jq -r '.platform // "unknown"' "$summary_file")
+              TEST_TYPE=$(jq -r '.test_type // "unknown"' "$summary_file")
+              SERVICE=$(jq -r '.service // ""' "$summary_file")
+              
+              echo "### $PLATFORM $([ -n "$SERVICE" ] && echo "- $SERVICE") - $TEST_TYPE" >> "$REPORT_FILE"
+              
+              if [ "$PLATFORM" == "frontend" ]; then
+                LINES=$(jq -r '.coverage.lines // 0' "$summary_file")
+                FUNCTIONS=$(jq -r '.coverage.functions // 0' "$summary_file")
+                BRANCHES=$(jq -r '.coverage.branches // 0' "$summary_file")
+                STATEMENTS=$(jq -r '.coverage.statements // 0' "$summary_file")
+                
+                echo "- Lines: ${LINES}%" >> "$REPORT_FILE"
+                echo "- Functions: ${FUNCTIONS}%" >> "$REPORT_FILE"
+                echo "- Branches: ${BRANCHES}%" >> "$REPORT_FILE"
+                echo "- Statements: ${STATEMENTS}%" >> "$REPORT_FILE"
+              elif [ "$PLATFORM" == "backend" ]; then
+                PERCENT=$(jq -r '.coverage.percent // 0' "$summary_file")
+                COVERED=$(jq -r '.coverage.covered_lines // 0' "$summary_file")
+                TOTAL=$(jq -r '.coverage.total_lines // 0' "$summary_file")
+                
+                echo "- Coverage: ${PERCENT}%" >> "$REPORT_FILE"
+                echo "- Covered Lines: $COVERED" >> "$REPORT_FILE"
+                echo "- Total Lines: $TOTAL" >> "$REPORT_FILE"
+              elif [ "$PLATFORM" == "full-stack" ]; then
+                PASS_RATE=$(jq -r '.results.pass_rate // 0' "$summary_file")
+                PASSED=$(jq -r '.results.passed_tests // 0' "$summary_file")
+                TOTAL=$(jq -r '.results.total_tests // 0' "$summary_file")
+                
+                echo "- Pass Rate: ${PASS_RATE}%" >> "$REPORT_FILE"
+                echo "- Passed Tests: $PASSED" >> "$REPORT_FILE"
+                echo "- Total Tests: $TOTAL" >> "$REPORT_FILE"
+              fi
+              
+              echo "" >> "$REPORT_FILE"
+            fi
+          done
+          
+          echo "---" >> "$REPORT_FILE"
+          echo "*Report generated at $(date -u)*" >> "$REPORT_FILE"
+          
+          echo "✅ Coverage report generated: $REPORT_FILE"
+
+      - name: Generate coverage badge
+        if: needs.setup.outputs.generate_badge == 'true'
+        run: |
+          echo "🏷️ Generating coverage badge"
+          
+          # Calculate overall coverage percentage
+          OVERALL_COVERAGE=0
+          COVERAGE_COUNT=0
+          
+          # Sum up all coverage percentages
+          find coverage-results -name "summary.json" | while read summary_file; do
+            if [ -f "$summary_file" ]; then
+              PLATFORM=$(jq -r '.platform // "unknown"' "$summary_file")
+              
+              if [ "$PLATFORM" == "frontend" ]; then
+                LINES=$(jq -r '.coverage.lines // 0' "$summary_file")
+                OVERALL_COVERAGE=$(echo "$OVERALL_COVERAGE + $LINES" | bc)
+                COVERAGE_COUNT=$((COVERAGE_COUNT + 1))
+              elif [ "$PLATFORM" == "backend" ]; then
+                PERCENT=$(jq -r '.coverage.percent // 0' "$summary_file")
+                OVERALL_COVERAGE=$(echo "$OVERALL_COVERAGE + $PERCENT" | bc)
+                COVERAGE_COUNT=$((COVERAGE_COUNT + 1))
+              fi
+            fi
+          done
+          
+          if [ "$COVERAGE_COUNT" -gt 0 ]; then
+            AVERAGE_COVERAGE=$(echo "scale=1; $OVERALL_COVERAGE / $COVERAGE_COUNT" | bc)
+            
+            # Determine badge color
+            if (( $(echo "$AVERAGE_COVERAGE >= 90" | bc -l) )); then
+              BADGE_COLOR="brightgreen"
+            elif (( $(echo "$AVERAGE_COVERAGE >= 80" | bc -l) )); then
+              BADGE_COLOR="green"
+            elif (( $(echo "$AVERAGE_COVERAGE >= 70" | bc -l) )); then
+              BADGE_COLOR="yellow"
+            elif (( $(echo "$AVERAGE_COVERAGE >= 60" | bc -l) )); then
+              BADGE_COLOR="orange"
+            else
+              BADGE_COLOR="red"
+            fi
+            
+            # Create badge URL
+            BADGE_URL="https://img.shields.io/badge/coverage-${AVERAGE_COVERAGE}%25-${BADGE_COLOR}"
+            
+            echo "🏷️ Coverage Badge: $BADGE_URL"
+            echo "COVERAGE_BADGE_URL=$BADGE_URL" >> $GITHUB_ENV
+            
+            # Save badge info
+            cat > coverage-report/badge.json << EOF
+{
+  "coverage": $AVERAGE_COVERAGE,
+  "color": "$BADGE_COLOR",
+  "url": "$BADGE_URL",
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+          fi
+
+      - name: Upload merged coverage to Codecov
+        if: needs.setup.outputs.upload_codecov == 'true'
+        uses: codecov/codecov-action@v3
+        with:
+          file: coverage-merged/all-merged.lcov
+          flags: merged,all
+          name: merged-coverage
+          fail_ci_if_error: false
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage-report/
+          retention-days: 90
+
+      - name: Upload merged coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-merged
+          path: coverage-merged/
+          retention-days: 90
+
+      - name: Generate GitHub step summary
+        run: |
+          echo "# 📊 Code Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Coverage Type:** ${{ needs.setup.outputs.coverage_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Threshold:** ${{ needs.setup.outputs.threshold }}%" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Add coverage badge if generated
+          if [ -n "$COVERAGE_BADGE_URL" ]; then
+            echo "![Coverage Badge]($COVERAGE_BADGE_URL)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "## 📊 Coverage Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Frontend coverage results
+          if [ "${{ needs.frontend_coverage.result }}" == "success" ]; then
+            echo "✅ Frontend Coverage: All tests passed threshold" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.frontend_coverage.result }}" == "skipped" ]; then
+            echo "⏭️ Frontend Coverage: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend Coverage: Below threshold or tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Backend coverage results
+          if [ "${{ needs.backend_coverage.result }}" == "success" ]; then
+            echo "✅ Backend Coverage: All tests passed threshold" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.backend_coverage.result }}" == "skipped" ]; then
+            echo "⏭️ Backend Coverage: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Backend Coverage: Below threshold or tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # E2E coverage results
+          if [ "${{ needs.e2e_coverage.result }}" == "success" ]; then
+            echo "✅ E2E Coverage: All tests passed threshold" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.e2e_coverage.result }}" == "skipped" ]; then
+            echo "⏭️ E2E Coverage: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ E2E Coverage: Below threshold or tests failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed coverage reports are available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY

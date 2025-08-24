@@ -1,0 +1,492 @@
+# Kong Gateway Configuration for SoulMatting Platform
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+# Author: Kim Hsiao
+
+_format_version: "3.0"
+_transform: true
+
+# Services Configuration
+services:
+  # Web Application Service
+  - name: web-service
+    url: http://web:3000
+    protocol: http
+    host: web
+    port: 3000
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 5
+    tags:
+      - web
+      - frontend
+
+  # Supabase Auth Service (GoTrue)
+  - name: auth-service
+    url: http://auth:9999
+    protocol: http
+    host: auth
+    port: 9999
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 5
+    tags:
+      - auth
+      - supabase
+
+  # PostgREST API Service
+  - name: rest-service
+    url: http://rest:3000
+    protocol: http
+    host: rest
+    port: 3000
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 5
+    tags:
+      - rest
+      - api
+      - supabase
+
+  # Supabase Storage Service
+  - name: storage-service
+    url: http://storage:5000
+    protocol: http
+    host: storage
+    port: 5000
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 5
+    tags:
+      - storage
+      - supabase
+
+  # Supabase Realtime Service
+  - name: realtime-service
+    url: http://realtime:4000
+    protocol: http
+    host: realtime
+    port: 4000
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 5
+    tags:
+      - realtime
+      - websocket
+      - supabase
+
+  # Custom Auth Service (NestJS)
+  - name: custom-auth-service
+    url: http://auth-service:3002
+    protocol: http
+    host: auth-service
+    port: 3002
+    path: /
+    connect_timeout: 60000
+    write_timeout: 60000
+    read_timeout: 60000
+    retries: 5
+    tags:
+      - custom-auth
+      - nestjs
+      - microservice
+
+# Routes Configuration
+routes:
+  # Web Application Routes
+  - name: web-route
+    service: web-service
+    protocols:
+      - http
+      - https
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    paths:
+      - /
+      - /app
+    strip_path: false
+    preserve_host: false
+    tags:
+      - web
+      - frontend
+
+  # Supabase Auth Routes
+  - name: auth-route
+    service: auth-service
+    protocols:
+      - http
+      - https
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    paths:
+      - /auth/v1
+    strip_path: false
+    preserve_host: false
+    tags:
+      - auth
+      - supabase
+
+  # PostgREST API Routes
+  - name: rest-route
+    service: rest-service
+    protocols:
+      - http
+      - https
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    paths:
+      - /rest/v1
+    strip_path: true
+    preserve_host: false
+    tags:
+      - rest
+      - api
+      - supabase
+
+  # Supabase Storage Routes
+  - name: storage-route
+    service: storage-service
+    protocols:
+      - http
+      - https
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    paths:
+      - /storage/v1
+    strip_path: true
+    preserve_host: false
+    tags:
+      - storage
+      - supabase
+
+  # Supabase Realtime Routes
+  - name: realtime-route
+    service: realtime-service
+    protocols:
+      - http
+      - https
+      - ws
+      - wss
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    paths:
+      - /realtime/v1
+    strip_path: true
+    preserve_host: false
+    tags:
+      - realtime
+      - websocket
+      - supabase
+
+  # Custom Auth Service Routes
+  - name: custom-auth-route
+    service: custom-auth-service
+    protocols:
+      - http
+      - https
+    methods:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    paths:
+      - /api/auth
+    strip_path: true
+    preserve_host: false
+    tags:
+      - custom-auth
+      - nestjs
+      - microservice
+
+# Plugins Configuration
+plugins:
+  # CORS Plugin for all services
+  - name: cors
+    config:
+      origins:
+        - "http://localhost:3000"
+        - "http://localhost:8000"
+        - "https://soulmatting.com"
+        - "https://*.soulmatting.com"
+      methods:
+        - GET
+        - POST
+        - PUT
+        - DELETE
+        - PATCH
+        - OPTIONS
+      headers:
+        - Accept
+        - Accept-Version
+        - Content-Length
+        - Content-MD5
+        - Content-Type
+        - Date
+        - X-Auth-Token
+        - Authorization
+        - X-Requested-With
+        - X-Client-Info
+        - apikey
+      exposed_headers:
+        - X-Auth-Token
+      credentials: true
+      max_age: 3600
+      preflight_continue: false
+    tags:
+      - cors
+      - security
+
+  # Rate Limiting Plugin
+  - name: rate-limiting
+    config:
+      minute: 100
+      hour: 1000
+      day: 10000
+      month: 100000
+      year: 1000000
+      limit_by: consumer
+      policy: local
+      fault_tolerant: true
+      hide_client_headers: false
+    tags:
+      - rate-limiting
+      - security
+
+  # Request Size Limiting Plugin
+  - name: request-size-limiting
+    config:
+      allowed_payload_size: 128
+      size_unit: megabytes
+      require_content_length: false
+    tags:
+      - request-size-limiting
+      - security
+
+  # IP Restriction Plugin (for admin routes)
+  - name: ip-restriction
+    config:
+      allow:
+        - 127.0.0.1
+        - 172.20.0.0/16
+        - 10.0.0.0/8
+        - 192.168.0.0/16
+      deny: []
+    tags:
+      - ip-restriction
+      - security
+
+  # Request Transformer Plugin
+  - name: request-transformer
+    config:
+      remove:
+        headers:
+          - x-forwarded-for
+      add:
+        headers:
+          - "X-Gateway: Kong"
+          - "X-Service: SoulMatting"
+    tags:
+      - request-transformer
+      - headers
+
+  # Response Transformer Plugin
+  - name: response-transformer
+    config:
+      add:
+        headers:
+          - "X-Gateway: Kong"
+          - "X-Service: SoulMatting"
+          - "X-Response-Time: $(latency)"
+    tags:
+      - response-transformer
+      - headers
+
+  # Prometheus Plugin for metrics
+  - name: prometheus
+    config:
+      per_consumer: true
+      status_code_metrics: true
+      latency_metrics: true
+      bandwidth_metrics: true
+      upstream_health_metrics: true
+    tags:
+      - prometheus
+      - monitoring
+
+# Consumers Configuration
+consumers:
+  # Anonymous Consumer
+  - username: anonymous
+    custom_id: anonymous
+    tags:
+      - anonymous
+      - public
+
+  # Service Consumer for internal services
+  - username: service
+    custom_id: service
+    tags:
+      - service
+      - internal
+
+  # Admin Consumer
+  - username: admin
+    custom_id: admin
+    tags:
+      - admin
+      - privileged
+
+# Consumer Groups (Kong Enterprise feature)
+# Uncomment if using Kong Enterprise
+# consumer_groups:
+#   - name: public
+#     tags:
+#       - public
+#       - basic
+#   
+#   - name: premium
+#     tags:
+#       - premium
+#       - advanced
+#   
+#   - name: admin
+#     tags:
+#       - admin
+#       - privileged
+
+# Upstreams Configuration (for load balancing)
+upstreams:
+  # Web Application Upstream
+  - name: web-upstream
+    algorithm: round-robin
+    hash_on: none
+    hash_fallback: none
+    healthchecks:
+      active:
+        timeout: 1
+        concurrency: 10
+        http_path: /health
+        healthy:
+          interval: 0
+          http_statuses:
+            - 200
+            - 302
+          successes: 0
+        unhealthy:
+          interval: 0
+          http_statuses:
+            - 429
+            - 404
+            - 500
+            - 501
+            - 502
+            - 503
+            - 504
+            - 505
+          tcp_failures: 0
+          timeouts: 0
+          http_failures: 0
+      passive:
+        healthy:
+          http_statuses:
+            - 200
+            - 201
+            - 202
+            - 203
+            - 204
+            - 205
+            - 206
+            - 207
+            - 208
+            - 226
+            - 300
+            - 301
+            - 302
+            - 303
+            - 304
+            - 305
+            - 306
+            - 307
+            - 308
+          successes: 0
+        unhealthy:
+          http_statuses:
+            - 429
+            - 500
+            - 503
+          tcp_failures: 0
+          timeouts: 0
+          http_failures: 0
+    tags:
+      - web
+      - upstream
+
+# Targets for Upstreams
+targets:
+  # Web Application Targets
+  - target: web:3000
+    upstream: web-upstream
+    weight: 100
+    tags:
+      - web
+      - target
+
+# Certificates (for HTTPS)
+# certificates:
+#   - cert: |
+#       -----BEGIN CERTIFICATE-----
+#       ...
+#       -----END CERTIFICATE-----
+#     key: |
+#       -----BEGIN PRIVATE KEY-----
+#       ...
+#       -----END PRIVATE KEY-----
+#     tags:
+#       - ssl
+#       - https
+
+# SNIs (Server Name Indication)
+# snis:
+#   - name: soulmatting.com
+#     certificate: <certificate_id>
+#     tags:
+#       - ssl
+#       - domain

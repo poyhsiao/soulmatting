@@ -1,0 +1,1011 @@
+# =============================================================================
+# SoulMatting Platform - Code Quality Workflow
+# =============================================================================
+# This workflow performs comprehensive code quality checks including linting,
+# formatting, type checking, complexity analysis, and code coverage.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 🔍 Code Quality
+
+on:
+  # Trigger on pull requests
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.py'
+      - '**/*.sql'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '**/*.json'
+      - '**/*.md'
+      - 'package*.json'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+  
+  # Trigger on pushes to main branches
+  push:
+    branches: [main, develop]
+    paths:
+      - '**/*.ts'
+      - '**/*.tsx'
+      - '**/*.js'
+      - '**/*.jsx'
+      - '**/*.py'
+      - '**/*.sql'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '**/*.json'
+      - '**/*.md'
+      - 'package*.json'
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'Dockerfile*'
+      - 'docker-compose*.yml'
+  
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      check_type:
+        description: 'Type of code quality check to run'
+        required: true
+        type: choice
+        options:
+          - all
+          - frontend
+          - backend
+          - docker
+          - documentation
+      severity_level:
+        description: 'Minimum severity level for issues'
+        required: false
+        type: choice
+        options:
+          - error
+          - warning
+          - info
+        default: 'warning'
+      fix_issues:
+        description: 'Automatically fix issues where possible'
+        required: false
+        type: boolean
+        default: false
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
+  PNPM_VERSION: '10'
+
+jobs:
+  # =============================================================================
+  # Code Quality Setup
+  # =============================================================================
+  setup:
+    name: Code Quality Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    
+    outputs:
+      check_type: ${{ steps.setup.outputs.check_type }}
+      severity_level: ${{ steps.setup.outputs.severity_level }}
+      fix_issues: ${{ steps.setup.outputs.fix_issues }}
+      has_frontend_changes: ${{ steps.changes.outputs.frontend }}
+      has_backend_changes: ${{ steps.changes.outputs.backend }}
+      has_docker_changes: ${{ steps.changes.outputs.docker }}
+      has_docs_changes: ${{ steps.changes.outputs.docs }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect file changes
+        uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            frontend:
+              - 'apps/web/**'
+              - 'packages/**'
+              - '**/*.ts'
+              - '**/*.tsx'
+              - '**/*.js'
+              - '**/*.jsx'
+              - 'package*.json'
+            backend:
+              - 'services/**'
+              - '**/*.py'
+              - 'requirements*.txt'
+              - 'pyproject.toml'
+            docker:
+              - 'Dockerfile*'
+              - 'docker-compose*.yml'
+              - '.dockerignore'
+            docs:
+              - '**/*.md'
+              - 'docs/**'
+
+      - name: Setup parameters
+        id: setup
+        run: |
+          # Determine check type
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            CHECK_TYPE="${{ github.event.inputs.check_type }}"
+            SEVERITY_LEVEL="${{ github.event.inputs.severity_level }}"
+            FIX_ISSUES="${{ github.event.inputs.fix_issues }}"
+          else
+            CHECK_TYPE="all"
+            SEVERITY_LEVEL="warning"
+            FIX_ISSUES="false"
+          fi
+          
+          echo "🔍 Code Quality Check Configuration:"
+          echo "- Check Type: $CHECK_TYPE"
+          echo "- Severity Level: $SEVERITY_LEVEL"
+          echo "- Fix Issues: $FIX_ISSUES"
+          echo "- Frontend Changes: ${{ steps.changes.outputs.frontend }}"
+          echo "- Backend Changes: ${{ steps.changes.outputs.backend }}"
+          echo "- Docker Changes: ${{ steps.changes.outputs.docker }}"
+          echo "- Documentation Changes: ${{ steps.changes.outputs.docs }}"
+          
+          # Set outputs
+          echo "check_type=$CHECK_TYPE" >> $GITHUB_OUTPUT
+          echo "severity_level=$SEVERITY_LEVEL" >> $GITHUB_OUTPUT
+          echo "fix_issues=$FIX_ISSUES" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Frontend Code Quality
+  # =============================================================================
+  frontend_quality:
+    name: Frontend Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: setup
+    if: |
+      needs.setup.outputs.has_frontend_changes == 'true' &&
+      (needs.setup.outputs.check_type == 'all' || needs.setup.outputs.check_type == 'frontend')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing frontend dependencies"
+          pnpm install --frozen-lockfile
+
+      - name: TypeScript type checking
+        run: |
+          echo "🔍 Running TypeScript type checking"
+          
+          # Create results directory
+          mkdir -p quality-results/typescript
+          
+          # Run TypeScript compiler
+          pnpm run type-check 2>&1 | tee quality-results/typescript/tsc-output.txt || {
+            echo "❌ TypeScript type checking failed"
+            exit 1
+          }
+          
+          echo "✅ TypeScript type checking completed"
+
+      - name: ESLint analysis
+        run: |
+          echo "🔍 Running ESLint analysis"
+          
+          # Create results directory
+          mkdir -p quality-results/eslint
+          
+          # Run ESLint with different output formats
+          pnpm run lint:check \
+            --format=json \
+            --output-file=quality-results/eslint/eslint-results.json || true
+          
+          pnpm run lint:check \
+            --format=html \
+            --output-file=quality-results/eslint/eslint-report.html || true
+          
+          pnpm run lint:check \
+            --format=checkstyle \
+            --output-file=quality-results/eslint/eslint-checkstyle.xml || true
+          
+          # Generate summary
+          if [ -f "quality-results/eslint/eslint-results.json" ]; then
+            ERROR_COUNT=$(jq '[.[] | .errorCount] | add // 0' quality-results/eslint/eslint-results.json)
+            WARNING_COUNT=$(jq '[.[] | .warningCount] | add // 0' quality-results/eslint/eslint-results.json)
+            
+            echo "📊 ESLint Results:"
+            echo "- Errors: $ERROR_COUNT"
+            echo "- Warnings: $WARNING_COUNT"
+            
+            # Create summary file
+            cat > quality-results/eslint/summary.json << EOF
+{
+  "errors": $ERROR_COUNT,
+  "warnings": $WARNING_COUNT,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+            
+            # Fail if errors found and severity is error
+            if [ "${{ needs.setup.outputs.severity_level }}" == "error" ] && [ "$ERROR_COUNT" -gt 0 ]; then
+              echo "❌ ESLint found $ERROR_COUNT errors"
+              exit 1
+            elif [ "${{ needs.setup.outputs.severity_level }}" == "warning" ] && [ "$((ERROR_COUNT + WARNING_COUNT))" -gt 0 ]; then
+              echo "⚠️ ESLint found $((ERROR_COUNT + WARNING_COUNT)) issues"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ ESLint analysis completed"
+
+      - name: Prettier formatting check
+        run: |
+          echo "🔍 Running Prettier formatting check"
+          
+          # Create results directory
+          mkdir -p quality-results/prettier
+          
+          # Check formatting
+          if [ "${{ needs.setup.outputs.fix_issues }}" == "true" ]; then
+            echo "🔧 Auto-fixing formatting issues"
+            pnpm run format:write
+          else
+            pnpm run format:check 2>&1 | tee quality-results/prettier/prettier-output.txt || {
+              echo "❌ Prettier formatting check failed"
+              echo "Run 'pnpm run format:write' to fix formatting issues"
+              exit 1
+            }
+          fi
+          
+          echo "✅ Prettier formatting check completed"
+
+      - name: Stylelint CSS analysis
+        run: |
+          echo "🔍 Running Stylelint CSS analysis"
+          
+          # Create results directory
+          mkdir -p quality-results/stylelint
+          
+          # Run Stylelint
+          pnpm run lint:css \
+            --formatter=json \
+            --output-file=quality-results/stylelint/stylelint-results.json || true
+          
+          pnpm run lint:css \
+            --formatter=html \
+            --output-file=quality-results/stylelint/stylelint-report.html || true
+          
+          # Generate summary
+          if [ -f "quality-results/stylelint/stylelint-results.json" ]; then
+            ERROR_COUNT=$(jq '[.[] | .errored] | length' quality-results/stylelint/stylelint-results.json)
+            WARNING_COUNT=$(jq '[.[] | .warnings | length] | add // 0' quality-results/stylelint/stylelint-results.json)
+            
+            echo "📊 Stylelint Results:"
+            echo "- Errors: $ERROR_COUNT"
+            echo "- Warnings: $WARNING_COUNT"
+          fi
+          
+          echo "✅ Stylelint analysis completed"
+
+      - name: Bundle size analysis
+        run: |
+          echo "🔍 Running bundle size analysis"
+          
+          # Create results directory
+          mkdir -p quality-results/bundle
+          
+          # Build for analysis
+          pnpm run build:analyze || {
+            echo "⚠️ Bundle analysis build failed, skipping"
+            exit 0
+          }
+          
+          # Generate bundle report
+          if [ -d "dist" ]; then
+            # Calculate bundle sizes
+            find dist -name "*.js" -type f -exec ls -la {} \; > quality-results/bundle/bundle-sizes.txt
+            
+            # Create summary
+            TOTAL_SIZE=$(find dist -name "*.js" -type f -exec stat -f%z {} \; | awk '{sum += $1} END {print sum}')
+            
+            cat > quality-results/bundle/summary.json << EOF
+{
+  "total_size_bytes": $TOTAL_SIZE,
+  "total_size_mb": $(echo "scale=2; $TOTAL_SIZE / 1024 / 1024" | bc),
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+            
+            echo "📊 Bundle Size: $(echo "scale=2; $TOTAL_SIZE / 1024 / 1024" | bc) MB"
+          fi
+          
+          echo "✅ Bundle size analysis completed"
+
+      - name: Upload frontend quality results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-quality-results
+          path: quality-results/
+          retention-days: 30
+
+  # =============================================================================
+  # Backend Code Quality
+  # =============================================================================
+  backend_quality:
+    name: Backend Code Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: setup
+    if: |
+      needs.setup.outputs.has_backend_changes == 'true' &&
+      (needs.setup.outputs.check_type == 'all' || needs.setup.outputs.check_type == 'backend')
+    
+    strategy:
+      matrix:
+        service: [auth-service, user-service, matching-service, messaging-service, notification-service]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install Python dependencies
+        run: |
+          echo "📦 Installing Python dependencies for ${{ matrix.service }}"
+          
+          # Navigate to service directory
+          cd services/${{ matrix.service }}
+          
+          # Install dependencies
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          
+          if [ -f "requirements-dev.txt" ]; then
+            pip install -r requirements-dev.txt
+          fi
+          
+          # Install quality tools
+          pip install black isort flake8 mypy pylint bandit safety
+
+      - name: Black formatting check
+        run: |
+          echo "🔍 Running Black formatting check for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/black
+          
+          cd services/${{ matrix.service }}
+          
+          if [ "${{ needs.setup.outputs.fix_issues }}" == "true" ]; then
+            echo "🔧 Auto-fixing formatting issues"
+            black . --config ../../pyproject.toml
+          else
+            black . --check --diff --config ../../pyproject.toml 2>&1 | \
+              tee ../../quality-results/${{ matrix.service }}/black/black-output.txt || {
+              echo "❌ Black formatting check failed for ${{ matrix.service }}"
+              exit 1
+            }
+          fi
+          
+          echo "✅ Black formatting check completed for ${{ matrix.service }}"
+
+      - name: isort import sorting check
+        run: |
+          echo "🔍 Running isort import sorting check for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/isort
+          
+          cd services/${{ matrix.service }}
+          
+          if [ "${{ needs.setup.outputs.fix_issues }}" == "true" ]; then
+            echo "🔧 Auto-fixing import sorting"
+            isort . --settings-path ../../pyproject.toml
+          else
+            isort . --check-only --diff --settings-path ../../pyproject.toml 2>&1 | \
+              tee ../../quality-results/${{ matrix.service }}/isort/isort-output.txt || {
+              echo "❌ isort check failed for ${{ matrix.service }}"
+              exit 1
+            }
+          fi
+          
+          echo "✅ isort check completed for ${{ matrix.service }}"
+
+      - name: Flake8 linting
+        run: |
+          echo "🔍 Running Flake8 linting for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/flake8
+          
+          cd services/${{ matrix.service }}
+          
+          # Run Flake8 with different output formats
+          flake8 . \
+            --config ../../.flake8 \
+            --format=json \
+            --output-file ../../quality-results/${{ matrix.service }}/flake8/flake8-results.json || true
+          
+          flake8 . \
+            --config ../../.flake8 \
+            --format=html \
+            --htmldir ../../quality-results/${{ matrix.service }}/flake8/html-report || true
+          
+          # Generate summary
+          if [ -f "../../quality-results/${{ matrix.service }}/flake8/flake8-results.json" ]; then
+            ERROR_COUNT=$(jq 'length' ../../quality-results/${{ matrix.service }}/flake8/flake8-results.json)
+            
+            echo "📊 Flake8 Results for ${{ matrix.service }}:"
+            echo "- Issues: $ERROR_COUNT"
+            
+            # Create summary file
+            cat > ../../quality-results/${{ matrix.service }}/flake8/summary.json << EOF
+{
+  "issues": $ERROR_COUNT,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+            
+            # Fail if issues found based on severity level
+            if [ "${{ needs.setup.outputs.severity_level }}" != "info" ] && [ "$ERROR_COUNT" -gt 0 ]; then
+              echo "❌ Flake8 found $ERROR_COUNT issues in ${{ matrix.service }}"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Flake8 linting completed for ${{ matrix.service }}"
+
+      - name: MyPy type checking
+        run: |
+          echo "🔍 Running MyPy type checking for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/mypy
+          
+          cd services/${{ matrix.service }}
+          
+          # Run MyPy
+          mypy . \
+            --config-file ../../mypy.ini \
+            --json-report ../../quality-results/${{ matrix.service }}/mypy \
+            --html-report ../../quality-results/${{ matrix.service }}/mypy/html-report || true
+          
+          # Generate summary from MyPy output
+          if [ -f "../../quality-results/${{ matrix.service }}/mypy/index.txt" ]; then
+            ERROR_COUNT=$(grep -c "error:" ../../quality-results/${{ matrix.service }}/mypy/index.txt || echo "0")
+            
+            echo "📊 MyPy Results for ${{ matrix.service }}:"
+            echo "- Type Errors: $ERROR_COUNT"
+            
+            # Create summary file
+            cat > ../../quality-results/${{ matrix.service }}/mypy/summary.json << EOF
+{
+  "type_errors": $ERROR_COUNT,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+          fi
+          
+          echo "✅ MyPy type checking completed for ${{ matrix.service }}"
+
+      - name: Pylint analysis
+        run: |
+          echo "🔍 Running Pylint analysis for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/pylint
+          
+          cd services/${{ matrix.service }}
+          
+          # Run Pylint
+          pylint . \
+            --rcfile ../../.pylintrc \
+            --output-format=json \
+            --reports=yes > ../../quality-results/${{ matrix.service }}/pylint/pylint-results.json || true
+          
+          pylint . \
+            --rcfile ../../.pylintrc \
+            --output-format=html > ../../quality-results/${{ matrix.service }}/pylint/pylint-report.html || true
+          
+          # Generate summary
+          if [ -f "../../quality-results/${{ matrix.service }}/pylint/pylint-results.json" ]; then
+            ERROR_COUNT=$(jq '[.[] | select(.type == "error")] | length' ../../quality-results/${{ matrix.service }}/pylint/pylint-results.json)
+            WARNING_COUNT=$(jq '[.[] | select(.type == "warning")] | length' ../../quality-results/${{ matrix.service }}/pylint/pylint-results.json)
+            
+            echo "📊 Pylint Results for ${{ matrix.service }}:"
+            echo "- Errors: $ERROR_COUNT"
+            echo "- Warnings: $WARNING_COUNT"
+            
+            # Create summary file
+            cat > ../../quality-results/${{ matrix.service }}/pylint/summary.json << EOF
+{
+  "errors": $ERROR_COUNT,
+  "warnings": $WARNING_COUNT,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+          fi
+          
+          echo "✅ Pylint analysis completed for ${{ matrix.service }}"
+
+      - name: Bandit security analysis
+        run: |
+          echo "🔍 Running Bandit security analysis for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/bandit
+          
+          cd services/${{ matrix.service }}
+          
+          # Run Bandit
+          bandit -r . \
+            -f json \
+            -o ../../quality-results/${{ matrix.service }}/bandit/bandit-results.json || true
+          
+          bandit -r . \
+            -f html \
+            -o ../../quality-results/${{ matrix.service }}/bandit/bandit-report.html || true
+          
+          # Generate summary
+          if [ -f "../../quality-results/${{ matrix.service }}/bandit/bandit-results.json" ]; then
+            HIGH_ISSUES=$(jq '[.results[] | select(.issue_severity == "HIGH")] | length' ../../quality-results/${{ matrix.service }}/bandit/bandit-results.json)
+            MEDIUM_ISSUES=$(jq '[.results[] | select(.issue_severity == "MEDIUM")] | length' ../../quality-results/${{ matrix.service }}/bandit/bandit-results.json)
+            LOW_ISSUES=$(jq '[.results[] | select(.issue_severity == "LOW")] | length' ../../quality-results/${{ matrix.service }}/bandit/bandit-results.json)
+            
+            echo "📊 Bandit Security Results for ${{ matrix.service }}:"
+            echo "- High Severity: $HIGH_ISSUES"
+            echo "- Medium Severity: $MEDIUM_ISSUES"
+            echo "- Low Severity: $LOW_ISSUES"
+            
+            # Create summary file
+            cat > ../../quality-results/${{ matrix.service }}/bandit/summary.json << EOF
+{
+  "high_severity": $HIGH_ISSUES,
+  "medium_severity": $MEDIUM_ISSUES,
+  "low_severity": $LOW_ISSUES,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+            
+            # Fail if high severity issues found
+            if [ "$HIGH_ISSUES" -gt 0 ]; then
+              echo "❌ Bandit found $HIGH_ISSUES high severity security issues in ${{ matrix.service }}"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Bandit security analysis completed for ${{ matrix.service }}"
+
+      - name: Safety dependency check
+        run: |
+          echo "🔍 Running Safety dependency check for ${{ matrix.service }}"
+          
+          # Create results directory
+          mkdir -p quality-results/${{ matrix.service }}/safety
+          
+          cd services/${{ matrix.service }}
+          
+          # Run Safety
+          safety check \
+            --json \
+            --output ../../quality-results/${{ matrix.service }}/safety/safety-results.json || true
+          
+          # Generate summary
+          if [ -f "../../quality-results/${{ matrix.service }}/safety/safety-results.json" ]; then
+            VULNERABILITY_COUNT=$(jq 'length' ../../quality-results/${{ matrix.service }}/safety/safety-results.json)
+            
+            echo "📊 Safety Results for ${{ matrix.service }}:"
+            echo "- Vulnerabilities: $VULNERABILITY_COUNT"
+            
+            # Create summary file
+            cat > ../../quality-results/${{ matrix.service }}/safety/summary.json << EOF
+{
+  "vulnerabilities": $VULNERABILITY_COUNT,
+  "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+}
+EOF
+            
+            # Fail if vulnerabilities found
+            if [ "$VULNERABILITY_COUNT" -gt 0 ]; then
+              echo "❌ Safety found $VULNERABILITY_COUNT vulnerabilities in ${{ matrix.service }}"
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Safety dependency check completed for ${{ matrix.service }}"
+
+      - name: Upload backend quality results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-quality-results-${{ matrix.service }}
+          path: quality-results/
+          retention-days: 30
+
+  # =============================================================================
+  # Docker Quality
+  # =============================================================================
+  docker_quality:
+    name: Docker Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    if: |
+      needs.setup.outputs.has_docker_changes == 'true' &&
+      (needs.setup.outputs.check_type == 'all' || needs.setup.outputs.check_type == 'docker')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Hadolint
+        run: |
+          echo "📦 Installing Hadolint"
+          wget -O hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
+          chmod +x hadolint
+          sudo mv hadolint /usr/local/bin/
+
+      - name: Dockerfile linting
+        run: |
+          echo "🔍 Running Dockerfile linting"
+          
+          # Create results directory
+          mkdir -p quality-results/docker
+          
+          # Find all Dockerfiles
+          DOCKERFILES=$(find . -name "Dockerfile*" -type f)
+          
+          if [ -z "$DOCKERFILES" ]; then
+            echo "⚠️ No Dockerfiles found"
+            exit 0
+          fi
+          
+          # Lint each Dockerfile
+          for dockerfile in $DOCKERFILES; do
+            echo "🔍 Linting $dockerfile"
+            
+            BASENAME=$(basename "$dockerfile")
+            DIRNAME=$(dirname "$dockerfile" | sed 's|./||' | tr '/' '_')
+            OUTPUT_FILE="quality-results/docker/hadolint-${DIRNAME}-${BASENAME}.json"
+            
+            # Run Hadolint
+            hadolint "$dockerfile" \
+              --format json > "$OUTPUT_FILE" || true
+            
+            # Generate summary
+            if [ -f "$OUTPUT_FILE" ]; then
+              ERROR_COUNT=$(jq '[.[] | select(.level == "error")] | length' "$OUTPUT_FILE")
+              WARNING_COUNT=$(jq '[.[] | select(.level == "warning")] | length' "$OUTPUT_FILE")
+              INFO_COUNT=$(jq '[.[] | select(.level == "info")] | length' "$OUTPUT_FILE")
+              
+              echo "📊 Hadolint Results for $dockerfile:"
+              echo "- Errors: $ERROR_COUNT"
+              echo "- Warnings: $WARNING_COUNT"
+              echo "- Info: $INFO_COUNT"
+              
+              # Fail if errors found based on severity level
+              if [ "${{ needs.setup.outputs.severity_level }}" == "error" ] && [ "$ERROR_COUNT" -gt 0 ]; then
+                echo "❌ Hadolint found $ERROR_COUNT errors in $dockerfile"
+                exit 1
+              elif [ "${{ needs.setup.outputs.severity_level }}" == "warning" ] && [ "$((ERROR_COUNT + WARNING_COUNT))" -gt 0 ]; then
+                echo "⚠️ Hadolint found $((ERROR_COUNT + WARNING_COUNT)) issues in $dockerfile"
+                exit 1
+              fi
+            fi
+          done
+          
+          echo "✅ Dockerfile linting completed"
+
+      - name: Docker Compose validation
+        run: |
+          echo "🔍 Running Docker Compose validation"
+          
+          # Find all docker-compose files
+          COMPOSE_FILES=$(find . -name "docker-compose*.yml" -o -name "docker-compose*.yaml" -type f)
+          
+          if [ -z "$COMPOSE_FILES" ]; then
+            echo "⚠️ No Docker Compose files found"
+            exit 0
+          fi
+          
+          # Validate each compose file
+          for compose_file in $COMPOSE_FILES; do
+            echo "🔍 Validating $compose_file"
+            
+            # Validate syntax
+            docker-compose -f "$compose_file" config --quiet || {
+              echo "❌ Docker Compose validation failed for $compose_file"
+              exit 1
+            }
+            
+            echo "✅ $compose_file is valid"
+          done
+          
+          echo "✅ Docker Compose validation completed"
+
+      - name: Upload Docker quality results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: docker-quality-results
+          path: quality-results/
+          retention-days: 30
+
+  # =============================================================================
+  # Documentation Quality
+  # =============================================================================
+  documentation_quality:
+    name: Documentation Quality
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup
+    if: |
+      needs.setup.outputs.has_docs_changes == 'true' &&
+      (needs.setup.outputs.check_type == 'all' || needs.setup.outputs.check_type == 'documentation')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install markdownlint
+        run: |
+          echo "📦 Installing markdownlint"
+          npm install -g markdownlint-cli
+
+      - name: Markdown linting
+        run: |
+          echo "🔍 Running Markdown linting"
+          
+          # Create results directory
+          mkdir -p quality-results/markdown
+          
+          # Find all Markdown files
+          MARKDOWN_FILES=$(find . -name "*.md" -type f -not -path "./node_modules/*" -not -path "./dist/*")
+          
+          if [ -z "$MARKDOWN_FILES" ]; then
+            echo "⚠️ No Markdown files found"
+            exit 0
+          fi
+          
+          # Run markdownlint
+          markdownlint $MARKDOWN_FILES \
+            --config .markdownlint.json \
+            --output quality-results/markdown/markdownlint-results.txt || {
+            
+            if [ "${{ needs.setup.outputs.fix_issues }}" == "true" ]; then
+              echo "🔧 Auto-fixing Markdown issues"
+              markdownlint $MARKDOWN_FILES \
+                --config .markdownlint.json \
+                --fix
+            else
+              echo "❌ Markdown linting failed"
+              echo "Run markdownlint with --fix to auto-fix issues"
+              exit 1
+            fi
+          }
+          
+          echo "✅ Markdown linting completed"
+
+      - name: Check for broken links
+        run: |
+          echo "🔍 Checking for broken links in documentation"
+          
+          # Install markdown-link-check
+          npm install -g markdown-link-check
+          
+          # Create results directory
+          mkdir -p quality-results/links
+          
+          # Find all Markdown files
+          MARKDOWN_FILES=$(find . -name "*.md" -type f -not -path "./node_modules/*" -not -path "./dist/*")
+          
+          if [ -z "$MARKDOWN_FILES" ]; then
+            echo "⚠️ No Markdown files found"
+            exit 0
+          fi
+          
+          # Check links in each file
+          BROKEN_LINKS=0
+          for md_file in $MARKDOWN_FILES; do
+            echo "🔍 Checking links in $md_file"
+            
+            markdown-link-check "$md_file" \
+              --config .markdown-link-check.json \
+              --quiet || {
+              BROKEN_LINKS=$((BROKEN_LINKS + 1))
+              echo "❌ Broken links found in $md_file"
+            }
+          done
+          
+          if [ "$BROKEN_LINKS" -gt 0 ]; then
+            echo "❌ Found broken links in $BROKEN_LINKS files"
+            exit 1
+          fi
+          
+          echo "✅ Link checking completed"
+
+      - name: Upload documentation quality results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: documentation-quality-results
+          path: quality-results/
+          retention-days: 30
+
+  # =============================================================================
+  # Quality Report Generation
+  # =============================================================================
+  generate_quality_report:
+    name: Generate Quality Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, frontend_quality, backend_quality, docker_quality, documentation_quality]
+    if: always() && !cancelled()
+    
+    steps:
+      - name: Download all quality results
+        uses: actions/download-artifact@v4
+        with:
+          path: quality-results
+
+      - name: Generate consolidated quality report
+        run: |
+          echo "📊 Generating consolidated quality report"
+          
+          # Create report directory
+          mkdir -p quality-report
+          
+          # Initialize report
+          REPORT_FILE="quality-report/quality-report-$(date -u +%Y%m%d_%H%M%S).md"
+          
+          cat > "$REPORT_FILE" << 'EOF'
+# 🔍 Code Quality Report
+
+**Check Type:** ${{ needs.setup.outputs.check_type }}
+**Severity Level:** ${{ needs.setup.outputs.severity_level }}
+**Auto-fix Issues:** ${{ needs.setup.outputs.fix_issues }}
+**Report Date:** $(date -u)
+**Triggered By:** ${{ github.actor }}
+
+## 📋 Quality Check Summary
+
+EOF
+          
+          # Add frontend quality results
+          if [ "${{ needs.frontend_quality.result }}" == "success" ]; then
+            echo "✅ **Frontend Quality:** All checks passed" >> "$REPORT_FILE"
+          elif [ "${{ needs.frontend_quality.result }}" == "skipped" ]; then
+            echo "⏭️ **Frontend Quality:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **Frontend Quality:** Issues found" >> "$REPORT_FILE"
+          fi
+          
+          # Add backend quality results
+          if [ "${{ needs.backend_quality.result }}" == "success" ]; then
+            echo "✅ **Backend Quality:** All checks passed" >> "$REPORT_FILE"
+          elif [ "${{ needs.backend_quality.result }}" == "skipped" ]; then
+            echo "⏭️ **Backend Quality:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **Backend Quality:** Issues found" >> "$REPORT_FILE"
+          fi
+          
+          # Add Docker quality results
+          if [ "${{ needs.docker_quality.result }}" == "success" ]; then
+            echo "✅ **Docker Quality:** All checks passed" >> "$REPORT_FILE"
+          elif [ "${{ needs.docker_quality.result }}" == "skipped" ]; then
+            echo "⏭️ **Docker Quality:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **Docker Quality:** Issues found" >> "$REPORT_FILE"
+          fi
+          
+          # Add documentation quality results
+          if [ "${{ needs.documentation_quality.result }}" == "success" ]; then
+            echo "✅ **Documentation Quality:** All checks passed" >> "$REPORT_FILE"
+          elif [ "${{ needs.documentation_quality.result }}" == "skipped" ]; then
+            echo "⏭️ **Documentation Quality:** Skipped (no changes detected)" >> "$REPORT_FILE"
+          else
+            echo "❌ **Documentation Quality:** Issues found" >> "$REPORT_FILE"
+          fi
+          
+          echo "" >> "$REPORT_FILE"
+          echo "## 📊 Detailed Results" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "Detailed quality check results are available in the workflow artifacts." >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "---" >> "$REPORT_FILE"
+          echo "*Report generated at $(date -u)*" >> "$REPORT_FILE"
+          
+          echo "✅ Quality report generated: $REPORT_FILE"
+
+      - name: Upload quality report
+        uses: actions/upload-artifact@v4
+        with:
+          name: quality-report
+          path: quality-report/
+          retention-days: 90
+
+      - name: Generate GitHub step summary
+        run: |
+          echo "# 🔍 Code Quality Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Check Type:** ${{ needs.setup.outputs.check_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Severity Level:** ${{ needs.setup.outputs.severity_level }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📊 Quality Check Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Frontend quality results
+          if [ "${{ needs.frontend_quality.result }}" == "success" ]; then
+            echo "✅ Frontend Quality: All checks passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.frontend_quality.result }}" == "skipped" ]; then
+            echo "⏭️ Frontend Quality: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Frontend Quality: Issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Backend quality results
+          if [ "${{ needs.backend_quality.result }}" == "success" ]; then
+            echo "✅ Backend Quality: All checks passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.backend_quality.result }}" == "skipped" ]; then
+            echo "⏭️ Backend Quality: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Backend Quality: Issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Docker quality results
+          if [ "${{ needs.docker_quality.result }}" == "success" ]; then
+            echo "✅ Docker Quality: All checks passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.docker_quality.result }}" == "skipped" ]; then
+            echo "⏭️ Docker Quality: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Docker Quality: Issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Documentation quality results
+          if [ "${{ needs.documentation_quality.result }}" == "success" ]; then
+            echo "✅ Documentation Quality: All checks passed" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.documentation_quality.result }}" == "skipped" ]; then
+            echo "⏭️ Documentation Quality: Skipped (no changes)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Documentation Quality: Issues found" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed results are available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY

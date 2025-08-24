@@ -46,7 +46,7 @@ graph TB
     end
     
     subgraph "Data Layer"
-        POSTGRES["PostgreSQL 15 + Supabase\n- Primary Database\n- PostgREST API\n- Real-time Subscriptions"]
+        POSTGRES["PostgreSQL 16 + Supabase\n- Primary Database\n- PostgREST API\n- Real-time Subscriptions"]
         REDIS["Redis 7\n- Caching Layer\n- Session Store\n- Bull Queue"]
         MINIO["MinIO\n- Object Storage\n- S3 Compatible\n- Supabase Storage"]
         SUPABASE_RT["Supabase Realtime\n- Live Updates\n- WebSocket Events"]

@@ -100,7 +100,7 @@ graph TB
 - **Testing:** Jest + React Testing Library
 
 ### 2.2 Backend Technologies
-- **Runtime:** Node.js 20+ LTS
+- **Runtime:** Node.js 22+ LTS
 - **Framework:** Express.js with TypeScript
 - **Authentication:** JWT + Passport.js
 - **Real-time:** Socket.IO

@@ -1,0 +1,65 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": ["*"]
+      },
+      "Action": [
+        "s3:GetBucketLocation",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::soulmatting-dev",
+        "arn:aws:s3:::soulmatting-prod"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": ["*"]
+      },
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::soulmatting-dev/public/*",
+        "arn:aws:s3:::soulmatting-prod/public/*"
+      ]
+    },
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "AWS": ["arn:aws:iam::123456789012:user/soulmatting-service"]
+      },
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::soulmatting-dev/*",
+        "arn:aws:s3:::soulmatting-prod/*"
+      ]
+    },
+    {
+      "Effect": "Deny",
+      "Principal": {
+        "AWS": ["*"]
+      },
+      "Action": [
+        "s3:GetObject"
+      ],
+      "Resource": [
+        "arn:aws:s3:::soulmatting-dev/private/*",
+        "arn:aws:s3:::soulmatting-prod/private/*"
+      ],
+      "Condition": {
+        "StringNotEquals": {
+          "aws:PrincipalType": "User"
+        }
+      }
+    }
+  ]
+}

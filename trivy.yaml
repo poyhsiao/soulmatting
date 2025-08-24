@@ -1,0 +1,356 @@
+# Trivy Security Scanner Configuration for SoulMatting Platform
+# 
+# This configuration file defines security scanning settings for
+# container images, filesystems, and dependencies.
+# 
+# Version: 1.0.0
+# Created: 2024-01-20
+# Updated: 2024-01-20
+# Author: Kim Hsiao
+
+# =============================================================================
+# GLOBAL CONFIGURATION
+# =============================================================================
+
+# Scanner settings
+scanner:
+  - vuln        # Vulnerability scanning
+  - secret      # Secret detection
+  - config      # Configuration issues
+  - license     # License scanning
+
+# Severity levels to report
+severity:
+  - UNKNOWN
+  - LOW
+  - MEDIUM
+  - HIGH
+  - CRITICAL
+
+# Output format
+format: json
+
+# Cache settings
+cache:
+  # Cache directory
+  dir: ".trivy-cache"
+  # Clear cache before scanning
+  clear: false
+  # Cache TTL (time to live)
+  ttl: 24h
+
+# =============================================================================
+# VULNERABILITY SCANNING
+# =============================================================================
+
+vulnerability:
+  # Vulnerability types to detect
+  type:
+    - os          # OS packages
+    - library     # Application dependencies
+  
+  # Skip update of vulnerability database
+  skip-update: false
+  
+  # Skip files and directories
+  skip-files:
+    - "**/*.md"
+    - "**/*.txt"
+    - "**/LICENSE*"
+    - "**/CHANGELOG*"
+    - "**/README*"
+    - "**/.git/**"
+    - "**/node_modules/**/.cache/**"
+    - "**/coverage/**"
+    - "**/dist/**"
+    - "**/build/**"
+    - "**/.next/**"
+    - "**/.nuxt/**"
+  
+  # Skip directories
+  skip-dirs:
+    - ".git"
+    - ".github"
+    - "node_modules/.cache"
+    - "coverage"
+    - "dist"
+    - "build"
+    - ".next"
+    - ".nuxt"
+    - "docs"
+    - "examples"
+    - "test"
+    - "tests"
+    - "__tests__"
+    - "spec"
+    - "specs"
+
+# =============================================================================
+# SECRET DETECTION
+# =============================================================================
+
+secret:
+  # Skip secret scanning for specific files
+  skip-files:
+    - "**/*.md"
+    - "**/*.txt"
+    - "**/package-lock.json"
+    - "**/yarn.lock"
+    - "**/pnpm-lock.yaml"
+    - "**/.env.example"
+    - "**/.env.template"
+  
+  # Custom secret patterns
+  config: |
+    rules:
+      # SoulMatting specific secrets
+      - id: soulmatting-api-key
+        description: SoulMatting API Key
+        regex: 'sm_[a-zA-Z0-9]{32}'
+        keywords:
+          - soulmatting
+          - api_key
+      
+      - id: soulmatting-jwt-secret
+        description: SoulMatting JWT Secret
+        regex: 'jwt_secret_[a-zA-Z0-9]{64}'
+        keywords:
+          - jwt
+          - secret
+      
+      # Database credentials
+      - id: database-url
+        description: Database Connection URL
+        regex: 'postgresql://[^\s]+'
+        keywords:
+          - database
+          - postgres
+          - db_url
+      
+      # Redis credentials
+      - id: redis-url
+        description: Redis Connection URL
+        regex: 'redis://[^\s]+'
+        keywords:
+          - redis
+          - cache
+      
+      # Supabase credentials
+      - id: supabase-key
+        description: Supabase API Key
+        regex: 'eyJ[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+'
+        keywords:
+          - supabase
+          - anon
+          - service_role
+      
+      # AWS credentials
+      - id: aws-access-key
+        description: AWS Access Key
+        regex: 'AKIA[0-9A-Z]{16}'
+        keywords:
+          - aws
+          - access
+          - key
+      
+      # Generic API keys
+      - id: generic-api-key
+        description: Generic API Key
+        regex: '[a-zA-Z0-9]{32,}'
+        keywords:
+          - api_key
+          - apikey
+          - access_token
+          - auth_token
+
+# =============================================================================
+# CONFIGURATION SCANNING
+# =============================================================================
+
+config:
+  # Configuration file types to scan
+  file-patterns:
+    - "*.yaml"
+    - "*.yml"
+    - "*.json"
+    - "*.toml"
+    - "*.hcl"
+    - "*.tf"
+    - "Dockerfile*"
+    - "docker-compose*.yml"
+    - "docker-compose*.yaml"
+  
+  # Skip configuration scanning for specific files
+  skip-files:
+    - "**/package.json"
+    - "**/package-lock.json"
+    - "**/yarn.lock"
+    - "**/pnpm-lock.yaml"
+    - "**/tsconfig.json"
+    - "**/jest.config.js"
+    - "**/webpack.config.js"
+    - "**/vite.config.js"
+    - "**/next.config.js"
+    - "**/tailwind.config.js"
+    - "**/postcss.config.js"
+    - "**/.eslintrc*"
+    - "**/.prettierrc*"
+    - "**/babel.config.js"
+
+# =============================================================================
+# LICENSE SCANNING
+# =============================================================================
+
+license:
+  # License categories to flag
+  forbidden:
+    - GPL-2.0
+    - GPL-3.0
+    - AGPL-1.0
+    - AGPL-3.0
+    - LGPL-2.0
+    - LGPL-2.1
+    - LGPL-3.0
+    - CPAL-1.0
+    - EUPL-1.1
+    - EUPL-1.2
+  
+  # License categories that require notice
+  notice-required:
+    - Apache-2.0
+    - BSD-2-Clause
+    - BSD-3-Clause
+    - MIT
+    - ISC
+    - MPL-2.0
+  
+  # Skip license scanning for specific files
+  skip-files:
+    - "**/node_modules/**"
+    - "**/vendor/**"
+    - "**/third_party/**"
+
+# =============================================================================
+# REPORTING
+# =============================================================================
+
+report:
+  # Report format
+  format: json
+  
+  # Output file
+  output: "trivy-report.json"
+  
+  # Include suppressed vulnerabilities in report
+  list-all-pkgs: false
+  
+  # Dependency tree output
+  dependency-tree: true
+  
+  # Exit code configuration
+  exit-code: 1
+  
+  # Ignore unfixed vulnerabilities
+  ignore-unfixed: false
+  
+  # Timeout for scanning
+  timeout: 10m
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+
+db:
+  # Skip database update
+  skip-update: false
+  
+  # Database repository
+  repository: "ghcr.io/aquasecurity/trivy-db"
+  
+  # Download timeout
+  download-timeout: 5m
+
+# =============================================================================
+# REGISTRY CONFIGURATION
+# =============================================================================
+
+registry:
+  # Registry credentials (use environment variables)
+  # TRIVY_USERNAME and TRIVY_PASSWORD
+  
+  # Skip TLS verification (not recommended for production)
+  insecure: false
+  
+  # Registry timeout
+  timeout: 5m
+
+# =============================================================================
+# IGNORE CONFIGURATION
+# =============================================================================
+
+ignore:
+  # Ignore file path
+  file: ".trivyignore"
+  
+  # Ignore policy file
+  policy: ".trivy-policy.rego"
+
+# =============================================================================
+# PERFORMANCE TUNING
+# =============================================================================
+
+performance:
+  # Parallel scanning
+  parallel: 4
+  
+  # Memory limit
+  memory-limit: "1g"
+  
+  # CPU limit
+  cpu-limit: "2"
+  
+  # Scan timeout
+  timeout: "30m"
+
+# =============================================================================
+# ENVIRONMENT-SPECIFIC OVERRIDES
+# =============================================================================
+
+# Development environment
+development:
+  severity:
+    - MEDIUM
+    - HIGH
+    - CRITICAL
+  ignore-unfixed: true
+  exit-code: 0
+
+# Staging environment
+staging:
+  severity:
+    - HIGH
+    - CRITICAL
+  ignore-unfixed: false
+  exit-code: 1
+
+# Production environment
+production:
+  severity:
+    - CRITICAL
+  ignore-unfixed: false
+  exit-code: 1
+  
+  # Additional security checks for production
+  scanner:
+    - vuln
+    - secret
+    - config
+    - license
+  
+  # Stricter secret detection
+  secret:
+    skip-files: []
+  
+  # Comprehensive configuration scanning
+  config:
+    skip-files: []

@@ -1,0 +1,226 @@
+# SoulMatting Notification Service - Helm Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# Application configuration
+app:
+  name: soulmatting-notification
+  version: "1.0.0"
+  description: "SoulMatting Notification Service"
+  port: 3006
+  environment: development
+
+# Image configuration
+image:
+  repository: ghcr.io/kimhsiao/soulmatting/notification-service
+  tag: "latest"
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# Deployment configuration
+deployment:
+  replicaCount: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  annotations: {}
+  labels: {}
+  podAnnotations: {}
+  podLabels: {}
+  imagePullSecrets: []
+  serviceAccountName: ""
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1000
+    fsGroup: 1000
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    capabilities:
+      drop:
+        - ALL
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3006
+  annotations: {}
+  labels: {}
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: notification.soulmatting.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: soulmatting-notification-tls
+      hosts:
+        - notification.soulmatting.local
+
+# Resource configuration
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# Autoscaling configuration
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 3006
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 3006
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# Environment variables
+env:
+  NODE_ENV: development
+  PORT: "3006"
+  LOG_LEVEL: info
+
+# Secrets
+secrets:
+  DATABASE_URL: ""
+  REDIS_URL: ""
+  JWT_SECRET: ""
+  SMTP_HOST: ""
+  SMTP_PORT: ""
+  SMTP_USER: ""
+  SMTP_PASS: ""
+  TWILIO_ACCOUNT_SID: ""
+  TWILIO_AUTH_TOKEN: ""
+  FIREBASE_SERVER_KEY: ""
+  APNS_KEY_ID: ""
+  APNS_TEAM_ID: ""
+  APNS_PRIVATE_KEY: ""
+
+# ConfigMap
+configMap:
+  data: {}
+
+# Persistence
+persistence:
+  enabled: false
+  storageClass: ""
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  mountPath: /app/data
+
+# Service Account
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+  automountServiceAccountToken: false
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: ""
+
+# Network Policy
+networkPolicy:
+  enabled: false
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: soulmatting
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: soulmatting-web
+      ports:
+        - protocol: TCP
+          port: 3006
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: soulmatting
+      ports:
+        - protocol: TCP
+          port: 5432  # PostgreSQL
+        - protocol: TCP
+          port: 6379  # Redis
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 53    # DNS
+        - protocol: UDP
+          port: 53    # DNS
+        - protocol: TCP
+          port: 443   # HTTPS
+        - protocol: TCP
+          port: 80    # HTTP
+        - protocol: TCP
+          port: 587   # SMTP
+        - protocol: TCP
+          port: 465   # SMTPS
+
+# Monitoring
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    path: /metrics
+    port: 3006
+
+# External dependencies
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: "postgres"
+    database: "soulmatting_notification"
+  primary:
+    persistence:
+      enabled: false

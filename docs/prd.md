@@ -163,7 +163,7 @@ To revolutionize online dating by providing a secure, intuitive, and engaging pl
 
 #### 4.1.3 Data Layer
 
-- **Primary Database:** PostgreSQL 15+ with connection pooling
+- **Primary Database:** PostgreSQL 16+ with connection pooling
 - **Document Store:** MongoDB for flexible matching data and user preferences
 - **Cache Layer:** Redis Cluster for session management and real-time data
 - **Search Engine:** Meilisearch for user discovery and content search
@@ -201,7 +201,7 @@ To revolutionize online dating by providing a secure, intuitive, and engaging pl
 #### 4.2.1 Self-Hosted Infrastructure
 
 - **Deployment Strategy:** Docker Compose for self-hosted environments
-- **Database:** PostgreSQL 15+ with Supabase stack integration
+- **Database:** PostgreSQL 16+ with Supabase stack integration
 - **Object Storage:** MinIO S3-compatible storage for media files
 - **Caching:** Redis 7+ for session management and performance
 - **API Gateway:** Kong Gateway with Supabase integration

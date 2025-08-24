@@ -1,0 +1,41 @@
+# SoulMatting Web Frontend Helm Chart
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+apiVersion: v2
+name: soulmatting-web
+description: SoulMatting Web Frontend Application
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+
+keywords:
+  - soulmatting
+  - dating
+  - web
+  - frontend
+  - nextjs
+
+home: https://soulmatting.com
+sources:
+  - https://github.com/kimhsiao/soulmatting
+
+maintainers:
+  - name: Kim Hsiao
+    email: kim@soulmatting.com
+
+dependencies:
+  - name: redis
+    version: "17.15.6"
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled
+  - name: postgresql
+    version: "12.12.10"
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+
+annotations:
+  category: Web
+  licenses: MIT

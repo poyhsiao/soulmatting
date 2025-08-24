@@ -1,0 +1,117 @@
+# SoulMatting Platform - Dependabot Auto-merge Workflow
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+name: Dependabot Auto-merge
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+  pull-requests: write
+  checks: read
+
+jobs:
+  auto-merge:
+    name: Auto-merge Dependabot PRs
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Get Dependabot metadata
+        id: metadata
+        uses: dependabot/fetch-metadata@v1
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+          run_install: false
+          
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+        
+      - name: Run tests
+        run: pnpm test
+        
+      - name: Run linting
+        run: pnpm lint
+        
+      - name: Run type checking
+        run: pnpm type-check
+        
+      - name: Auto-merge patch updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch'
+        run: |
+          echo "Auto-merging patch update for ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Auto-merge minor dev dependencies
+        if: |
+          steps.metadata.outputs.update-type == 'version-update:semver-minor' &&
+          steps.metadata.outputs.dependency-type == 'direct:development'
+        run: |
+          echo "Auto-merging minor dev dependency update for ${{ steps.metadata.outputs.dependency-names }}"
+          gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Comment on major updates
+        if: steps.metadata.outputs.update-type == 'version-update:semver-major'
+        run: |
+          gh pr comment "$PR_URL" --body "🚨 **Major version update detected!**
+          
+          This PR updates ${{ steps.metadata.outputs.dependency-names }} with potentially breaking changes.
+          Please review the changelog and test thoroughly before merging.
+          
+          **Update type:** ${{ steps.metadata.outputs.update-type }}
+          **Dependency type:** ${{ steps.metadata.outputs.dependency-type }}"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          
+      - name: Add labels
+        run: |
+          gh pr edit "$PR_URL" --add-label "dependencies"
+          
+          case "${{ steps.metadata.outputs.update-type }}" in
+            "version-update:semver-patch")
+              gh pr edit "$PR_URL" --add-label "patch"
+              ;;
+            "version-update:semver-minor")
+              gh pr edit "$PR_URL" --add-label "minor"
+              ;;
+            "version-update:semver-major")
+              gh pr edit "$PR_URL" --add-label "major" --add-label "breaking-change"
+              ;;
+          esac
+          
+          if [ "${{ steps.metadata.outputs.dependency-type }}" = "direct:development" ]; then
+            gh pr edit "$PR_URL" --add-label "dev-dependencies"
+          else
+            gh pr edit "$PR_URL" --add-label "production-dependencies"
+          fi
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

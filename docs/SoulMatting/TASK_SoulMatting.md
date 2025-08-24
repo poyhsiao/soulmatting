@@ -116,7 +116,7 @@ graph TD
 #### Input Contracts
 - Project requirements from ALIGNMENT document
 - Technical architecture from DESIGN document
-- Development environment (Node.js 20+, Docker)
+- Development environment (Node.js 22+, Docker)
 
 #### Output Contracts
 - Monorepo structure with microservices
