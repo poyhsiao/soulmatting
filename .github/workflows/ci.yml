@@ -164,13 +164,13 @@ jobs:
 
       - name: Run tests - Frontend
         if: matrix.test-group == 'frontend'
-        run: pnpm test:frontend --coverage
+        run: pnpm test:frontend -- --coverage
         env:
           CI: true
 
       - name: Run tests - Backend
         if: matrix.test-group == 'backend'
-        run: pnpm test:backend --coverage
+        run: pnpm test:backend -- --coverage
         env:
           CI: true
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/soulmatting_test
