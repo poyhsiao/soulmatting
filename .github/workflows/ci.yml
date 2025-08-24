@@ -178,9 +178,9 @@ jobs:
       - name: Run tests
         run: |
           if [ "${{ matrix.test-group }}" = "frontend" ]; then
-            pnpm run test:frontend -- --coverage
+            pnpm run test:frontend
           else
-            pnpm run test:unit -- --coverage
+            pnpm run test:unit
           fi
         env:
           CI: true

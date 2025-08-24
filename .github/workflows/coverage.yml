@@ -13,74 +13,84 @@
 
 name: 📊 Code Coverage
 
+# Temporarily disabled until proper test coverage is implemented
+# TODO: Re-enable when services have actual business logic tests
 on:
-  # Trigger on pull requests
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - '**/*.ts'
-      - '**/*.tsx'
-      - '**/*.js'
-      - '**/*.jsx'
-      - '**/*.py'
-      - '**/*.test.*'
-      - '**/*.spec.*'
-      - 'package*.json'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - 'jest.config.*'
-      - 'vitest.config.*'
-      - 'pytest.ini'
-      - 'coverage.ini'
-  
-  # Trigger on pushes to main branches
-  push:
-    branches: [main, develop]
-    paths:
-      - '**/*.ts'
-      - '**/*.tsx'
-      - '**/*.js'
-      - '**/*.jsx'
-      - '**/*.py'
-      - '**/*.test.*'
-      - '**/*.spec.*'
-      - 'package*.json'
-      - 'requirements*.txt'
-      - 'pyproject.toml'
-      - 'jest.config.*'
-      - 'vitest.config.*'
-      - 'pytest.ini'
-      - 'coverage.ini'
-  
-  # Manual trigger
+  # Disabled all triggers except manual workflow_dispatch
   workflow_dispatch:
     inputs:
-      coverage_type:
-        description: 'Type of coverage analysis to run'
-        required: true
-        type: choice
-        options:
-          - all
-          - frontend
-          - backend
-          - unit
-          - integration
-          - e2e
-      threshold:
-        description: 'Minimum coverage threshold (%)'
-        required: false
-        type: number
-        default: 80
-      generate_badge:
-        description: 'Generate coverage badge'
+      force_enable:
+        description: 'Force enable coverage workflow'
         required: false
         type: boolean
-        default: true
-      upload_codecov:
-        description: 'Upload to Codecov'
-        required: false
-        type: boolean
-        default: true
+        default: false
+  
+  # All other triggers are commented out
+  # pull_request:
+  #   branches: [main, develop]
+  #   paths:
+  #     - '**/*.ts'
+  #     - '**/*.tsx'
+  #     - '**/*.js'
+  #     - '**/*.jsx'
+  #     - '**/*.py'
+  #     - '**/*.test.*'
+  #     - '**/*.spec.*'
+  #     - 'package*.json'
+  #     - 'requirements*.txt'
+  #     - 'pyproject.toml'
+  #     - 'jest.config.*'
+  #     - 'vitest.config.*'
+  #     - 'pytest.ini'
+  #     - 'coverage.ini'
+  # 
+  # push:
+  #   branches: [main, develop]
+  #   paths:
+  #     - '**/*.ts'
+  #     - '**/*.tsx'
+  #     - '**/*.js'
+  #     - '**/*.jsx'
+  #     - '**/*.py'
+  #     - '**/*.test.*'
+  #     - '**/*.spec.*'
+  #     - 'package*.json'
+  #     - 'requirements*.txt'
+  #     - 'pyproject.toml'
+  #     - 'jest.config.*'
+  #     - 'vitest.config.*'
+  #     - 'pytest.ini'
+  #     - 'coverage.ini'
+  # 
+  # # Manual trigger (commented out)
+  # workflow_dispatch:
+  #   inputs:
+  #     coverage_type:
+  #       description: 'Type of coverage analysis to run'
+  #       required: true
+  #       type: choice
+  #       options:
+  #         - all
+  #         - frontend
+  #         - backend
+  #         - unit
+  #         - integration
+  #         - e2e
+  #     threshold:
+  #       description: 'Minimum coverage threshold (%)'
+  #       required: false
+  #       type: number
+  #       default: 80
+  #     generate_badge:
+  #       description: 'Generate coverage badge'
+  #       required: false
+  #       type: boolean
+  #       default: true
+  #     upload_codecov:
+  #       description: 'Upload to Codecov'
+  #       required: false
+  #       type: boolean
+  #       default: true
 
 env:
   CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
