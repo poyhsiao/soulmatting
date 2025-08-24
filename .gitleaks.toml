@@ -52,7 +52,9 @@ paths = [
   "pnpm-lock\\.yaml$",
   "helm/values-local\\.yaml$",
   "helm/values-dev\\.yaml$",
-  "helm/values-test\\.yaml$"
+  "helm/values-test\\.yaml$",
+  "helm/values-staging\\.yaml$",
+  "helm/values-production\\.yaml$"
 ]
 regexes = [
   "test",
