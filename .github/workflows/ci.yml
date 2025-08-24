@@ -278,7 +278,27 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build application
-        run: pnpm build:${{ matrix.service }}
+        run: |
+          if [ "${{ matrix.service }}" = "web" ]; then
+            pnpm --filter @soulmatting/web build
+          elif [ "${{ matrix.service }}" = "auth-service" ]; then
+            pnpm --filter @soulmatting/auth-service build
+          elif [ "${{ matrix.service }}" = "user" ]; then
+            pnpm --filter @soulmatting/user build
+          elif [ "${{ matrix.service }}" = "match" ]; then
+            pnpm --filter @soulmatting/match build
+          elif [ "${{ matrix.service }}" = "communication" ]; then
+            pnpm --filter @soulmatting/communication build
+          elif [ "${{ matrix.service }}" = "media" ]; then
+            pnpm --filter @soulmatting/media build
+          elif [ "${{ matrix.service }}" = "notification" ]; then
+            pnpm --filter @soulmatting/notification build
+          elif [ "${{ matrix.service }}" = "search" ]; then
+            pnpm --filter @soulmatting/search build
+          else
+            echo "Unknown service: ${{ matrix.service }}"
+            exit 1
+          fi
         env:
           NODE_ENV: production
 
