@@ -167,7 +167,7 @@ jobs:
 
       - name: Setup database
         run: |
-          pnpm run db:generate
+          pnpm --filter @soulmatting/database run generate
           pnpm run db:migrate:test
           pnpm run db:seed
         env:
@@ -271,7 +271,7 @@ jobs:
 
       - name: Setup test database
         run: |
-          pnpm run db:generate
+          pnpm --filter @soulmatting/database run generate
           pnpm run db:migrate:test
           pnpm run db:seed
         env:
