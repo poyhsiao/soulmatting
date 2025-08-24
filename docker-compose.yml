@@ -85,7 +85,7 @@ services:
 
   # Kong Gateway (API Gateway)
   kong:
-    image: kong:3.8-alpine
+    image: kong:3.9
     container_name: soulmatting-kong
     restart: unless-stopped
     environment:
