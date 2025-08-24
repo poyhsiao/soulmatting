@@ -2,13 +2,13 @@ import { defineConfig, devices } from '@playwright/test';
 
 /**
  * Playwright Configuration for SoulMatting Platform
- * 
+ *
  * This configuration follows Context7 standards for:
  * - End-to-end testing best practices
  * - Cross-browser compatibility testing
  * - Performance and accessibility testing
  * - Security-focused E2E testing patterns
- * 
+ *
  * @version 1.0.0
  * @created 2024-01-20
  * @updated 2024-01-20
@@ -48,7 +48,7 @@ export default defineConfig({
     /* Context7 security settings */
     ignoreHTTPSErrors: false,
     acceptDownloads: false,
-    
+
     /* Performance and accessibility testing */
     extraHTTPHeaders: {
       'Accept-Language': 'en-US,en;q=0.9',

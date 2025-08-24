@@ -1,12 +1,12 @@
 /**
  * Cucumber Configuration for SoulMatting Platform
- * 
+ *
  * This configuration follows Context7 standards for:
  * - Behavior-driven development (BDD) best practices
  * - Comprehensive scenario coverage
  * - Security-focused testing patterns
  * - Scalable test automation architecture
- * 
+ *
  * @version 1.0.0
  * @created 2024-01-20
  * @updated 2024-01-20

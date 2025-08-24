@@ -1,12 +1,12 @@
 /**
  * Jest Configuration for SoulMatting Platform
- * 
+ *
  * This configuration follows Context7 standards for:
  * - Code quality and testing best practices
  * - Comprehensive test coverage requirements
  * - Scalable testing architecture
  * - Security-focused testing patterns
- * 
+ *
  * @version 1.0.0
  * @created 2024-01-20
  * @updated 2024-01-20
