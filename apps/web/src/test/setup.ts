@@ -38,9 +38,11 @@ beforeAll(() => {
   });
 
   // Mock scrollTo
-  global.scrollTo = vi.fn((_optionsOrX?: ScrollToOptions | number, _y?: number) => {
-    // Mock implementation
-  }) as typeof global.scrollTo;
+  global.scrollTo = vi.fn(
+    (_optionsOrX?: ScrollToOptions | number, _y?: number) => {
+      // Mock implementation
+    }
+  ) as typeof global.scrollTo;
 
   // Mock localStorage
   const localStorageMock = {

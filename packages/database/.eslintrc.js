@@ -4,7 +4,7 @@ module.exports = {
     'src/generated/**/*',
     'dist/**/*',
     'node_modules/**/*',
-    '*.d.ts'
+    '*.d.ts',
   ],
   parserOptions: {
     project: './tsconfig.json',
