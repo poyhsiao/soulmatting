@@ -46,16 +46,16 @@ jobs:
       with:
         fetch-depth: 0
 
+    - name: Install pnpm
+      uses: pnpm/action-setup@v2
+      with:
+        version: 10.15.0
+
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:
         node-version: '22'
         cache: 'pnpm'
-
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 10.15.0
 
     - name: Install dependencies
       run: |
@@ -144,7 +144,7 @@ jobs:
         pnpm --filter @soulmatting/web build
 
     - name: Upload build artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: frontend-build
         path: apps/web/dist/
@@ -406,6 +406,5 @@ jobs:
       with:
         status: ${{ job.status }}
         channel: '#deployments'
-        webhook_url: ${{ secrets.SLACK_WEBHOOK }}
       env:
         SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

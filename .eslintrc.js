@@ -9,7 +9,9 @@ module.exports = {
     project: [
       './tsconfig.json',
       './apps/web/tsconfig.json',
-      './services/auth/tsconfig.json'
+      './services/auth/tsconfig.json',
+      './packages/database/tsconfig.json',
+      './packages/types/tsconfig.json'
     ],
     tsconfigRootDir: __dirname,
   },
