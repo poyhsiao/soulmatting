@@ -47,9 +47,9 @@ async function bootstrap(): Promise<void> {
   SwaggerModule.setup('api/docs', app, document);
 
   // Start the application
-  const port = process.env.PORT || 3003;
+  const port = 3003;
   await app.listen(port);
-  console.log(`Search Service is running on: http://localhost:${port}`);
+  // console.log(`Search Service is running on: http://localhost:${port}`);
 }
 
 bootstrap();

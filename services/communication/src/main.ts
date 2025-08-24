@@ -51,7 +51,7 @@ async function bootstrap(): Promise<void> {
   // Start the application
   const port = process.env.PORT || 3004;
   await app.listen(port);
-  console.log(`Communication Service is running on: http://localhost:${port}`);
+  // Communication Service is running on: http://localhost:${port}
 }
 
 bootstrap();

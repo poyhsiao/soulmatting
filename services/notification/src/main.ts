@@ -3,9 +3,8 @@
  */
 async function bootstrap(): Promise<void> {
   // TODO: Implement proper app module
-  console.log('Notification Service starting...');
-  const port = process.env.PORT || 3007;
-  console.log(`Notification Service would run on: http://localhost:${port}`);
+  // Notification Service starting...
+  // Notification Service would run on: http://localhost:3007
 }
 
 bootstrap();
