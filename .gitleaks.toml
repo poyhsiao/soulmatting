@@ -6,21 +6,38 @@
 
 title = "GitLeaks config for SoulMatting"
 
-[extend]
-# Extend default rules
-path = "https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml"
+# [extend]
+# Extend default rules - commented out due to network access issues in CI
+# path = "https://raw.githubusercontent.com/gitleaks/gitleaks/master/config/gitleaks.toml"
+
+# Basic rules for common secrets
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api[_-]?key|apikey)[\s]*[=:][\s]*["']?([a-zA-Z0-9]{20,})["']?'''
+secretGroup = 2
+
+[[rules]]
+id = "aws-access-key"
+description = "AWS Access Key"
+regex = '''AKIA[0-9A-Z]{16}'''
+
+[[rules]]
+id = "jwt-token"
+description = "JWT Token"
+regex = '''eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+
+[[rules]]
+id = "database-connection-string"
+description = "Database connection string"
+regex = '''(?i)(database[_-]?url|db[_-]?url|connection[_-]?string)[\s]*[=:][\s]*["']?(postgresql://|mysql://|mongodb://)[^\s"']+["']?'''
+secretGroup = 2
 
 # Custom rules for this project
 [[rules]]
 id = "soulmatting-api-key"
 description = "SoulMatting API Key"
 regex = '''(?i)(soulmatting[_-]?api[_-]?key)[\s]*[=:][\s]*["']?([a-zA-Z0-9]{32,})["']?'''
-secretGroup = 2
-
-[[rules]]
-id = "database-connection-string"
-description = "Database connection string"
-regex = '''(?i)(database[_-]?url|db[_-]?url|connection[_-]?string)[\s]*[=:][\s]*["']?(postgresql://|mysql://|mongodb://)[^\s"']+["']?'''
 secretGroup = 2
 
 # Allowlist for false positives
