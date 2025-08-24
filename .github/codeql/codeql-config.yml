@@ -69,7 +69,6 @@ query-filters:
 # Custom query packs
 packs:
   - codeql/javascript-queries
-  - codeql/javascript-security-queries
 
 # Analysis configuration
 analysis:
