@@ -136,9 +136,10 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
+          run_install: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -155,6 +156,10 @@ jobs:
             apps/*/node_modules
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
+
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
 
       - name: Restore build cache
         uses: actions/cache@v4
@@ -176,9 +181,11 @@ jobs:
 
       - name: Start application
         run: |
+          # Start web application (services already running via GitHub Actions)
           pnpm --filter @soulmatting/web run dev &
           sleep 30
-          curl -f http://localhost:3000 || exit 1
+          # Wait for application to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3000; do sleep 2; done'
         env:
           CI: true
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
@@ -196,10 +203,10 @@ jobs:
       - name: Upload Lighthouse results
         uses: actions/upload-artifact@v4
         with:
-          name: lighthouse-results
+          name: lighthouse-performance-results
           path: |
+            lhci_reports/
             .lighthouseci/
-            lighthouse-results.json
           retention-days: 30
 
   # Load testing with Artillery
@@ -260,6 +267,10 @@ jobs:
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
 
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
+
       - name: Restore build cache
         uses: actions/cache@v4
         with:
@@ -280,9 +291,11 @@ jobs:
 
       - name: Start API server
         run: |
-          docker compose up -d rest
+          # Start REST API (services already running via GitHub Actions)
+          pnpm --filter './services/*' run dev &
           sleep 15
-          curl -f http://localhost:3001/ || exit 1
+          # Wait for API to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3001/; do sleep 2; done'
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
@@ -295,6 +308,8 @@ jobs:
         run: |
           artillery run tests/performance/load-test.yml --output load-test-results.json
           artillery report load-test-results.json --output load-test-report.html
+        env:
+          TARGET_URL: http://localhost:3001
 
       - name: Upload load test results
         uses: actions/upload-artifact@v4
@@ -363,6 +378,10 @@ jobs:
             packages/*/node_modules
           key: ${{ needs.setup.outputs.cache-key }}
 
+      - name: Install dependencies
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: pnpm install --frozen-lockfile
+
       - name: Setup test database
         run: |
           pnpm --filter @soulmatting/database run generate
@@ -374,8 +393,11 @@ jobs:
 
       - name: Start API server
         run: |
-          docker compose up -d rest
+          # Start REST API (services already running via GitHub Actions)
+          pnpm --filter './services/*' run dev &
           sleep 15
+          # Wait for API to be ready
+          timeout 60 bash -c 'until curl -f http://localhost:3001/; do sleep 2; done'
         env:
           NODE_ENV: test
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/soulmatting_test
@@ -383,17 +405,18 @@ jobs:
 
       - name: Run API performance tests
         run: |
-          # Run performance tests against the API
-          curl -f http://localhost:3001/ || exit 1
-          echo "API performance test completed"
+          artillery run tests/performance/api-test.yml --output api-performance-results.json
+          artillery report api-performance-results.json --output api-performance-report.html
+        env:
+          TARGET_URL: http://localhost:3001
 
       - name: Upload API performance results
         uses: actions/upload-artifact@v4
         with:
           name: api-performance-results
           path: |
-            performance-results.json
-            performance-report.html
+            api-performance-results.json
+            api-performance-report.html
           retention-days: 30
 
   # Performance summary and reporting
