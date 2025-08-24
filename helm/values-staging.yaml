@@ -12,12 +12,12 @@ global:
   environment: staging
   domain: staging.soulmatting.com
   debug: false
-  
+
   # TLS enabled for staging
   tls:
     enabled: true
     secretName: soulmatting-staging-tls
-  
+
   # Staging database settings
   database:
     host: postgresql
@@ -25,14 +25,14 @@ global:
     username: postgres
     passwordSecret: postgresql-secret
     passwordKey: postgres-password
-  
+
   # Staging Redis settings
   redis:
     host: redis-master
     port: 6379
     passwordSecret: redis-secret
     passwordKey: redis-password
-  
+
   # Staging Elasticsearch settings
   elasticsearch:
     host: elasticsearch
@@ -40,7 +40,7 @@ global:
     username: elastic
     passwordSecret: elasticsearch-secret
     passwordKey: elastic-password
-  
+
   # Staging security settings
   security:
     jwtSecretRef:
@@ -56,13 +56,13 @@ web:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/web
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3000
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -78,7 +78,7 @@ web:
       - secretName: soulmatting-staging-tls
         hosts:
           - staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 500m
@@ -86,14 +86,14 @@ web:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
     targetMemoryUtilizationPercentage: 80
-  
+
   env:
     NODE_ENV: staging
     REACT_APP_API_URL: https://api-staging.soulmatting.com
@@ -105,13 +105,13 @@ auth:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/auth-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3001
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -126,7 +126,7 @@ auth:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 500m
@@ -134,13 +134,13 @@ auth:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
     maxReplicas: 5
     targetCPUUtilizationPercentage: 70
-  
+
   env:
     NODE_ENV: staging
     LOG_LEVEL: info
@@ -153,13 +153,13 @@ user:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/user-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3002
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -174,7 +174,7 @@ user:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 500m
@@ -182,7 +182,7 @@ user:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -195,13 +195,13 @@ match:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/match-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3003
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -216,7 +216,7 @@ match:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 1000m
@@ -224,7 +224,7 @@ match:
     requests:
       cpu: 500m
       memory: 512Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -237,20 +237,20 @@ communication:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/communication-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3004
-  
+
   ingress:
     enabled: true
     className: nginx
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-staging
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+      nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+      nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
       nginx.ingress.kubernetes.io/websocket-services: soulmatting-communication
     hosts:
       - host: ws-staging.soulmatting.com
@@ -268,7 +268,7 @@ communication:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 500m
@@ -276,7 +276,7 @@ communication:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -289,19 +289,19 @@ media:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/media-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3005
-  
+
   ingress:
     enabled: true
     className: nginx
     annotations:
       cert-manager.io/cluster-issuer: letsencrypt-staging
-      nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+      nginx.ingress.kubernetes.io/proxy-body-size: '50m'
     hosts:
       - host: api-staging.soulmatting.com
         paths:
@@ -311,7 +311,7 @@ media:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 1000m
@@ -319,16 +319,16 @@ media:
     requests:
       cpu: 500m
       memory: 512Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
     maxReplicas: 6
     targetCPUUtilizationPercentage: 70
-  
+
   persistence:
     enabled: true
-    storageClass: "gp2"
+    storageClass: 'gp2'
     size: 50Gi
 
 # Notification Service
@@ -337,13 +337,13 @@ notification:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/notification-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3006
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -358,7 +358,7 @@ notification:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 500m
@@ -366,7 +366,7 @@ notification:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -379,13 +379,13 @@ search:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/search-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3007
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -400,7 +400,7 @@ search:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 1000m
@@ -408,7 +408,7 @@ search:
     requests:
       cpu: 500m
       memory: 512Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -421,13 +421,13 @@ payment:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/payment-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3008
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -442,7 +442,7 @@ payment:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 500m
@@ -450,7 +450,7 @@ payment:
     requests:
       cpu: 250m
       memory: 256Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -463,13 +463,13 @@ analytics:
   replicaCount: 2
   image:
     repository: ghcr.io/kimhsiao/soulmatting/analytics-service
-    tag: "staging"
+    tag: 'staging'
     pullPolicy: IfNotPresent
-  
+
   service:
     type: ClusterIP
     port: 3009
-  
+
   ingress:
     enabled: true
     className: nginx
@@ -484,7 +484,7 @@ analytics:
       - secretName: api-staging-tls
         hosts:
           - api-staging.soulmatting.com
-  
+
   resources:
     limits:
       cpu: 1000m
@@ -492,7 +492,7 @@ analytics:
     requests:
       cpu: 500m
       memory: 512Mi
-  
+
   autoscaling:
     enabled: true
     minReplicas: 2
@@ -506,13 +506,13 @@ redis:
   enabled: true
   auth:
     enabled: true
-    password: "staging-redis-password"
+    password: 'staging-redis-password'
     existingSecret: redis-secret
     existingSecretPasswordKey: redis-password
   master:
     persistence:
       enabled: true
-      storageClass: "gp2"
+      storageClass: 'gp2'
       size: 8Gi
     resources:
       limits:
@@ -525,7 +525,7 @@ redis:
     replicaCount: 1
     persistence:
       enabled: true
-      storageClass: "gp2"
+      storageClass: 'gp2'
       size: 8Gi
     resources:
       limits:
@@ -539,15 +539,15 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "staging-postgres-password"
-    database: "soulmatting"
+    postgresPassword: 'staging-postgres-password'
+    database: 'soulmatting'
     existingSecret: postgresql-secret
     secretKeys:
       adminPasswordKey: postgres-password
   primary:
     persistence:
       enabled: true
-      storageClass: "gp2"
+      storageClass: 'gp2'
       size: 20Gi
     resources:
       limits:
@@ -569,7 +569,7 @@ postgresql:
           CREATE DATABASE search_service;
           CREATE DATABASE payment_service;
           CREATE DATABASE analytics_service;
-          
+
           -- Grant permissions
           GRANT ALL PRIVILEGES ON DATABASE auth_service TO postgres;
           GRANT ALL PRIVILEGES ON DATABASE user_service TO postgres;
@@ -584,7 +584,7 @@ postgresql:
     replicaCount: 1
     persistence:
       enabled: true
-      storageClass: "gp2"
+      storageClass: 'gp2'
       size: 20Gi
     resources:
       limits:
@@ -599,7 +599,7 @@ elasticsearch:
   enabled: true
   auth:
     enabled: true
-    elasticPassword: "staging-elastic-password"
+    elasticPassword: 'staging-elastic-password'
     existingSecret: elasticsearch-secret
     secretKeys:
       elasticPassword: elastic-password
@@ -607,7 +607,7 @@ elasticsearch:
     replicaCount: 3
     persistence:
       enabled: true
-      storageClass: "gp2"
+      storageClass: 'gp2'
       size: 10Gi
     resources:
       limits:
@@ -620,7 +620,7 @@ elasticsearch:
     replicaCount: 2
     persistence:
       enabled: true
-      storageClass: "gp2"
+      storageClass: 'gp2'
       size: 50Gi
     resources:
       limits:

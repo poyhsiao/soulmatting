@@ -9,42 +9,42 @@ global:
   # Image registry settings
   imageRegistry: ghcr.io
   imagePullSecrets: []
-  
+
   # Environment settings
   environment: development
-  
+
   # Domain settings
   domain: soulmatting.local
-  
+
   # TLS settings
   tls:
     enabled: true
     secretName: soulmatting-tls
-  
+
   # Database settings
   database:
     host: postgresql
     port: 5432
     username: postgres
     password: postgres
-  
+
   # Redis settings
   redis:
     host: redis-master
     port: 6379
-    password: ""
-  
+    password: ''
+
   # Elasticsearch settings
   elasticsearch:
     host: elasticsearch
     port: 9200
-    username: ""
-    password: ""
-  
+    username: ''
+    password: ''
+
   # Security settings
   security:
-    jwtSecret: "your-jwt-secret-here"
-    encryptionKey: "your-encryption-key-here"
+    jwtSecret: 'your-jwt-secret-here'
+    encryptionKey: 'your-encryption-key-here'
 
 # Frontend Web Application
 web:
@@ -54,7 +54,7 @@ web:
     port: 3000
   image:
     repository: ghcr.io/kimhsiao/soulmatting/web
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -65,7 +65,7 @@ web:
   secrets:
     enabled: true
     data:
-      example_secret: "test_value"
+      example_secret: 'test_value'
   resources:
     limits:
       cpu: 500m
@@ -82,7 +82,7 @@ auth:
     port: 3001
   image:
     repository: ghcr.io/kimhsiao/soulmatting/auth-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -106,7 +106,7 @@ user:
     port: 3002
   image:
     repository: ghcr.io/kimhsiao/soulmatting/user-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -130,7 +130,7 @@ match:
     port: 3003
   image:
     repository: ghcr.io/kimhsiao/soulmatting/match-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -154,7 +154,7 @@ communication:
     port: 3004
   image:
     repository: ghcr.io/kimhsiao/soulmatting/communication-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -178,7 +178,7 @@ media:
     port: 3005
   image:
     repository: ghcr.io/kimhsiao/soulmatting/media-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -205,7 +205,7 @@ notification:
     port: 3006
   image:
     repository: ghcr.io/kimhsiao/soulmatting/notification-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -229,7 +229,7 @@ search:
     port: 3007
   image:
     repository: ghcr.io/kimhsiao/soulmatting/search-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -253,7 +253,7 @@ payment:
     port: 3008
   image:
     repository: ghcr.io/kimhsiao/soulmatting/payment-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -277,7 +277,7 @@ analytics:
     port: 3009
   image:
     repository: ghcr.io/kimhsiao/soulmatting/analytics-service
-    tag: "latest"
+    tag: 'latest'
   ingress:
     enabled: true
     hosts:
@@ -315,8 +315,8 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "postgres"
-    database: "soulmatting"
+    postgresPassword: 'postgres'
+    database: 'soulmatting'
   primary:
     persistence:
       enabled: false

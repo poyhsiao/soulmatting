@@ -9,7 +9,7 @@
 # =============================================================================
 app:
   name: soulmatting-auth-service
-  version: "1.0.0"
+  version: '1.0.0'
   environment: development
 
 # =============================================================================
@@ -31,18 +31,18 @@ deployment:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-  
+
   annotations: {}
   labels: {}
-  
+
   podAnnotations: {}
   podLabels: {}
-  
+
   securityContext:
     runAsNonRoot: true
     runAsUser: 1001
     fsGroup: 1001
-  
+
   containerSecurityContext:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
@@ -69,10 +69,10 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
   hosts:
     - host: auth.soulmatting.local
       paths:
@@ -155,7 +155,7 @@ configMap:
 # =============================================================================
 persistence:
   enabled: false
-  storageClass: ""
+  storageClass: ''
   accessMode: ReadWriteOnce
   size: 1Gi
 
@@ -165,7 +165,7 @@ persistence:
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
 
 # =============================================================================
 # Pod Disruption Budget
@@ -200,7 +200,7 @@ redis:
   enabled: false
   auth:
     enabled: true
-    password: ""
+    password: ''
   master:
     persistence:
       enabled: true
@@ -209,9 +209,9 @@ redis:
 postgresql:
   enabled: false
   auth:
-    postgresPassword: ""
+    postgresPassword: ''
     username: soulmatting
-    password: ""
+    password: ''
     database: soulmatting_auth
   primary:
     persistence:

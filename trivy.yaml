@@ -1,8 +1,8 @@
 # Trivy Security Scanner Configuration for SoulMatting Platform
-# 
+#
 # This configuration file defines security scanning settings for
 # container images, filesystems, and dependencies.
-# 
+#
 # Version: 1.0.0
 # Created: 2024-01-20
 # Updated: 2024-01-20
@@ -14,10 +14,10 @@
 
 # Scanner settings
 scanner:
-  - vuln        # Vulnerability scanning
-  - secret      # Secret detection
-  - config      # Configuration issues
-  - license     # License scanning
+  - vuln # Vulnerability scanning
+  - secret # Secret detection
+  - config # Configuration issues
+  - license # License scanning
 
 # Severity levels to report
 severity:
@@ -33,7 +33,7 @@ format: json
 # Cache settings
 cache:
   # Cache directory
-  dir: ".trivy-cache"
+  dir: '.trivy-cache'
   # Clear cache before scanning
   clear: false
   # Cache TTL (time to live)
@@ -46,44 +46,44 @@ cache:
 vulnerability:
   # Vulnerability types to detect
   type:
-    - os          # OS packages
-    - library     # Application dependencies
-  
+    - os # OS packages
+    - library # Application dependencies
+
   # Skip update of vulnerability database
   skip-update: false
-  
+
   # Skip files and directories
   skip-files:
-    - "**/*.md"
-    - "**/*.txt"
-    - "**/LICENSE*"
-    - "**/CHANGELOG*"
-    - "**/README*"
-    - "**/.git/**"
-    - "**/node_modules/**/.cache/**"
-    - "**/coverage/**"
-    - "**/dist/**"
-    - "**/build/**"
-    - "**/.next/**"
-    - "**/.nuxt/**"
-  
+    - '**/*.md'
+    - '**/*.txt'
+    - '**/LICENSE*'
+    - '**/CHANGELOG*'
+    - '**/README*'
+    - '**/.git/**'
+    - '**/node_modules/**/.cache/**'
+    - '**/coverage/**'
+    - '**/dist/**'
+    - '**/build/**'
+    - '**/.next/**'
+    - '**/.nuxt/**'
+
   # Skip directories
   skip-dirs:
-    - ".git"
-    - ".github"
-    - "node_modules/.cache"
-    - "coverage"
-    - "dist"
-    - "build"
-    - ".next"
-    - ".nuxt"
-    - "docs"
-    - "examples"
-    - "test"
-    - "tests"
-    - "__tests__"
-    - "spec"
-    - "specs"
+    - '.git'
+    - '.github'
+    - 'node_modules/.cache'
+    - 'coverage'
+    - 'dist'
+    - 'build'
+    - '.next'
+    - '.nuxt'
+    - 'docs'
+    - 'examples'
+    - 'test'
+    - 'tests'
+    - '__tests__'
+    - 'spec'
+    - 'specs'
 
 # =============================================================================
 # SECRET DETECTION
@@ -92,14 +92,14 @@ vulnerability:
 secret:
   # Skip secret scanning for specific files
   skip-files:
-    - "**/*.md"
-    - "**/*.txt"
-    - "**/package-lock.json"
-    - "**/yarn.lock"
-    - "**/pnpm-lock.yaml"
-    - "**/.env.example"
-    - "**/.env.template"
-  
+    - '**/*.md'
+    - '**/*.txt'
+    - '**/package-lock.json'
+    - '**/yarn.lock'
+    - '**/pnpm-lock.yaml'
+    - '**/.env.example'
+    - '**/.env.template'
+
   # Custom secret patterns
   config: |
     rules:
@@ -170,32 +170,32 @@ secret:
 config:
   # Configuration file types to scan
   file-patterns:
-    - "*.yaml"
-    - "*.yml"
-    - "*.json"
-    - "*.toml"
-    - "*.hcl"
-    - "*.tf"
-    - "Dockerfile*"
-    - "docker-compose*.yml"
-    - "docker-compose*.yaml"
-  
+    - '*.yaml'
+    - '*.yml'
+    - '*.json'
+    - '*.toml'
+    - '*.hcl'
+    - '*.tf'
+    - 'Dockerfile*'
+    - 'docker-compose*.yml'
+    - 'docker-compose*.yaml'
+
   # Skip configuration scanning for specific files
   skip-files:
-    - "**/package.json"
-    - "**/package-lock.json"
-    - "**/yarn.lock"
-    - "**/pnpm-lock.yaml"
-    - "**/tsconfig.json"
-    - "**/jest.config.js"
-    - "**/webpack.config.js"
-    - "**/vite.config.js"
-    - "**/next.config.js"
-    - "**/tailwind.config.js"
-    - "**/postcss.config.js"
-    - "**/.eslintrc*"
-    - "**/.prettierrc*"
-    - "**/babel.config.js"
+    - '**/package.json'
+    - '**/package-lock.json'
+    - '**/yarn.lock'
+    - '**/pnpm-lock.yaml'
+    - '**/tsconfig.json'
+    - '**/jest.config.js'
+    - '**/webpack.config.js'
+    - '**/vite.config.js'
+    - '**/next.config.js'
+    - '**/tailwind.config.js'
+    - '**/postcss.config.js'
+    - '**/.eslintrc*'
+    - '**/.prettierrc*'
+    - '**/babel.config.js'
 
 # =============================================================================
 # LICENSE SCANNING
@@ -214,7 +214,7 @@ license:
     - CPAL-1.0
     - EUPL-1.1
     - EUPL-1.2
-  
+
   # License categories that require notice
   notice-required:
     - Apache-2.0
@@ -223,12 +223,12 @@ license:
     - MIT
     - ISC
     - MPL-2.0
-  
+
   # Skip license scanning for specific files
   skip-files:
-    - "**/node_modules/**"
-    - "**/vendor/**"
-    - "**/third_party/**"
+    - '**/node_modules/**'
+    - '**/vendor/**'
+    - '**/third_party/**'
 
 # =============================================================================
 # REPORTING
@@ -237,22 +237,22 @@ license:
 report:
   # Report format
   format: json
-  
+
   # Output file
-  output: "trivy-report.json"
-  
+  output: 'trivy-report.json'
+
   # Include suppressed vulnerabilities in report
   list-all-pkgs: false
-  
+
   # Dependency tree output
   dependency-tree: true
-  
+
   # Exit code configuration
   exit-code: 1
-  
+
   # Ignore unfixed vulnerabilities
   ignore-unfixed: false
-  
+
   # Timeout for scanning
   timeout: 10m
 
@@ -263,10 +263,10 @@ report:
 db:
   # Skip database update
   skip-update: false
-  
+
   # Database repository
-  repository: "ghcr.io/aquasecurity/trivy-db"
-  
+  repository: 'ghcr.io/aquasecurity/trivy-db'
+
   # Download timeout
   download-timeout: 5m
 
@@ -277,10 +277,10 @@ db:
 registry:
   # Registry credentials (use environment variables)
   # TRIVY_USERNAME and TRIVY_PASSWORD
-  
+
   # Skip TLS verification (not recommended for production)
   insecure: false
-  
+
   # Registry timeout
   timeout: 5m
 
@@ -290,10 +290,10 @@ registry:
 
 ignore:
   # Ignore file path
-  file: ".trivyignore"
-  
+  file: '.trivyignore'
+
   # Ignore policy file
-  policy: ".trivy-policy.rego"
+  policy: '.trivy-policy.rego'
 
 # =============================================================================
 # PERFORMANCE TUNING
@@ -302,15 +302,15 @@ ignore:
 performance:
   # Parallel scanning
   parallel: 4
-  
+
   # Memory limit
-  memory-limit: "1g"
-  
+  memory-limit: '1g'
+
   # CPU limit
-  cpu-limit: "2"
-  
+  cpu-limit: '2'
+
   # Scan timeout
-  timeout: "30m"
+  timeout: '30m'
 
 # =============================================================================
 # ENVIRONMENT-SPECIFIC OVERRIDES
@@ -339,18 +339,18 @@ production:
     - CRITICAL
   ignore-unfixed: false
   exit-code: 1
-  
+
   # Additional security checks for production
   scanner:
     - vuln
     - secret
     - config
     - license
-  
+
   # Stricter secret detection
   secret:
     skip-files: []
-  
+
   # Comprehensive configuration scanning
   config:
     skip-files: []

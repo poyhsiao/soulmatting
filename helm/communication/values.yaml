@@ -7,15 +7,15 @@
 # Application configuration
 app:
   name: soulmatting-communication
-  version: "1.0.0"
-  description: "SoulMatting Communication Service"
+  version: '1.0.0'
+  description: 'SoulMatting Communication Service'
   port: 3004
   environment: development
 
 # Image configuration
 image:
   repository: ghcr.io/kimhsiao/soulmatting/communication-service
-  tag: "latest"
+  tag: 'latest'
   pullPolicy: IfNotPresent
   pullSecrets: []
 
@@ -32,7 +32,7 @@ deployment:
   podAnnotations: {}
   podLabels: {}
   imagePullSecrets: []
-  serviceAccountName: ""
+  serviceAccountName: ''
   securityContext:
     runAsNonRoot: true
     runAsUser: 1000
@@ -58,10 +58,10 @@ service:
 # Ingress configuration
 ingress:
   enabled: true
-  className: "nginx"
+  className: 'nginx'
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
   hosts:
     - host: communication.soulmatting.local
       paths:
@@ -112,16 +112,16 @@ healthCheck:
 # Environment variables
 env:
   NODE_ENV: development
-  PORT: "3004"
+  PORT: '3004'
   LOG_LEVEL: info
 
 # Secrets
 secrets:
-  DATABASE_URL: ""
-  REDIS_URL: ""
-  JWT_SECRET: ""
-  WEBSOCKET_SECRET: ""
-  ENCRYPTION_KEY: ""
+  DATABASE_URL: ''
+  REDIS_URL: ''
+  JWT_SECRET: ''
+  WEBSOCKET_SECRET: ''
+  ENCRYPTION_KEY: ''
 
 # ConfigMap
 configMap:
@@ -130,7 +130,7 @@ configMap:
 # Persistence
 persistence:
   enabled: false
-  storageClass: ""
+  storageClass: ''
   accessMode: ReadWriteOnce
   size: 1Gi
   mountPath: /app/data
@@ -139,14 +139,14 @@ persistence:
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
   automountServiceAccountToken: false
 
 # Pod Disruption Budget
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
-  maxUnavailable: ""
+  maxUnavailable: ''
 
 # Network Policy
 networkPolicy:
@@ -172,19 +172,19 @@ networkPolicy:
               name: soulmatting
       ports:
         - protocol: TCP
-          port: 5432  # PostgreSQL
+          port: 5432 # PostgreSQL
         - protocol: TCP
-          port: 6379  # Redis
+          port: 6379 # Redis
     - to: []
       ports:
         - protocol: TCP
-          port: 53    # DNS
+          port: 53 # DNS
         - protocol: UDP
-          port: 53    # DNS
+          port: 53 # DNS
         - protocol: TCP
-          port: 443   # HTTPS
+          port: 443 # HTTPS
         - protocol: TCP
-          port: 80    # HTTP
+          port: 80 # HTTP
 
 # Monitoring
 monitoring:
@@ -207,8 +207,8 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "postgres"
-    database: "soulmatting_communication"
+    postgresPassword: 'postgres'
+    database: 'soulmatting_communication'
   primary:
     persistence:
       enabled: false

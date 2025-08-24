@@ -68,7 +68,7 @@ env:
 redis:
   enabled: true
   auth:
-    password: "staging-redis-password"
+    password: 'staging-redis-password'
   master:
     persistence:
       size: 4Gi
@@ -76,8 +76,8 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "staging-postgres-password"
-    password: "staging-auth-password"
+    postgresPassword: 'staging-postgres-password'
+    password: 'staging-auth-password'
   primary:
     persistence:
       size: 10Gi

@@ -22,13 +22,25 @@ export class SearchController {
   @Get()
   @ApiOperation({ summary: 'Search for users and profiles' })
   @ApiQuery({ name: 'query', description: 'Search query string' })
-  @ApiQuery({ name: 'limit', description: 'Maximum number of results', required: false })
-  @ApiQuery({ name: 'offset', description: 'Number of results to skip', required: false })
-  @ApiResponse({ status: 200, description: 'Search results', type: [SearchResultDto] })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Maximum number of results',
+    required: false,
+  })
+  @ApiQuery({
+    name: 'offset',
+    description: 'Number of results to skip',
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Search results',
+    type: [SearchResultDto],
+  })
   async search(
     @Query('query') query: string,
     @Query('limit') limit?: number,
-    @Query('offset') offset?: number,
+    @Query('offset') offset?: number
   ): Promise<SearchResultDto[]> {
     return this.searchService.search(query, limit, offset);
   }
@@ -41,7 +53,11 @@ export class SearchController {
   @Get('suggestions')
   @ApiOperation({ summary: 'Get search suggestions' })
   @ApiQuery({ name: 'query', description: 'Partial search query' })
-  @ApiResponse({ status: 200, description: 'Search suggestions', type: [String] })
+  @ApiResponse({
+    status: 200,
+    description: 'Search suggestions',
+    type: [String],
+  })
   async getSuggestions(@Query('query') query: string): Promise<string[]> {
     return this.searchService.getSuggestions(query);
   }

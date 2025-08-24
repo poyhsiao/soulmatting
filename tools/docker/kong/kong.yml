@@ -4,7 +4,7 @@
 # Last Updated: 2024-01-20
 # Author: Kim Hsiao
 
-_format_version: "3.0"
+_format_version: '3.0'
 _transform: true
 
 # Services Configuration
@@ -242,10 +242,10 @@ plugins:
   - name: cors
     config:
       origins:
-        - "http://localhost:3000"
-        - "http://localhost:8000"
-        - "https://soulmatting.com"
-        - "https://*.soulmatting.com"
+        - 'http://localhost:3000'
+        - 'http://localhost:8000'
+        - 'https://soulmatting.com'
+        - 'https://*.soulmatting.com'
       methods:
         - GET
         - POST
@@ -321,8 +321,8 @@ plugins:
           - x-forwarded-for
       add:
         headers:
-          - "X-Gateway: Kong"
-          - "X-Service: SoulMatting"
+          - 'X-Gateway: Kong'
+          - 'X-Service: SoulMatting'
     tags:
       - request-transformer
       - headers
@@ -332,9 +332,9 @@ plugins:
     config:
       add:
         headers:
-          - "X-Gateway: Kong"
-          - "X-Service: SoulMatting"
-          - "X-Response-Time: $(latency)"
+          - 'X-Gateway: Kong'
+          - 'X-Service: SoulMatting'
+          - 'X-Response-Time: $(latency)'
     tags:
       - response-transformer
       - headers
@@ -381,12 +381,12 @@ consumers:
 #     tags:
 #       - public
 #       - basic
-#   
+#
 #   - name: premium
 #     tags:
 #       - premium
 #       - advanced
-#   
+#
 #   - name: admin
 #     tags:
 #       - admin
@@ -468,7 +468,6 @@ targets:
     tags:
       - web
       - target
-
 # Certificates (for HTTPS)
 # certificates:
 #   - cert: |

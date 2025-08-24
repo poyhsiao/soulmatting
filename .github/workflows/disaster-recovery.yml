@@ -73,14 +73,14 @@ jobs:
     name: Validate Recovery Request
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    
+
     outputs:
       recovery_type: ${{ steps.validate.outputs.recovery_type }}
       environment: ${{ steps.validate.outputs.environment }}
       backup_timestamp: ${{ steps.validate.outputs.backup_timestamp }}
       emergency_mode: ${{ steps.validate.outputs.emergency_mode }}
       recovery_id: ${{ steps.validate.outputs.recovery_id }}
-    
+
     steps:
       - name: Validate recovery request
         id: validate
@@ -90,31 +90,31 @@ jobs:
             echo "❌ Recovery not confirmed. Please type 'CONFIRM' to proceed."
             exit 1
           fi
-          
+
           # Validate environment
           ENVIRONMENT="${{ github.event.inputs.environment }}"
           if [[ ! "$ENVIRONMENT" =~ ^(production|staging|development)$ ]]; then
             echo "❌ Invalid environment: $ENVIRONMENT"
             exit 1
           fi
-          
+
           # Validate backup timestamp format
           BACKUP_TIMESTAMP="${{ github.event.inputs.backup_timestamp }}"
           if [[ ! "$BACKUP_TIMESTAMP" =~ ^[0-9]{8}_[0-9]{6}$ ]]; then
             echo "❌ Invalid backup timestamp format. Expected: YYYYMMDD_HHMMSS"
             exit 1
           fi
-          
+
           # Generate recovery ID
           RECOVERY_ID="recovery_$(date -u +%Y%m%d_%H%M%S)_$(echo $RANDOM | md5sum | head -c 8)"
-          
+
           echo "🚨 DISASTER RECOVERY INITIATED"
           echo "- Recovery Type: ${{ github.event.inputs.recovery_type }}"
           echo "- Environment: $ENVIRONMENT"
           echo "- Backup Timestamp: $BACKUP_TIMESTAMP"
           echo "- Emergency Mode: ${{ github.event.inputs.emergency_mode }}"
           echo "- Recovery ID: $RECOVERY_ID"
-          
+
           # Set outputs
           echo "recovery_type=${{ github.event.inputs.recovery_type }}" >> $GITHUB_OUTPUT
           echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
@@ -141,7 +141,7 @@ jobs:
     timeout-minutes: 10
     needs: validate_recovery
     if: github.event.inputs.skip_verification != 'true'
-    
+
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -154,18 +154,18 @@ jobs:
         id: verify_backup
         run: |
           echo "🔍 Verifying backup availability"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
           BACKUP_TIMESTAMP="${{ needs.validate_recovery.outputs.backup_timestamp }}"
-          
+
           # Check if backup exists
           BACKUP_PATH="s3://${{ env.BACKUP_BUCKET }}/$ENVIRONMENT"
-          
+
           echo "📍 Searching for backups in: $BACKUP_PATH"
-          
+
           # Find backup with matching timestamp
           BACKUP_FOUND=false
-          
+
           # Check different backup types
           for BACKUP_TYPE in full incremental archive; do
             FULL_BACKUP_PATH="$BACKUP_PATH/$BACKUP_TYPE/$BACKUP_TIMESTAMP/"
@@ -178,7 +178,7 @@ jobs:
               break
             fi
           done
-          
+
           if [ "$BACKUP_FOUND" != "true" ]; then
             echo "❌ Backup not found for timestamp: $BACKUP_TIMESTAMP"
             echo "Available backups:"
@@ -189,13 +189,13 @@ jobs:
       - name: Verify backup integrity
         run: |
           echo "🔍 Verifying backup integrity"
-          
+
           BACKUP_PATH="${{ steps.verify_backup.outputs.backup_path }}"
-          
+
           # Download and verify backup manifest
           TEMP_DIR="./recovery_verification"
           mkdir -p "$TEMP_DIR"
-          
+
           if aws s3 cp "${BACKUP_PATH}backup_manifest.json" "$TEMP_DIR/" 2>/dev/null; then
             echo "✅ Backup manifest found"
             
@@ -226,16 +226,16 @@ jobs:
             echo "❌ Backup manifest not found"
             exit 1
           fi
-          
+
           # Cleanup
           rm -rf "$TEMP_DIR"
 
       - name: Check current system status
         run: |
           echo "🔍 Checking current system status"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
-          
+
           # Set environment-specific URLs
           case "$ENVIRONMENT" in
             "development")
@@ -251,23 +251,23 @@ jobs:
               API_URL="https://api.soulmatting.com"
               ;;
           esac
-          
+
           echo "🌐 Testing current system availability"
-          
+
           # Test web application
           if curl -f -s "$APP_URL" > /dev/null; then
             echo "✅ Web application is currently accessible"
           else
             echo "❌ Web application is currently inaccessible"
           fi
-          
+
           # Test API
           if curl -f -s "$API_URL/health" > /dev/null; then
             echo "✅ API is currently accessible"
           else
             echo "❌ API is currently inaccessible"
           fi
-          
+
           echo "📊 Current system status check completed"
 
   # =============================================================================
@@ -279,7 +279,7 @@ jobs:
     timeout-minutes: 60
     needs: [validate_recovery, pre_recovery_verification]
     if: always() && !cancelled() && contains(fromJson('["full_system_recovery", "database_recovery"]'), needs.validate_recovery.outputs.recovery_type)
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -307,17 +307,17 @@ jobs:
         id: download_backup
         run: |
           echo "📥 Downloading database backup"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
           BACKUP_TIMESTAMP="${{ needs.validate_recovery.outputs.backup_timestamp }}"
-          
+
           # Create recovery directory
           RECOVERY_DIR="./recovery/${{ needs.validate_recovery.outputs.recovery_id }}"
           mkdir -p "$RECOVERY_DIR"
-          
+
           # Find and download backup
           BACKUP_PATH="s3://${{ env.BACKUP_BUCKET }}/$ENVIRONMENT"
-          
+
           # Try different backup types
           for BACKUP_TYPE in full incremental archive; do
             FULL_BACKUP_PATH="$BACKUP_PATH/$BACKUP_TYPE/$BACKUP_TIMESTAMP/"
@@ -333,7 +333,7 @@ jobs:
               break
             fi
           done
-          
+
           # Verify download
           if [ -f "$RECOVERY_DIR/backup_manifest.json" ]; then
             echo "✅ Backup downloaded successfully"
@@ -349,9 +349,9 @@ jobs:
       - name: Create database backup (pre-recovery)
         run: |
           echo "💾 Creating pre-recovery database backup"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
-          
+
           # Set environment-specific database URL
           case "$ENVIRONMENT" in
             "development")
@@ -364,14 +364,14 @@ jobs:
               DB_URL="${{ secrets.PROD_DATABASE_URL }}"
               ;;
           esac
-          
+
           PRE_RECOVERY_DIR="./pre_recovery_backup"
           mkdir -p "$PRE_RECOVERY_DIR"
-          
+
           # Create pre-recovery backup
           TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
           BACKUP_FILE="$PRE_RECOVERY_DIR/pre_recovery_${ENVIRONMENT}_${TIMESTAMP}.sql"
-          
+
           pg_dump "$DB_URL" \
             --verbose \
             --clean \
@@ -379,24 +379,24 @@ jobs:
             --create \
             --format=custom \
             --file="${BACKUP_FILE}.dump"
-          
+
           echo "✅ Pre-recovery backup created: $BACKUP_FILE"
-          
+
           # Upload pre-recovery backup to S3
           aws s3 cp "$PRE_RECOVERY_DIR/" \
             "s3://${{ env.BACKUP_BUCKET }}/$ENVIRONMENT/pre_recovery/$TIMESTAMP/" \
             --recursive
-          
+
           echo "☁️ Pre-recovery backup uploaded to S3"
 
       - name: Restore database
         id: restore_db
         run: |
           echo "🔄 Restoring database from backup"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
           RECOVERY_DIR="${{ steps.download_backup.outputs.recovery_dir }}"
-          
+
           # Set environment-specific database URL
           case "$ENVIRONMENT" in
             "development")
@@ -409,10 +409,10 @@ jobs:
               DB_URL="${{ secrets.PROD_DATABASE_URL }}"
               ;;
           esac
-          
+
           # Find database backup file
           BACKUP_FILE=""
-          
+
           # Look for compressed backup first
           if [ -f "$RECOVERY_DIR/database_${ENVIRONMENT}_${{ needs.validate_recovery.outputs.backup_timestamp }}.sql.dump.gz" ]; then
             BACKUP_FILE="$RECOVERY_DIR/database_${ENVIRONMENT}_${{ needs.validate_recovery.outputs.backup_timestamp }}.sql.dump.gz"
@@ -428,10 +428,10 @@ jobs:
             echo "❌ Database backup file not found"
             exit 1
           fi
-          
+
           # Restore database
           echo "🔄 Starting database restoration..."
-          
+
           if [ "${{ needs.validate_recovery.outputs.emergency_mode }}" == "true" ]; then
             echo "⚡ Emergency mode: Fast restoration"
             pg_restore \
@@ -453,15 +453,15 @@ jobs:
               --single-transaction \
               "$BACKUP_FILE"
           fi
-          
+
           echo "✅ Database restoration completed"
 
       - name: Verify database restoration
         run: |
           echo "🔍 Verifying database restoration"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
-          
+
           # Set environment-specific database URL
           case "$ENVIRONMENT" in
             "development")
@@ -474,7 +474,7 @@ jobs:
               DB_URL="${{ secrets.PROD_DATABASE_URL }}"
               ;;
           esac
-          
+
           # Test database connectivity
           if psql "$DB_URL" -c "SELECT 1;" > /dev/null 2>&1; then
             echo "✅ Database connectivity test passed"
@@ -482,7 +482,7 @@ jobs:
             echo "❌ Database connectivity test failed"
             exit 1
           fi
-          
+
           # Check table counts
           echo "📊 Checking table counts:"
           psql "$DB_URL" -c "
@@ -495,7 +495,7 @@ jobs:
             FROM pg_stat_user_tables 
             ORDER BY schemaname, tablename;
           "
-          
+
           echo "✅ Database verification completed"
 
   # =============================================================================
@@ -507,12 +507,21 @@ jobs:
     timeout-minutes: 30
     needs: [validate_recovery, database_recovery]
     if: always() && !cancelled() && contains(fromJson('["full_system_recovery", "service_recovery"]'), needs.validate_recovery.outputs.recovery_type)
-    
+
     strategy:
       matrix:
-        service: [web, api, auth-service, user-service, matching-service, messaging-service, notification-service]
+        service:
+          [
+            web,
+            api,
+            auth-service,
+            user-service,
+            matching-service,
+            messaging-service,
+            notification-service,
+          ]
       fail-fast: false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -530,19 +539,19 @@ jobs:
       - name: Stop existing service
         run: |
           echo "🛑 Stopping existing ${{ matrix.service }} service"
-          
+
           # Stop and remove existing container
           docker stop "soulmatting-${{ matrix.service }}" 2>/dev/null || true
           docker rm "soulmatting-${{ matrix.service }}" 2>/dev/null || true
-          
+
           echo "✅ Existing service stopped"
 
       - name: Deploy service
         run: |
           echo "🚀 Deploying ${{ matrix.service }} service"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
-          
+
           # Set environment-specific configuration
           case "$ENVIRONMENT" in
             "development")
@@ -558,10 +567,10 @@ jobs:
               IMAGE_TAG="latest"
               ;;
           esac
-          
+
           # Pull latest image
           docker pull "${{ secrets.REGISTRY_URL }}/soulmatting-${{ matrix.service }}:$IMAGE_TAG"
-          
+
           # Deploy service
           docker run -d \
             --name "soulmatting-${{ matrix.service }}" \
@@ -569,16 +578,16 @@ jobs:
             --restart unless-stopped \
             --network soulmatting-network \
             "${{ secrets.REGISTRY_URL }}/soulmatting-${{ matrix.service }}:$IMAGE_TAG"
-          
+
           echo "✅ ${{ matrix.service }} service deployed"
 
       - name: Health check
         run: |
           echo "🏥 Performing health check for ${{ matrix.service }}"
-          
+
           # Wait for service to start
           sleep 30
-          
+
           # Set service-specific health check
           case "${{ matrix.service }}" in
             "web")
@@ -591,7 +600,7 @@ jobs:
               HEALTH_URL="http://localhost:300$(echo ${{ matrix.service }} | tr -d 'a-z-')/health"
               ;;
           esac
-          
+
           # Perform health check with retries
           for i in {1..10}; do
             if curl -f -s "$HEALTH_URL" > /dev/null; then
@@ -602,13 +611,13 @@ jobs:
             echo "⏳ Health check attempt $i/10 failed, retrying..."
             sleep 10
           done
-          
+
           echo "❌ ${{ matrix.service }} health check failed after 10 attempts"
-          
+
           # Show service logs for debugging
           echo "📋 Service logs:"
           docker logs "soulmatting-${{ matrix.service }}" --tail 50
-          
+
           exit 1
 
   # =============================================================================
@@ -620,7 +629,7 @@ jobs:
     timeout-minutes: 15
     needs: [validate_recovery, pre_recovery_verification]
     if: always() && !cancelled() && contains(fromJson('["full_system_recovery", "configuration_recovery"]'), needs.validate_recovery.outputs.recovery_type)
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -636,17 +645,17 @@ jobs:
         id: download_config
         run: |
           echo "📥 Downloading configuration backup"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
           BACKUP_TIMESTAMP="${{ needs.validate_recovery.outputs.backup_timestamp }}"
-          
+
           # Create recovery directory
           CONFIG_RECOVERY_DIR="./config_recovery"
           mkdir -p "$CONFIG_RECOVERY_DIR"
-          
+
           # Find and download configuration backup
           BACKUP_PATH="s3://${{ env.BACKUP_BUCKET }}/$ENVIRONMENT"
-          
+
           # Try different backup types
           for BACKUP_TYPE in full archive config_only; do
             FULL_BACKUP_PATH="$BACKUP_PATH/$BACKUP_TYPE/$BACKUP_TIMESTAMP/config/"
@@ -661,7 +670,7 @@ jobs:
               break
             fi
           done
-          
+
           # Verify download
           if [ -f "$CONFIG_RECOVERY_DIR/environment_config.json" ]; then
             echo "✅ Configuration backup downloaded successfully"
@@ -677,42 +686,42 @@ jobs:
       - name: Restore configuration files
         run: |
           echo "🔄 Restoring configuration files"
-          
+
           CONFIG_RECOVERY_DIR="./config_recovery"
-          
+
           # Backup current configuration
           CURRENT_CONFIG_BACKUP="./current_config_backup_$(date -u +%Y%m%d_%H%M%S)"
           mkdir -p "$CURRENT_CONFIG_BACKUP"
-          
+
           # Backup current files before restoration
           cp docker-compose.yml "$CURRENT_CONFIG_BACKUP/" 2>/dev/null || true
           cp docker-compose.prod.yml "$CURRENT_CONFIG_BACKUP/" 2>/dev/null || true
           cp package.json "$CURRENT_CONFIG_BACKUP/" 2>/dev/null || true
           cp -r .github "$CURRENT_CONFIG_BACKUP/" 2>/dev/null || true
-          
+
           echo "💾 Current configuration backed up to: $CURRENT_CONFIG_BACKUP"
-          
+
           # Restore configuration files
           if [ -f "$CONFIG_RECOVERY_DIR/docker-compose.yml" ]; then
             cp "$CONFIG_RECOVERY_DIR/docker-compose.yml" ./
             echo "✅ docker-compose.yml restored"
           fi
-          
+
           if [ -f "$CONFIG_RECOVERY_DIR/docker-compose.prod.yml" ]; then
             cp "$CONFIG_RECOVERY_DIR/docker-compose.prod.yml" ./
             echo "✅ docker-compose.prod.yml restored"
           fi
-          
+
           if [ -f "$CONFIG_RECOVERY_DIR/package.json" ]; then
             cp "$CONFIG_RECOVERY_DIR/package.json" ./
             echo "✅ package.json restored"
           fi
-          
+
           if [ -d "$CONFIG_RECOVERY_DIR/.github" ]; then
             cp -r "$CONFIG_RECOVERY_DIR/.github" ./
             echo "✅ GitHub Actions configuration restored"
           fi
-          
+
           echo "✅ Configuration restoration completed"
 
   # =============================================================================
@@ -722,16 +731,22 @@ jobs:
     name: Post-Recovery Verification
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    needs: [validate_recovery, database_recovery, service_recovery, configuration_recovery]
+    needs:
+      [
+        validate_recovery,
+        database_recovery,
+        service_recovery,
+        configuration_recovery,
+      ]
     if: always() && !cancelled()
-    
+
     steps:
       - name: Verify system functionality
         run: |
           echo "🔍 Verifying system functionality after recovery"
-          
+
           ENVIRONMENT="${{ needs.validate_recovery.outputs.environment }}"
-          
+
           # Set environment-specific URLs
           case "$ENVIRONMENT" in
             "development")
@@ -747,9 +762,9 @@ jobs:
               API_URL="https://api.soulmatting.com"
               ;;
           esac
-          
+
           echo "🌐 Testing system endpoints"
-          
+
           # Test web application
           for i in {1..5}; do
             if curl -f -s "$APP_URL" > /dev/null; then
@@ -764,7 +779,7 @@ jobs:
               sleep 30
             fi
           done
-          
+
           # Test API
           for i in {1..5}; do
             if curl -f -s "$API_URL/health" > /dev/null; then
@@ -783,14 +798,14 @@ jobs:
       - name: Run smoke tests
         run: |
           echo "🧪 Running post-recovery smoke tests"
-          
+
           # Add smoke test logic here
           echo "📋 Smoke tests would run here:"
           echo "- User authentication test"
           echo "- Database connectivity test"
           echo "- Core functionality test"
           echo "- Integration test"
-          
+
           echo "✅ Smoke tests completed"
 
   # =============================================================================
@@ -800,8 +815,15 @@ jobs:
     name: Recovery Summary
     runs-on: ubuntu-latest
     if: always()
-    needs: [validate_recovery, database_recovery, service_recovery, configuration_recovery, post_recovery_verification]
-    
+    needs:
+      [
+        validate_recovery,
+        database_recovery,
+        service_recovery,
+        configuration_recovery,
+        post_recovery_verification,
+      ]
+
     steps:
       - name: Generate recovery summary
         run: |
@@ -814,10 +836,10 @@ jobs:
           echo "**Emergency Mode:** ${{ needs.validate_recovery.outputs.emergency_mode }}" >> $GITHUB_STEP_SUMMARY
           echo "**Initiated By:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           # Recovery Results
           echo "## 📊 Recovery Results" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ needs.database_recovery.result }}" == "success" ]; then
             echo "✅ Database recovery completed successfully" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.database_recovery.result }}" == "skipped" ]; then
@@ -825,7 +847,7 @@ jobs:
           else
             echo "❌ Database recovery failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.service_recovery.result }}" == "success" ]; then
             echo "✅ Service recovery completed successfully" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.service_recovery.result }}" == "skipped" ]; then
@@ -833,7 +855,7 @@ jobs:
           else
             echo "❌ Service recovery failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.configuration_recovery.result }}" == "success" ]; then
             echo "✅ Configuration recovery completed successfully" >> $GITHUB_STEP_SUMMARY
           elif [ "${{ needs.configuration_recovery.result }}" == "skipped" ]; then
@@ -841,13 +863,13 @@ jobs:
           else
             echo "❌ Configuration recovery failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           if [ "${{ needs.post_recovery_verification.result }}" == "success" ]; then
             echo "✅ Post-recovery verification passed" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ Post-recovery verification failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "---" >> $GITHUB_STEP_SUMMARY
           echo "*Recovery completed at $(date -u)*" >> $GITHUB_STEP_SUMMARY
@@ -855,7 +877,7 @@ jobs:
       - name: Send recovery completion notification
         run: |
           echo "📢 Sending recovery completion notification"
-          
+
           # Determine overall status
           if [ "${{ needs.database_recovery.result }}" == "success" ] && \
              [ "${{ needs.service_recovery.result }}" == "success" ] && \
@@ -867,11 +889,11 @@ jobs:
             STATUS="FAILED"
             EMOJI="❌"
           fi
-          
+
           echo "$EMOJI DISASTER RECOVERY $STATUS"
           echo "Recovery ID: ${{ needs.validate_recovery.outputs.recovery_id }}"
           echo "Environment: ${{ needs.validate_recovery.outputs.environment }}"
           echo "Type: ${{ needs.validate_recovery.outputs.recovery_type }}"
           echo "Completed by: ${{ github.actor }}"
-          
+
           # Add notification logic here (Slack, PagerDuty, etc.)

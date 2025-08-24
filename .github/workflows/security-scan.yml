@@ -15,9 +15,9 @@ name: 🔒 Security Scan
 on:
   # Scheduled security scans
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM UTC
-    - cron: '0 2 * * 0'  # Weekly on Sunday at 2 AM UTC
-  
+    - cron: '0 2 * * *' # Daily at 2 AM UTC
+    - cron: '0 2 * * 0' # Weekly on Sunday at 2 AM UTC
+
   # Manual trigger
   workflow_dispatch:
     inputs:
@@ -61,7 +61,7 @@ on:
         required: false
         default: true
         type: boolean
-  
+
   # Trigger on pull requests to main/develop
   pull_request:
     branches: [main, develop]
@@ -82,7 +82,7 @@ on:
       - '**/go.mod'
       - '**/pom.xml'
       - '**/Gemfile*'
-  
+
   # Trigger on pushes to main branch
   push:
     branches: [main]
@@ -103,14 +103,14 @@ jobs:
     name: Security Scan Setup
     runs-on: ubuntu-latest
     timeout-minutes: 5
-    
+
     outputs:
       scan_type: ${{ steps.setup.outputs.scan_type }}
       environment: ${{ steps.setup.outputs.environment }}
       severity_threshold: ${{ steps.setup.outputs.severity_threshold }}
       fail_on_findings: ${{ steps.setup.outputs.fail_on_findings }}
       scan_id: ${{ steps.setup.outputs.scan_id }}
-    
+
     steps:
       - name: Setup scan parameters
         id: setup
@@ -138,17 +138,17 @@ jobs:
             SEVERITY_THRESHOLD="low"
             FAIL_ON_FINDINGS="false"
           fi
-          
+
           # Generate scan ID
           SCAN_ID="security_scan_$(date -u +%Y%m%d_%H%M%S)_$(echo $RANDOM | md5sum | head -c 8)"
-          
+
           echo "🔒 Security Scan Configuration:"
           echo "- Scan Type: $SCAN_TYPE"
           echo "- Environment: $ENVIRONMENT"
           echo "- Severity Threshold: $SEVERITY_THRESHOLD"
           echo "- Fail on Findings: $FAIL_ON_FINDINGS"
           echo "- Scan ID: $SCAN_ID"
-          
+
           # Set outputs
           echo "scan_type=$SCAN_TYPE" >> $GITHUB_OUTPUT
           echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
@@ -165,12 +165,12 @@ jobs:
     timeout-minutes: 30
     needs: setup
     if: contains(fromJson('["full_scan", "sast_only"]'), needs.setup.outputs.scan_type)
-    
+
     strategy:
       matrix:
         tool: [semgrep, codeql, eslint-security]
       fail-fast: false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -221,13 +221,13 @@ jobs:
         if: matrix.tool == 'codeql'
         uses: github/codeql-action/analyze@v3
         with:
-          category: "/language:${{matrix.language}}"
+          category: '/language:${{matrix.language}}'
 
       - name: Run ESLint Security
         if: matrix.tool == 'eslint-security'
         run: |
           echo "🔍 Running ESLint security scan"
-          
+
           # Create ESLint security config
           cat > .eslintrc.security.js << 'EOF'
           module.exports = {
@@ -255,7 +255,7 @@ jobs:
             }
           };
           EOF
-          
+
           # Run ESLint with security rules
           npx eslint \
             --config .eslintrc.security.js \
@@ -263,7 +263,7 @@ jobs:
             --format json \
             --output-file eslint-security-results.json \
             . || true
-          
+
           # Convert results to SARIF format
           if [ -f "eslint-security-results.json" ]; then
             echo "📊 ESLint security scan completed"
@@ -302,12 +302,12 @@ jobs:
     timeout-minutes: 20
     needs: setup
     if: contains(fromJson('["full_scan", "dependency_scan"]'), needs.setup.outputs.scan_type)
-    
+
     strategy:
       matrix:
         scanner: [npm-audit, snyk, trivy]
       fail-fast: false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -327,10 +327,10 @@ jobs:
         if: matrix.scanner == 'npm-audit'
         run: |
           echo "🔍 Running npm audit"
-          
+
           # Run npm audit with JSON output
           npm audit --audit-level=${{ needs.setup.outputs.severity_threshold }} --json > npm-audit-results.json || true
-          
+
           # Parse results
           if [ -f "npm-audit-results.json" ]; then
             VULNERABILITIES=$(jq '.metadata.vulnerabilities' npm-audit-results.json)
@@ -352,24 +352,24 @@ jobs:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         run: |
           echo "🔍 Running Snyk dependency scan"
-          
+
           # Install Snyk CLI
           npm install -g snyk@${{ env.SNYK_VERSION }}
-          
+
           # Authenticate with Snyk
           snyk auth $SNYK_TOKEN
-          
+
           # Run Snyk test
           snyk test \
             --json \
             --severity-threshold=${{ needs.setup.outputs.severity_threshold }} \
             > snyk-results.json || true
-          
+
           # Generate human-readable report
           snyk test \
             --severity-threshold=${{ needs.setup.outputs.severity_threshold }} \
             > snyk-report.txt || true
-          
+
           # Parse results
           if [ -f "snyk-results.json" ]; then
             VULNERABILITIES=$(jq '.vulnerabilities | length' snyk-results.json)
@@ -391,7 +391,7 @@ jobs:
         if: matrix.scanner == 'trivy'
         run: |
           echo "🔍 Running Trivy dependency scan"
-          
+
           # Install Trivy
           sudo apt-get update
           sudo apt-get install wget apt-transport-https gnupg lsb-release
@@ -399,21 +399,21 @@ jobs:
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
           sudo apt-get install trivy
-          
+
           # Scan for vulnerabilities in dependencies
           trivy fs \
             --format json \
             --output trivy-dependency-results.json \
             --severity ${{ needs.setup.outputs.severity_threshold | upper }} \
             .
-          
+
           # Generate human-readable report
           trivy fs \
             --format table \
             --output trivy-dependency-report.txt \
             --severity ${{ needs.setup.outputs.severity_threshold | upper }} \
             .
-          
+
           # Parse results
           if [ -f "trivy-dependency-results.json" ]; then
             VULNERABILITIES=$(jq '[.Results[]?.Vulnerabilities[]?] | length' trivy-dependency-results.json)
@@ -443,12 +443,21 @@ jobs:
     timeout-minutes: 30
     needs: setup
     if: contains(fromJson('["full_scan", "container_scan"]'), needs.setup.outputs.scan_type)
-    
+
     strategy:
       matrix:
-        service: [web, api, auth-service, user-service, matching-service, messaging-service, notification-service]
+        service:
+          [
+            web,
+            api,
+            auth-service,
+            user-service,
+            matching-service,
+            messaging-service,
+            notification-service,
+          ]
       fail-fast: false
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -459,7 +468,7 @@ jobs:
       - name: Build container image
         run: |
           echo "🏗️ Building ${{ matrix.service }} container image"
-          
+
           # Determine Dockerfile path
           if [ -f "apps/${{ matrix.service }}/Dockerfile" ]; then
             DOCKERFILE_PATH="apps/${{ matrix.service }}/Dockerfile"
@@ -471,19 +480,19 @@ jobs:
             echo "❌ Dockerfile not found for ${{ matrix.service }}"
             exit 1
           fi
-          
+
           # Build image
           docker build \
             -f "$DOCKERFILE_PATH" \
             -t "soulmatting-${{ matrix.service }}:security-scan" \
             "$BUILD_CONTEXT"
-          
+
           echo "✅ Container image built successfully"
 
       - name: Run Trivy container scan
         run: |
           echo "🔍 Running Trivy container security scan"
-          
+
           # Install Trivy
           sudo apt-get update
           sudo apt-get install wget apt-transport-https gnupg lsb-release
@@ -491,21 +500,21 @@ jobs:
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
           sudo apt-get install trivy
-          
+
           # Scan container image
           trivy image \
             --format json \
             --output "trivy-container-${{ matrix.service }}-results.json" \
             --severity ${{ needs.setup.outputs.severity_threshold | upper }} \
             "soulmatting-${{ matrix.service }}:security-scan"
-          
+
           # Generate human-readable report
           trivy image \
             --format table \
             --output "trivy-container-${{ matrix.service }}-report.txt" \
             --severity ${{ needs.setup.outputs.severity_threshold | upper }} \
             "soulmatting-${{ matrix.service }}:security-scan"
-          
+
           # Parse results
           if [ -f "trivy-container-${{ matrix.service }}-results.json" ]; then
             VULNERABILITIES=$(jq '[.Results[]?.Vulnerabilities[]?] | length' "trivy-container-${{ matrix.service }}-results.json")
@@ -526,18 +535,18 @@ jobs:
       - name: Run Docker Bench Security
         run: |
           echo "🔍 Running Docker Bench Security"
-          
+
           # Clone Docker Bench Security
           git clone https://github.com/docker/docker-bench-security.git
           cd docker-bench-security
-          
+
           # Run Docker Bench Security
           sudo ./docker-bench-security.sh -l "docker-bench-${{ matrix.service }}-results.log"
-          
+
           # Move results to parent directory
           mv "docker-bench-${{ matrix.service }}-results.log" ../
           cd ..
-          
+
           echo "✅ Docker Bench Security scan completed"
 
       - name: Upload container scan results
@@ -560,7 +569,7 @@ jobs:
     timeout-minutes: 45
     needs: setup
     if: contains(fromJson('["full_scan", "dast_only"]'), needs.setup.outputs.scan_type) && needs.setup.outputs.environment != 'development'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -569,7 +578,7 @@ jobs:
         id: setup_urls
         run: |
           ENVIRONMENT="${{ needs.setup.outputs.environment }}"
-          
+
           case "$ENVIRONMENT" in
             "staging")
               APP_URL="https://staging.soulmatting.com"
@@ -584,10 +593,10 @@ jobs:
               API_URL="https://api-staging.soulmatting.com,https://api.soulmatting.com"
               ;;
           esac
-          
+
           echo "app_url=$APP_URL" >> $GITHUB_OUTPUT
           echo "api_url=$API_URL" >> $GITHUB_OUTPUT
-          
+
           echo "🌐 DAST scan targets:"
           echo "- App URL(s): $APP_URL"
           echo "- API URL(s): $API_URL"
@@ -595,13 +604,13 @@ jobs:
       - name: Run OWASP ZAP scan
         run: |
           echo "🔍 Running OWASP ZAP DAST scan"
-          
+
           # Pull OWASP ZAP Docker image
           docker pull owasp/zap2docker-stable
-          
+
           # Create results directory
           mkdir -p zap-results
-          
+
           # Run ZAP baseline scan for each URL
           IFS=',' read -ra URLS <<< "${{ steps.setup_urls.outputs.app_url }}"
           for URL in "${URLS[@]}"; do
@@ -618,22 +627,22 @@ jobs:
               -r "zap-baseline-$DOMAIN.html" \
               -x "zap-baseline-$DOMAIN.xml" || true
           done
-          
+
           echo "✅ OWASP ZAP baseline scans completed"
 
       - name: Run Nuclei scan
         run: |
           echo "🔍 Running Nuclei DAST scan"
-          
+
           # Install Nuclei
           go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
-          
+
           # Update Nuclei templates
           nuclei -update-templates
-          
+
           # Create results directory
           mkdir -p nuclei-results
-          
+
           # Run Nuclei scan for each URL
           IFS=',' read -ra URLS <<< "${{ steps.setup_urls.outputs.app_url }}"
           for URL in "${URLS[@]}"; do
@@ -653,7 +662,7 @@ jobs:
               -severity ${{ needs.setup.outputs.severity_threshold }} \
               -o "nuclei-results/nuclei-$DOMAIN.txt" || true
           done
-          
+
           echo "✅ Nuclei scans completed"
 
       - name: Upload DAST results
@@ -675,7 +684,7 @@ jobs:
     timeout-minutes: 20
     needs: setup
     if: contains(fromJson('["full_scan", "infrastructure_scan"]'), needs.setup.outputs.scan_type)
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -683,7 +692,7 @@ jobs:
       - name: Run Trivy config scan
         run: |
           echo "🔍 Running Trivy infrastructure configuration scan"
-          
+
           # Install Trivy
           sudo apt-get update
           sudo apt-get install wget apt-transport-https gnupg lsb-release
@@ -691,21 +700,21 @@ jobs:
           echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
           sudo apt-get update
           sudo apt-get install trivy
-          
+
           # Scan configuration files
           trivy config \
             --format json \
             --output trivy-config-results.json \
             --severity ${{ needs.setup.outputs.severity_threshold | upper }} \
             .
-          
+
           # Generate human-readable report
           trivy config \
             --format table \
             --output trivy-config-report.txt \
             --severity ${{ needs.setup.outputs.severity_threshold | upper }} \
             .
-          
+
           # Parse results
           if [ -f "trivy-config-results.json" ]; then
             MISCONFIGURATIONS=$(jq '[.Results[]?.Misconfigurations[]?] | length' trivy-config-results.json)
@@ -715,24 +724,24 @@ jobs:
       - name: Run Checkov scan
         run: |
           echo "🔍 Running Checkov infrastructure scan"
-          
+
           # Install Checkov
           pip install checkov
-          
+
           # Run Checkov scan
           checkov \
             --directory . \
             --output json \
             --output-file checkov-results.json \
             --quiet || true
-          
+
           # Generate human-readable report
           checkov \
             --directory . \
             --output cli \
             --output-file checkov-report.txt \
             --quiet || true
-          
+
           # Parse results
           if [ -f "checkov-results.json" ]; then
             FAILED_CHECKS=$(jq '.summary.failed' checkov-results.json)
@@ -746,18 +755,18 @@ jobs:
       - name: Run Hadolint Docker scan
         run: |
           echo "🔍 Running Hadolint Dockerfile scan"
-          
+
           # Install Hadolint
           wget -O hadolint https://github.com/hadolint/hadolint/releases/latest/download/hadolint-Linux-x86_64
           chmod +x hadolint
           sudo mv hadolint /usr/local/bin/
-          
+
           # Find all Dockerfiles
           find . -name "Dockerfile*" -type f > dockerfiles.txt
-          
+
           # Scan each Dockerfile
           mkdir -p hadolint-results
-          
+
           while IFS= read -r dockerfile; do
             if [ -f "$dockerfile" ]; then
               BASENAME=$(basename "$dockerfile")
@@ -777,7 +786,7 @@ jobs:
                 "$dockerfile" > "hadolint-results/hadolint-${DIRNAME}-${BASENAME}.txt" 2>/dev/null || true
             fi
           done < dockerfiles.txt
-          
+
           echo "✅ Hadolint Dockerfile scans completed"
 
       - name: Upload infrastructure scan results
@@ -800,9 +809,17 @@ jobs:
     name: Generate Security Report
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [setup, sast_scan, dependency_scan, container_scan, dast_scan, infrastructure_scan]
+    needs:
+      [
+        setup,
+        sast_scan,
+        dependency_scan,
+        container_scan,
+        dast_scan,
+        infrastructure_scan,
+      ]
     if: always() && !cancelled()
-    
+
     steps:
       - name: Download all scan results
         uses: actions/download-artifact@v4
@@ -812,27 +829,27 @@ jobs:
       - name: Generate consolidated security report
         run: |
           echo "📊 Generating consolidated security report"
-          
+
           # Create report directory
           mkdir -p security-report
-          
+
           # Initialize report
           REPORT_FILE="security-report/security-report-${{ needs.setup.outputs.scan_id }}.md"
-          
+
           cat > "$REPORT_FILE" << 'EOF'
           # 🔒 Security Scan Report
-          
+
           **Scan ID:** ${{ needs.setup.outputs.scan_id }}
           **Scan Type:** ${{ needs.setup.outputs.scan_type }}
           **Environment:** ${{ needs.setup.outputs.environment }}
           **Severity Threshold:** ${{ needs.setup.outputs.severity_threshold }}
           **Scan Date:** $(date -u)
           **Triggered By:** ${{ github.actor }}
-          
+
           ## 📋 Scan Summary
-          
+
           EOF
-          
+
           # Add SAST results
           if [ "${{ needs.sast_scan.result }}" == "success" ]; then
             echo "✅ **SAST Scan:** Completed successfully" >> "$REPORT_FILE"
@@ -841,7 +858,7 @@ jobs:
           else
             echo "❌ **SAST Scan:** Failed or had issues" >> "$REPORT_FILE"
           fi
-          
+
           # Add dependency scan results
           if [ "${{ needs.dependency_scan.result }}" == "success" ]; then
             echo "✅ **Dependency Scan:** Completed successfully" >> "$REPORT_FILE"
@@ -850,7 +867,7 @@ jobs:
           else
             echo "❌ **Dependency Scan:** Failed or had issues" >> "$REPORT_FILE"
           fi
-          
+
           # Add container scan results
           if [ "${{ needs.container_scan.result }}" == "success" ]; then
             echo "✅ **Container Scan:** Completed successfully" >> "$REPORT_FILE"
@@ -859,7 +876,7 @@ jobs:
           else
             echo "❌ **Container Scan:** Failed or had issues" >> "$REPORT_FILE"
           fi
-          
+
           # Add DAST results
           if [ "${{ needs.dast_scan.result }}" == "success" ]; then
             echo "✅ **DAST Scan:** Completed successfully" >> "$REPORT_FILE"
@@ -868,7 +885,7 @@ jobs:
           else
             echo "❌ **DAST Scan:** Failed or had issues" >> "$REPORT_FILE"
           fi
-          
+
           # Add infrastructure scan results
           if [ "${{ needs.infrastructure_scan.result }}" == "success" ]; then
             echo "✅ **Infrastructure Scan:** Completed successfully" >> "$REPORT_FILE"
@@ -877,7 +894,7 @@ jobs:
           else
             echo "❌ **Infrastructure Scan:** Failed or had issues" >> "$REPORT_FILE"
           fi
-          
+
           echo "" >> "$REPORT_FILE"
           echo "## 📁 Detailed Results" >> "$REPORT_FILE"
           echo "" >> "$REPORT_FILE"
@@ -885,7 +902,7 @@ jobs:
           echo "" >> "$REPORT_FILE"
           echo "---" >> "$REPORT_FILE"
           echo "*Report generated at $(date -u)*" >> "$REPORT_FILE"
-          
+
           echo "✅ Security report generated: $REPORT_FILE"
 
       - name: Upload security report
@@ -904,9 +921,9 @@ jobs:
           echo "**Environment:** ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
           echo "**Severity Threshold:** ${{ needs.setup.outputs.severity_threshold }}" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           echo "## 📊 Scan Results" >> $GITHUB_STEP_SUMMARY
-          
+
           # SAST results
           if [ "${{ needs.sast_scan.result }}" == "success" ]; then
             echo "✅ SAST Scan completed successfully" >> $GITHUB_STEP_SUMMARY
@@ -915,7 +932,7 @@ jobs:
           else
             echo "❌ SAST Scan failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Dependency scan results
           if [ "${{ needs.dependency_scan.result }}" == "success" ]; then
             echo "✅ Dependency Scan completed successfully" >> $GITHUB_STEP_SUMMARY
@@ -924,7 +941,7 @@ jobs:
           else
             echo "❌ Dependency Scan failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Container scan results
           if [ "${{ needs.container_scan.result }}" == "success" ]; then
             echo "✅ Container Scan completed successfully" >> $GITHUB_STEP_SUMMARY
@@ -933,7 +950,7 @@ jobs:
           else
             echo "❌ Container Scan failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # DAST results
           if [ "${{ needs.dast_scan.result }}" == "success" ]; then
             echo "✅ DAST Scan completed successfully" >> $GITHUB_STEP_SUMMARY
@@ -942,7 +959,7 @@ jobs:
           else
             echo "❌ DAST Scan failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           # Infrastructure scan results
           if [ "${{ needs.infrastructure_scan.result }}" == "success" ]; then
             echo "✅ Infrastructure Scan completed successfully" >> $GITHUB_STEP_SUMMARY
@@ -951,7 +968,7 @@ jobs:
           else
             echo "❌ Infrastructure Scan failed" >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📁 **Detailed results are available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY
 
@@ -959,15 +976,15 @@ jobs:
         if: needs.setup.outputs.fail_on_findings == 'true'
         run: |
           echo "🔍 Checking for critical security findings"
-          
+
           # This step would analyze all scan results and fail if critical issues are found
           # Implementation would depend on the specific tools and their output formats
-          
+
           CRITICAL_FOUND=false
-          
+
           # Check for critical findings in scan results
           # (This is a simplified check - in practice, you'd parse each tool's output)
-          
+
           if [ "$CRITICAL_FOUND" == "true" ]; then
             echo "❌ Critical security findings detected!"
             echo "Please review the security report and address critical issues before proceeding."

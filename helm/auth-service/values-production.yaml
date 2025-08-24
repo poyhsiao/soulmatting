@@ -86,7 +86,7 @@ monitoring:
 # External Dependencies
 # =============================================================================
 redis:
-  enabled: false  # Use external Redis cluster in production
+  enabled: false # Use external Redis cluster in production
 
 postgresql:
-  enabled: false  # Use external PostgreSQL cluster in production
+  enabled: false # Use external PostgreSQL cluster in production

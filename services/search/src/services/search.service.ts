@@ -17,7 +17,7 @@ export class SearchService {
   async search(
     query: string,
     limit: number = 10,
-    offset: number = 0,
+    offset: number = 0
   ): Promise<SearchResultDto[]> {
     // TODO: Implement Elasticsearch integration
     // For now, return mock data with pagination
@@ -30,7 +30,7 @@ export class SearchService {
         score: 1.0,
       },
     ];
-    
+
     // Apply pagination
     return mockResults.slice(offset, offset + limit);
   }

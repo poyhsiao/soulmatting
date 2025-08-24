@@ -7,203 +7,203 @@
 version: 2
 updates:
   # Frontend dependencies (React/TypeScript)
-  - package-ecosystem: "npm"
-    directory: "/apps/web"
+  - package-ecosystem: 'npm'
+    directory: '/apps/web'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 10
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "feat(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
+      prefix: 'feat(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "frontend"
+      - 'dependencies'
+      - 'frontend'
     ignore:
       # Ignore major version updates for critical dependencies
-      - dependency-name: "react"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "react-dom"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: 'react'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'react-dom'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
       react:
         patterns:
-          - "react*"
-          - "@types/react*"
+          - 'react*'
+          - '@types/react*'
       testing:
         patterns:
-          - "@testing-library/*"
-          - "jest*"
-          - "vitest*"
+          - '@testing-library/*'
+          - 'jest*'
+          - 'vitest*'
       build-tools:
         patterns:
-          - "vite*"
-          - "@vitejs/*"
-          - "rollup*"
-          - "esbuild*"
+          - 'vite*'
+          - '@vitejs/*'
+          - 'rollup*'
+          - 'esbuild*'
 
   # Backend dependencies (NestJS/Node.js)
-  - package-ecosystem: "npm"
-    directory: "/apps/api"
+  - package-ecosystem: 'npm'
+    directory: '/apps/api'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 10
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "feat(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
+      prefix: 'feat(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "backend"
+      - 'dependencies'
+      - 'backend'
     ignore:
       # Ignore major version updates for critical dependencies
-      - dependency-name: "@nestjs/core"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "typescript"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: '@nestjs/core'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
       nestjs:
         patterns:
-          - "@nestjs/*"
+          - '@nestjs/*'
       database:
         patterns:
-          - "prisma*"
-          - "@prisma/*"
-          - "pg*"
-          - "redis*"
+          - 'prisma*'
+          - '@prisma/*'
+          - 'pg*'
+          - 'redis*'
       testing:
         patterns:
-          - "jest*"
-          - "@types/jest*"
-          - "supertest*"
+          - 'jest*'
+          - '@types/jest*'
+          - 'supertest*'
 
   # Auth Service dependencies
-  - package-ecosystem: "npm"
-    directory: "/apps/auth-service"
+  - package-ecosystem: 'npm'
+    directory: '/apps/auth-service'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 5
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "feat(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
+      prefix: 'feat(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "auth-service"
+      - 'dependencies'
+      - 'auth-service'
 
   # Shared packages dependencies
-  - package-ecosystem: "npm"
-    directory: "/packages/shared"
+  - package-ecosystem: 'npm'
+    directory: '/packages/shared'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 5
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "feat(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
+      prefix: 'feat(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "shared"
+      - 'dependencies'
+      - 'shared'
 
   # Root workspace dependencies
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 5
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "chore(deps)"
-      prefix-development: "chore(deps-dev)"
-      include: "scope"
+      prefix: 'chore(deps)'
+      prefix-development: 'chore(deps-dev)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "workspace"
+      - 'dependencies'
+      - 'workspace'
     groups:
       workspace-tools:
         patterns:
-          - "pnpm*"
-          - "turbo*"
-          - "lerna*"
-          - "nx*"
+          - 'pnpm*'
+          - 'turbo*'
+          - 'lerna*'
+          - 'nx*'
 
   # Docker dependencies
-  - package-ecosystem: "docker"
-    directory: "/"
+  - package-ecosystem: 'docker'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "tuesday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'tuesday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 5
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "chore(docker)"
-      include: "scope"
+      prefix: 'chore(docker)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "docker"
+      - 'dependencies'
+      - 'docker'
 
   # GitHub Actions dependencies
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "wednesday"
-      time: "09:00"
-      timezone: "Asia/Taipei"
+      interval: 'weekly'
+      day: 'wednesday'
+      time: '09:00'
+      timezone: 'Asia/Taipei'
     open-pull-requests-limit: 5
     reviewers:
-      - "kimhsiao"
+      - 'kimhsiao'
     assignees:
-      - "kimhsiao"
+      - 'kimhsiao'
     commit-message:
-      prefix: "chore(ci)"
-      include: "scope"
+      prefix: 'chore(ci)'
+      include: 'scope'
     labels:
-      - "dependencies"
-      - "github-actions"
+      - 'dependencies'
+      - 'github-actions'
     groups:
       actions:
         patterns:
-          - "actions/*"
-          - "github/*"
+          - 'actions/*'
+          - 'github/*'

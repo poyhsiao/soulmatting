@@ -7,18 +7,18 @@
 # Application configuration
 app:
   name: soulmatting-user
-  version: "1.0.0"
+  version: '1.0.0'
   environment: development
 
 # Image configuration
 image:
   repository: ghcr.io/kimhsiao/soulmatting/user
   pullPolicy: IfNotPresent
-  tag: "latest"
+  tag: 'latest'
 
 imagePullSecrets: []
-nameOverride: ""
-fullnameOverride: ""
+nameOverride: ''
+fullnameOverride: ''
 
 # Deployment configuration
 replicaCount: 1
@@ -39,7 +39,7 @@ service:
 # Ingress configuration
 ingress:
   enabled: false
-  className: ""
+  className: ''
   annotations: {}
   hosts:
     - host: user.soulmatting.local
@@ -93,27 +93,27 @@ env:
 # Secrets
 secrets:
   enabled: true
-  name: ""
+  name: ''
   data:
-    DATABASE_URL: ""
-    REDIS_URL: ""
-    JWT_SECRET: ""
-    API_KEY: ""
+    DATABASE_URL: ''
+    REDIS_URL: ''
+    JWT_SECRET: ''
+    API_KEY: ''
 
 # Config maps
 configMap:
   enabled: true
-  name: ""
+  name: ''
   data:
-    APP_NAME: "SoulMatting User Service"
-    APP_VERSION: "1.0.0"
-    CACHE_TTL: "3600"
-    MAX_CONNECTIONS: "100"
+    APP_NAME: 'SoulMatting User Service'
+    APP_VERSION: '1.0.0'
+    CACHE_TTL: '3600'
+    MAX_CONNECTIONS: '100'
 
 # Persistence
 persistence:
   enabled: false
-  storageClass: ""
+  storageClass: ''
   accessMode: ReadWriteOnce
   size: 1Gi
   mountPath: /data
@@ -123,13 +123,13 @@ serviceAccount:
   create: true
   automount: true
   annotations: {}
-  name: ""
+  name: ''
 
 # Pod disruption budget
 podDisruptionBudget:
   enabled: false
   minAvailable: 1
-  maxUnavailable: ""
+  maxUnavailable: ''
 
 # Network policy
 networkPolicy:
@@ -147,7 +147,7 @@ podSecurityContext:
 securityContext:
   capabilities:
     drop:
-    - ALL
+      - ALL
   readOnlyRootFilesystem: true
   runAsNonRoot: true
   runAsUser: 1000
@@ -182,8 +182,8 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "postgres"
-    database: "soulmatting_user"
+    postgresPassword: 'postgres'
+    database: 'soulmatting_user'
   primary:
     persistence:
       enabled: false

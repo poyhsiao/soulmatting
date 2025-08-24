@@ -3,10 +3,10 @@ name: SoulMatting CI/CD Pipeline
 # Trigger the workflow on push to main/develop branches and pull requests
 on:
   push:
-    branches: [ main, develop ]
-    tags: [ 'v*' ]
+    branches: [main, develop]
+    tags: ['v*']
   pull_request:
-    branches: [ main, develop ]
+    branches: [main, develop]
   workflow_dispatch:
     inputs:
       environment:
@@ -15,8 +15,8 @@ on:
         default: 'staging'
         type: choice
         options:
-        - staging
-        - production
+          - staging
+          - production
       force_deploy:
         description: 'Force deployment even if tests fail'
         required: false
@@ -39,122 +39,122 @@ jobs:
     strategy:
       matrix:
         service: [auth]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 10.15.0
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.15.0
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
-        cache: 'pnpm'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
 
-    - name: Install dependencies
-      run: |
-        pnpm install
+      - name: Install dependencies
+        run: |
+          pnpm install
 
-    - name: Generate Prisma client
-      run: pnpm --filter @soulmatting/database generate
+      - name: Generate Prisma client
+        run: pnpm --filter @soulmatting/database generate
 
-    - name: Code formatting check (Prettier)
-      run: |
-        pnpm format:check
+      - name: Code formatting check (Prettier)
+        run: |
+          pnpm format:check
 
-    - name: Code linting (ESLint)
-      run: |
-        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} lint
+      - name: Code linting (ESLint)
+        run: |
+          pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} lint
 
-    - name: Type checking (TypeScript)
-      run: |
-        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} type-check
+      - name: Type checking (TypeScript)
+        run: |
+          pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} type-check
 
-    - name: Security check (npm audit)
-      run: |
-        pnpm audit --audit-level moderate
+      - name: Security check (npm audit)
+        run: |
+          pnpm audit --audit-level moderate
 
-    - name: Dependency vulnerability check
-      run: |
-        pnpm audit --audit-level high
+      - name: Dependency vulnerability check
+        run: |
+          pnpm audit --audit-level high
 
-    - name: Run unit tests
-      run: |
-        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} test
+      - name: Run unit tests
+        run: |
+          pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} test
 
-    - name: Run integration tests
-      run: |
-        pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} test:e2e
+      - name: Run integration tests
+        run: |
+          pnpm --filter @soulmatting/${{ matrix.service == 'auth' && 'auth-service' || matrix.service }} test:e2e
 
-    - name: Upload coverage reports
-      uses: codecov/codecov-action@v3
-      with:
-        file: services/${{ matrix.service }}/coverage/lcov.info
-        flags: ${{ matrix.service }}
-        name: codecov-${{ matrix.service }}
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v3
+        with:
+          file: services/${{ matrix.service }}/coverage/lcov.info
+          flags: ${{ matrix.service }}
+          name: codecov-${{ matrix.service }}
 
   # Job 2: Frontend Quality Check
   frontend-quality:
     name: Frontend Quality & Testing
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '22'
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-    - name: Install pnpm
-      uses: pnpm/action-setup@v2
-      with:
-        version: 10.15.0
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10.15.0
 
-    - name: Install dependencies
-      run: |
-        pnpm install
+      - name: Install dependencies
+        run: |
+          pnpm install
 
-    - name: Generate Prisma client
-      run: |
-        pnpm --filter @soulmatting/database prisma generate
+      - name: Generate Prisma client
+        run: |
+          pnpm --filter @soulmatting/database prisma generate
 
-    - name: Code linting (ESLint)
-      run: |
-        pnpm --filter @soulmatting/web lint
+      - name: Code linting (ESLint)
+        run: |
+          pnpm --filter @soulmatting/web lint
 
-    - name: Code formatting check (Prettier)
-      run: |
-        pnpm format:check
+      - name: Code formatting check (Prettier)
+        run: |
+          pnpm format:check
 
-    - name: Type checking (TypeScript)
-      run: |
-        pnpm --filter @soulmatting/web type-check
+      - name: Type checking (TypeScript)
+        run: |
+          pnpm --filter @soulmatting/web type-check
 
-    - name: Run unit tests
-      run: |
-        pnpm --filter @soulmatting/web test
+      - name: Run unit tests
+        run: |
+          pnpm --filter @soulmatting/web test
 
-    - name: Run e2e tests
-      run: |
-        pnpm test:e2e
+      - name: Run e2e tests
+        run: |
+          pnpm test:e2e
 
-    - name: Build application
-      run: |
-        pnpm --filter @soulmatting/web build
+      - name: Build application
+        run: |
+          pnpm --filter @soulmatting/web build
 
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: frontend-build
-        path: apps/web/dist/
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: apps/web/dist/
 
   # Job 3: Build and Push Docker Images
   build-images:
@@ -165,50 +165,50 @@ jobs:
     strategy:
       matrix:
         service: [web, auth]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-    - name: Log in to Container Registry
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Log in to Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Extract metadata
-      id: meta
-      uses: docker/metadata-action@v5
-      with:
-        images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
-        tags: |
-          type=ref,event=branch
-          type=ref,event=pr
-          type=semver,pattern={{version}}
-          type=semver,pattern={{major}}.{{minor}}
-          type=sha,prefix={{branch}}-
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha,prefix={{branch}}-
 
-    - name: Download frontend build (for web service)
-      if: matrix.service == 'web'
-      uses: actions/download-artifact@v3
-      with:
-        name: frontend-build
-        path: apps/web/dist/
+      - name: Download frontend build (for web service)
+        if: matrix.service == 'web'
+        uses: actions/download-artifact@v3
+        with:
+          name: frontend-build
+          path: apps/web/dist/
 
-    - name: Build and push Docker image
-      uses: docker/build-push-action@v5
-      with:
-        context: ${{ matrix.service == 'web' && 'apps/web' || (matrix.service == 'auth' && 'services/auth' || format('services/{0}', matrix.service)) }}
-        file: ${{ matrix.service == 'web' && 'apps/web/Dockerfile' || (matrix.service == 'auth' && 'services/auth/Dockerfile' || format('services/{0}/Dockerfile', matrix.service)) }}
-        push: true
-        tags: ${{ steps.meta.outputs.tags }}
-        labels: ${{ steps.meta.outputs.labels }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ${{ matrix.service == 'web' && 'apps/web' || (matrix.service == 'auth' && 'services/auth' || format('services/{0}', matrix.service)) }}
+          file: ${{ matrix.service == 'web' && 'apps/web/Dockerfile' || (matrix.service == 'auth' && 'services/auth/Dockerfile' || format('services/{0}/Dockerfile', matrix.service)) }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   # Job 4: Security Scanning
   security-scan:
@@ -219,61 +219,61 @@ jobs:
     strategy:
       matrix:
         service: [web, auth-service]
-    
-    steps:
-    - name: Run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ github.sha }}
-        format: 'sarif'
-        output: 'trivy-results-${{ matrix.service }}.sarif'
 
-    - name: Upload Trivy scan results
-      uses: github/codeql-action/upload-sarif@v2
-      with:
-        sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
+    steps:
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/${{ matrix.service }}:${{ github.sha }}
+          format: 'sarif'
+          output: 'trivy-results-${{ matrix.service }}.sarif'
+
+      - name: Upload Trivy scan results
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results-${{ matrix.service }}.sarif'
 
   # Job 5: Helm Chart Validation
   helm-validation:
     name: Helm Chart Validation
     runs-on: ubuntu-latest
     needs: [quality-check, frontend-quality]
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Helm
-      uses: azure/setup-helm@v3
-      with:
-        version: ${{ env.HELM_VERSION }}
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
 
-    - name: Add Helm repositories
-      run: |
-        helm repo add bitnami https://charts.bitnami.com/bitnami
-        helm repo update
+      - name: Add Helm repositories
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
 
-    - name: Lint Helm charts
-      run: |
-        cd helm
-        for chart in */; do
-          if [ -f "$chart/Chart.yaml" ]; then
-            echo "Linting chart: $chart"
-            helm lint "$chart"
-          fi
-        done
+      - name: Lint Helm charts
+        run: |
+          cd helm
+          for chart in */; do
+            if [ -f "$chart/Chart.yaml" ]; then
+              echo "Linting chart: $chart"
+              helm lint "$chart"
+            fi
+          done
 
-    - name: Validate Helm templates
-      run: |
-        cd helm/soulmatting
-        helm dependency update
-        helm template soulmatting . --values values-local.yaml --debug
+      - name: Validate Helm templates
+        run: |
+          cd helm/soulmatting
+          helm dependency update
+          helm template soulmatting . --values values-local.yaml --debug
 
-    - name: Run Helm chart tests
-      run: |
-        cd helm/soulmatting
-        helm template soulmatting . --values values-staging.yaml --validate
-        helm template soulmatting . --values values-production.yaml --validate
+      - name: Run Helm chart tests
+        run: |
+          cd helm/soulmatting
+          helm template soulmatting . --values values-staging.yaml --validate
+          helm template soulmatting . --values values-production.yaml --validate
 
   # Job 6: Deploy to Staging
   deploy-staging:
@@ -284,50 +284,50 @@ jobs:
     environment:
       name: staging
       url: https://staging.soulmatting.com
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: ${{ env.KUBECTL_VERSION }}
+      - name: Set up Kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
 
-    - name: Set up Helm
-      uses: azure/setup-helm@v3
-      with:
-        version: ${{ env.HELM_VERSION }}
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
 
-    - name: Configure Kubernetes context
-      run: |
-        echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
-        export KUBECONFIG=kubeconfig
-        kubectl config current-context
+      - name: Configure Kubernetes context
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_STAGING }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
 
-    - name: Add Helm repositories
-      run: |
-        helm repo add bitnami https://charts.bitnami.com/bitnami
-        helm repo update
+      - name: Add Helm repositories
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
 
-    - name: Deploy to staging
-      run: |
-        export KUBECONFIG=kubeconfig
-        cd helm
-        ./deploy.sh -e staging -n soulmatting-staging --upgrade
+      - name: Deploy to staging
+        run: |
+          export KUBECONFIG=kubeconfig
+          cd helm
+          ./deploy.sh -e staging -n soulmatting-staging --upgrade
 
-    - name: Verify deployment
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl get pods -n soulmatting-staging
-        kubectl get services -n soulmatting-staging
-        kubectl get ingress -n soulmatting-staging
+      - name: Verify deployment
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl get pods -n soulmatting-staging
+          kubectl get services -n soulmatting-staging
+          kubectl get ingress -n soulmatting-staging
 
-    - name: Run smoke tests
-      run: |
-        # Add smoke tests here
-        echo "Running smoke tests..."
-        # curl -f https://staging.soulmatting.com/health || exit 1
+      - name: Run smoke tests
+        run: |
+          # Add smoke tests here
+          echo "Running smoke tests..."
+          # curl -f https://staging.soulmatting.com/health || exit 1
 
   # Job 7: Deploy to Production
   deploy-production:
@@ -338,61 +338,61 @@ jobs:
     environment:
       name: production
       url: https://soulmatting.com
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Kubectl
-      uses: azure/setup-kubectl@v3
-      with:
-        version: ${{ env.KUBECTL_VERSION }}
+      - name: Set up Kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
 
-    - name: Set up Helm
-      uses: azure/setup-helm@v3
-      with:
-        version: ${{ env.HELM_VERSION }}
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
 
-    - name: Configure Kubernetes context
-      run: |
-        echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
-        export KUBECONFIG=kubeconfig
-        kubectl config current-context
+      - name: Configure Kubernetes context
+        run: |
+          echo "${{ secrets.KUBE_CONFIG_PRODUCTION }}" | base64 -d > kubeconfig
+          export KUBECONFIG=kubeconfig
+          kubectl config current-context
 
-    - name: Add Helm repositories
-      run: |
-        helm repo add bitnami https://charts.bitnami.com/bitnami
-        helm repo update
+      - name: Add Helm repositories
+        run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update
 
-    - name: Deploy to production
-      run: |
-        export KUBECONFIG=kubeconfig
-        cd helm
-        ./deploy.sh -e production -n soulmatting-production --upgrade
+      - name: Deploy to production
+        run: |
+          export KUBECONFIG=kubeconfig
+          cd helm
+          ./deploy.sh -e production -n soulmatting-production --upgrade
 
-    - name: Verify deployment
-      run: |
-        export KUBECONFIG=kubeconfig
-        kubectl get pods -n soulmatting-production
-        kubectl get services -n soulmatting-production
-        kubectl get ingress -n soulmatting-production
+      - name: Verify deployment
+        run: |
+          export KUBECONFIG=kubeconfig
+          kubectl get pods -n soulmatting-production
+          kubectl get services -n soulmatting-production
+          kubectl get ingress -n soulmatting-production
 
-    - name: Run smoke tests
-      run: |
-        # Add smoke tests here
-        echo "Running smoke tests..."
-        # curl -f https://soulmatting.com/health || exit 1
+      - name: Run smoke tests
+        run: |
+          # Add smoke tests here
+          echo "Running smoke tests..."
+          # curl -f https://soulmatting.com/health || exit 1
 
-    - name: Create GitHub release
-      if: startsWith(github.ref, 'refs/tags/v')
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ github.ref }}
-        release_name: Release ${{ github.ref }}
-        draft: false
-        prerelease: false
+      - name: Create GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          draft: false
+          prerelease: false
 
   # Job 8: Cleanup
   cleanup:
@@ -400,18 +400,18 @@ jobs:
     runs-on: ubuntu-latest
     needs: [deploy-staging, deploy-production]
     if: always()
-    
-    steps:
-    - name: Clean up old images
-      run: |
-        echo "Cleaning up old container images..."
-        # Add cleanup logic here
 
-    - name: Notify deployment status
-      if: always()
-      uses: 8398a7/action-slack@v3
-      with:
-        status: ${{ job.status }}
-        channel: '#deployments'
-      env:
-        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+    steps:
+      - name: Clean up old images
+        run: |
+          echo "Cleaning up old container images..."
+          # Add cleanup logic here
+
+      - name: Notify deployment status
+        if: always()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          channel: '#deployments'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}

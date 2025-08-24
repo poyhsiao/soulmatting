@@ -34,10 +34,10 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    cert-manager.io/cluster-issuer: 'letsencrypt-staging'
     nginx.ingress.kubernetes.io/auth-type: basic
     nginx.ingress.kubernetes.io/auth-secret: staging-basic-auth
     nginx.ingress.kubernetes.io/auth-realm: 'Authentication Required - Staging Environment'
@@ -77,32 +77,32 @@ autoscaling:
 # =============================================================================
 env:
   NODE_ENV: staging
-  PORT: "3000"
-  NEXT_TELEMETRY_DISABLED: "1"
-  LOG_LEVEL: "debug"
-  ENABLE_ANALYTICS: "false"
-  ENABLE_MONITORING: "true"
-  ENABLE_DEBUG: "true"
+  PORT: '3000'
+  NEXT_TELEMETRY_DISABLED: '1'
+  LOG_LEVEL: 'debug'
+  ENABLE_ANALYTICS: 'false'
+  ENABLE_MONITORING: 'true'
+  ENABLE_DEBUG: 'true'
 
 # =============================================================================
 # ConfigMap Data
 # =============================================================================
 configMap:
   data:
-    NEXT_PUBLIC_APP_NAME: "SoulMatting (Staging)"
-    NEXT_PUBLIC_APP_VERSION: "1.0.0-staging"
-    NEXT_PUBLIC_API_URL: "https://api-staging.soulmatting.com"
-    NEXT_PUBLIC_WS_URL: "wss://ws-staging.soulmatting.com"
-    NEXT_PUBLIC_SUPABASE_URL: "https://staging-soulmatting.supabase.co"
-    NEXT_PUBLIC_CDN_URL: "https://cdn-staging.soulmatting.com"
-    NEXT_PUBLIC_SENTRY_DSN: "https://your-staging-sentry-dsn@sentry.io/project-id"
-    NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: "G-STAGING-XXXX"
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: "your-staging-google-maps-key"
-    NEXT_PUBLIC_FACEBOOK_APP_ID: "your-staging-facebook-app-id"
-    NEXT_PUBLIC_GOOGLE_CLIENT_ID: "your-staging-google-client-id"
-    NEXT_PUBLIC_ENVIRONMENT: "staging"
-    NEXT_PUBLIC_FEATURE_FLAGS: "premium:true,matching:true,messaging:true,debug:true"
-    NEXT_PUBLIC_DEBUG_MODE: "true"
+    NEXT_PUBLIC_APP_NAME: 'SoulMatting (Staging)'
+    NEXT_PUBLIC_APP_VERSION: '1.0.0-staging'
+    NEXT_PUBLIC_API_URL: 'https://api-staging.soulmatting.com'
+    NEXT_PUBLIC_WS_URL: 'wss://ws-staging.soulmatting.com'
+    NEXT_PUBLIC_SUPABASE_URL: 'https://staging-soulmatting.supabase.co'
+    NEXT_PUBLIC_CDN_URL: 'https://cdn-staging.soulmatting.com'
+    NEXT_PUBLIC_SENTRY_DSN: 'https://your-staging-sentry-dsn@sentry.io/project-id'
+    NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: 'G-STAGING-XXXX'
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: 'your-staging-google-maps-key'
+    NEXT_PUBLIC_FACEBOOK_APP_ID: 'your-staging-facebook-app-id'
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: 'your-staging-google-client-id'
+    NEXT_PUBLIC_ENVIRONMENT: 'staging'
+    NEXT_PUBLIC_FEATURE_FLAGS: 'premium:true,matching:true,messaging:true,debug:true'
+    NEXT_PUBLIC_DEBUG_MODE: 'true'
 
 # =============================================================================
 # Node Selection
@@ -112,23 +112,23 @@ nodeSelector:
   environment: staging
 
 tolerations:
-  - key: "staging-workload"
-    operator: "Equal"
-    value: "true"
-    effect: "NoSchedule"
+  - key: 'staging-workload'
+    operator: 'Equal'
+    value: 'true'
+    effect: 'NoSchedule'
 
 affinity:
   podAntiAffinity:
     preferredDuringSchedulingIgnoredDuringExecution:
-    - weight: 100
-      podAffinityTerm:
-        labelSelector:
-          matchExpressions:
-          - key: app.kubernetes.io/name
-            operator: In
-            values:
-            - soulmatting-web
-        topologyKey: kubernetes.io/hostname
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - soulmatting-web
+          topologyKey: kubernetes.io/hostname
 
 # =============================================================================
 # Pod Disruption Budget
@@ -157,7 +157,7 @@ networkPolicy:
       ports:
         - protocol: TCP
           port: 3000
-    - from: []  # Allow all for staging debugging
+    - from: [] # Allow all for staging debugging
       ports:
         - protocol: TCP
           port: 3000
@@ -168,7 +168,7 @@ networkPolicy:
           port: 53
         - protocol: UDP
           port: 53
-    - to: []  # Allow all egress for staging
+    - to: [] # Allow all egress for staging
 
 # =============================================================================
 # Monitoring
@@ -183,7 +183,7 @@ monitoring:
     labels:
       environment: staging
       team: platform
-  
+
   prometheusRule:
     enabled: true
     rules:
@@ -194,9 +194,9 @@ monitoring:
           severity: warning
           team: platform
         annotations:
-          summary: "SoulMatting Web App is down in staging"
-          description: "SoulMatting Web App has been down for more than 5 minutes in staging."
-      
+          summary: 'SoulMatting Web App is down in staging'
+          description: 'SoulMatting Web App has been down for more than 5 minutes in staging.'
+
       - alert: StagingWebAppHighErrorRate
         expr: rate(http_requests_total{job="soulmatting-web",environment="staging",status=~"5.."}[5m]) > 0.1
         for: 10m
@@ -204,9 +204,9 @@ monitoring:
           severity: warning
           team: platform
         annotations:
-          summary: "High error rate in SoulMatting Web App staging"
-          description: "Error rate is above 10% for more than 10 minutes in staging."
-      
+          summary: 'High error rate in SoulMatting Web App staging'
+          description: 'Error rate is above 10% for more than 10 minutes in staging.'
+
       - alert: StagingWebAppHighLatency
         expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="soulmatting-web",environment="staging"}[5m])) > 5
         for: 10m
@@ -214,8 +214,8 @@ monitoring:
           severity: info
           team: platform
         annotations:
-          summary: "High latency in SoulMatting Web App staging"
-          description: "95th percentile latency is above 5 seconds for more than 10 minutes in staging."
+          summary: 'High latency in SoulMatting Web App staging'
+          description: '95th percentile latency is above 5 seconds for more than 10 minutes in staging.'
 
 # =============================================================================
 # Dependencies
@@ -224,12 +224,12 @@ redis:
   enabled: true
   auth:
     enabled: true
-    password: "staging-redis-password"
+    password: 'staging-redis-password'
   master:
     persistence:
       enabled: true
       size: 4Gi
-      storageClass: "standard"
+      storageClass: 'standard'
   replica:
     replicaCount: 1
     persistence:
@@ -238,12 +238,12 @@ redis:
 postgresql:
   enabled: true
   auth:
-    postgresPassword: "staging-postgres-password"
-    database: "soulmatting_staging"
+    postgresPassword: 'staging-postgres-password'
+    database: 'soulmatting_staging'
   primary:
     persistence:
       enabled: true
       size: 10Gi
-      storageClass: "standard"
+      storageClass: 'standard'
   readReplicas:
     replicaCount: 0

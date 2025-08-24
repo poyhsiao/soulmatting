@@ -1,14 +1,14 @@
 name: Feature Request
 description: Suggest an idea for this project
-title: "[FEATURE]: "
-labels: ["enhancement", "triage"]
+title: '[FEATURE]: '
+labels: ['enhancement', 'triage']
 assignees: []
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to suggest a new feature!
-        
+
   - type: input
     id: contact
     attributes:
@@ -17,7 +17,7 @@ body:
       placeholder: ex. email@example.com
     validations:
       required: false
-      
+
   - type: textarea
     id: problem
     attributes:
@@ -26,7 +26,7 @@ body:
       placeholder: I'm always frustrated when...
     validations:
       required: true
-      
+
   - type: textarea
     id: solution
     attributes:
@@ -35,7 +35,7 @@ body:
       placeholder: I would like to see...
     validations:
       required: true
-      
+
   - type: textarea
     id: alternatives
     attributes:
@@ -44,7 +44,7 @@ body:
       placeholder: Alternative approaches could be...
     validations:
       required: false
-      
+
   - type: dropdown
     id: feature-type
     attributes:
@@ -63,7 +63,7 @@ body:
         - Other
     validations:
       required: true
-      
+
   - type: dropdown
     id: priority
     attributes:
@@ -76,7 +76,7 @@ body:
         - Critical - Blocking my adoption
     validations:
       required: true
-      
+
   - type: dropdown
     id: user-type
     attributes:
@@ -91,7 +91,7 @@ body:
         - API Consumers
         - Mobile Users
         - All Users
-        
+
   - type: textarea
     id: use-cases
     attributes:
@@ -102,7 +102,7 @@ body:
         2. When [scenario], I need [feature] to [outcome]
     validations:
       required: true
-      
+
   - type: textarea
     id: acceptance-criteria
     attributes:
@@ -115,7 +115,7 @@ body:
         - [ ] Feature is tested
     validations:
       required: false
-      
+
   - type: textarea
     id: mockups
     attributes:
@@ -124,7 +124,7 @@ body:
       placeholder: Drag and drop images here or paste URLs
     validations:
       required: false
-      
+
   - type: textarea
     id: technical-considerations
     attributes:
@@ -137,7 +137,7 @@ body:
         - Breaking changes:
     validations:
       required: false
-      
+
   - type: textarea
     id: additional-context
     attributes:
@@ -146,7 +146,7 @@ body:
       placeholder: Any additional information that might be helpful
     validations:
       required: false
-      
+
   - type: checkboxes
     id: research
     attributes:
@@ -161,7 +161,7 @@ body:
           required: false
         - label: I am willing to help implement this feature
           required: false
-          
+
   - type: checkboxes
     id: terms
     attributes:

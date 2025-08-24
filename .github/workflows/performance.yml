@@ -50,7 +50,7 @@ jobs:
     timeout-minutes: 15
     outputs:
       cache-key: ${{ steps.cache-key.outputs.key }}
-      
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -391,16 +391,16 @@ jobs:
         with:
           script: |
             const summary = `## 🚀 Performance Test Results
-            
+
             | Test Type | Status |
             |-----------|--------|
             | Lighthouse | ${{ needs.lighthouse.result == 'success' && '✅ Passed' || needs.lighthouse.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |
             | Load Testing | ${{ needs.load-test.result == 'success' && '✅ Passed' || needs.load-test.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |
             | API Performance | ${{ needs.api-performance.result == 'success' && '✅ Passed' || needs.api-performance.result == 'skipped' && '⏭️ Skipped' || '❌ Failed' }} |
-            
+
             📊 Test completed at: ${new Date().toISOString()}
             🔗 Check the Actions tab for detailed performance reports and artifacts.`;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,

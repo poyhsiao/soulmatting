@@ -24,7 +24,7 @@ async function bootstrap(): Promise<void> {
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // limit each IP to 100 requests per windowMs
-    }),
+    })
   );
 
   // Global validation pipe
@@ -33,7 +33,7 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    }),
+    })
   );
 
   // Swagger documentation

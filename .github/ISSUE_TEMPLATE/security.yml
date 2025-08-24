@@ -1,18 +1,18 @@
 name: Security Vulnerability Report
 description: Report a security vulnerability (Please use private reporting for sensitive issues)
-title: "[SECURITY]: "
-labels: ["security", "triage", "high-priority"]
+title: '[SECURITY]: '
+labels: ['security', 'triage', 'high-priority']
 assignees: []
 body:
   - type: markdown
     attributes:
       value: |
         ## ⚠️ Security Vulnerability Report
-        
+
         **IMPORTANT**: If this is a sensitive security issue that could be exploited, please use GitHub's private vulnerability reporting feature instead of creating a public issue.
-        
+
         For non-sensitive security improvements or questions, you can continue with this form.
-        
+
   - type: input
     id: contact
     attributes:
@@ -21,7 +21,7 @@ body:
       placeholder: ex. email@example.com
     validations:
       required: true
-      
+
   - type: dropdown
     id: severity
     attributes:
@@ -35,7 +35,7 @@ body:
         - Informational - Security best practice suggestion
     validations:
       required: true
-      
+
   - type: dropdown
     id: vulnerability-type
     attributes:
@@ -60,7 +60,7 @@ body:
         - Third-party Dependencies
         - Infrastructure Security
         - Other
-        
+
   - type: textarea
     id: description
     attributes:
@@ -69,7 +69,7 @@ body:
       placeholder: Describe the security vulnerability...
     validations:
       required: true
-      
+
   - type: textarea
     id: impact
     attributes:
@@ -82,7 +82,7 @@ body:
         - Risk to user privacy:
     validations:
       required: true
-      
+
   - type: textarea
     id: reproduction
     attributes:
@@ -92,11 +92,11 @@ body:
         1. Go to '...'
         2. Perform action '...'
         3. Observe security issue '...'
-        
+
         **Note**: Only include reproduction steps if they don't pose additional security risks
     validations:
       required: false
-      
+
   - type: textarea
     id: proof-of-concept
     attributes:
@@ -104,13 +104,13 @@ body:
       description: Provide a proof of concept (if applicable and safe)
       placeholder: |
         **Warning**: Only include PoC if it doesn't cause harm or expose sensitive information
-        
+
         ```
         // Safe proof of concept code here
         ```
     validations:
       required: false
-      
+
   - type: textarea
     id: affected-versions
     attributes:
@@ -122,7 +122,7 @@ body:
         - Latest version (specify)
     validations:
       required: true
-      
+
   - type: textarea
     id: environment
     attributes:
@@ -135,7 +135,7 @@ body:
         - Deployment environment:
     validations:
       required: false
-      
+
   - type: textarea
     id: mitigation
     attributes:
@@ -147,7 +147,7 @@ body:
         - Security best practices to implement:
     validations:
       required: false
-      
+
   - type: textarea
     id: references
     attributes:
@@ -159,7 +159,7 @@ body:
         - Security advisory:
     validations:
       required: false
-      
+
   - type: checkboxes
     id: disclosure
     attributes:
@@ -174,7 +174,7 @@ body:
           required: true
         - label: I am willing to work with the team to resolve this issue
           required: true
-          
+
   - type: checkboxes
     id: terms
     attributes:

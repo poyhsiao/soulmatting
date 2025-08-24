@@ -24,7 +24,7 @@ async function bootstrap(): Promise<void> {
     rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // limit each IP to 100 requests per windowMs
-    }),
+    })
   );
 
   // Global validation pipe
@@ -33,13 +33,15 @@ async function bootstrap(): Promise<void> {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    }),
+    })
   );
 
   // Swagger documentation
   const config = new DocumentBuilder()
     .setTitle('SoulMatting Communication Service')
-    .setDescription('Real-time messaging and communication service for SoulMatting platform')
+    .setDescription(
+      'Real-time messaging and communication service for SoulMatting platform'
+    )
     .setVersion('1.0')
     .addTag('communication')
     .build();

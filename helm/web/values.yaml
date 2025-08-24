@@ -9,7 +9,7 @@
 # =============================================================================
 app:
   name: soulmatting-web
-  version: "1.0.0"
+  version: '1.0.0'
   environment: development
 
 # =============================================================================
@@ -31,18 +31,18 @@ deployment:
     rollingUpdate:
       maxSurge: 1
       maxUnavailable: 0
-  
+
   annotations: {}
   labels: {}
-  
+
   podAnnotations: {}
   podLabels: {}
-  
+
   securityContext:
     runAsNonRoot: true
     runAsUser: 1001
     fsGroup: 1001
-  
+
   containerSecurityContext:
     allowPrivilegeEscalation: false
     readOnlyRootFilesystem: true
@@ -69,10 +69,10 @@ ingress:
   enabled: true
   className: nginx
   annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
-    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
   hosts:
     - host: soulmatting.local
       paths:
@@ -116,7 +116,7 @@ healthChecks:
     periodSeconds: 10
     timeoutSeconds: 5
     failureThreshold: 3
-  
+
   readinessProbe:
     httpGet:
       path: /api/ready
@@ -131,9 +131,9 @@ healthChecks:
 # =============================================================================
 env:
   NODE_ENV: production
-  PORT: "3000"
-  NEXT_TELEMETRY_DISABLED: "1"
-  
+  PORT: '3000'
+  NEXT_TELEMETRY_DISABLED: '1'
+
 # Environment variables from secrets
 envFrom:
   - secretRef:
@@ -146,15 +146,15 @@ envFrom:
 # =============================================================================
 configMap:
   data:
-    NEXT_PUBLIC_APP_NAME: "SoulMatting"
-    NEXT_PUBLIC_APP_VERSION: "1.0.0"
-    NEXT_PUBLIC_API_URL: "https://api.soulmatting.com"
-    NEXT_PUBLIC_WS_URL: "wss://ws.soulmatting.com"
-    NEXT_PUBLIC_SUPABASE_URL: "https://your-project.supabase.co"
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: "your-anon-key"
-    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: "your-google-maps-key"
-    NEXT_PUBLIC_SENTRY_DSN: "your-sentry-dsn"
-    NEXT_PUBLIC_ANALYTICS_ID: "your-analytics-id"
+    NEXT_PUBLIC_APP_NAME: 'SoulMatting'
+    NEXT_PUBLIC_APP_VERSION: '1.0.0'
+    NEXT_PUBLIC_API_URL: 'https://api.soulmatting.com'
+    NEXT_PUBLIC_WS_URL: 'wss://ws.soulmatting.com'
+    NEXT_PUBLIC_SUPABASE_URL: 'https://your-project.supabase.co'
+    NEXT_PUBLIC_SUPABASE_ANON_KEY: 'your-anon-key'
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: 'your-google-maps-key'
+    NEXT_PUBLIC_SENTRY_DSN: 'your-sentry-dsn'
+    NEXT_PUBLIC_ANALYTICS_ID: 'your-analytics-id'
 
 # =============================================================================
 # Secrets (will be created separately)
@@ -162,7 +162,7 @@ configMap:
 secrets:
   enabled: true
   data:
-    example_secret: "test_value"
+    example_secret: 'test_value'
     # SUPABASE_SERVICE_ROLE_KEY: "your-service-role-key"
     # JWT_SECRET: "your-jwt-secret"
     # ENCRYPTION_KEY: "your-encryption-key"
@@ -174,7 +174,7 @@ secrets:
 # =============================================================================
 persistence:
   enabled: false
-  storageClass: ""
+  storageClass: ''
   accessMode: ReadWriteOnce
   size: 1Gi
   annotations: {}
@@ -205,7 +205,7 @@ affinity:
 serviceAccount:
   create: true
   annotations: {}
-  name: ""
+  name: ''
 
 # =============================================================================
 # Pod Disruption Budget
@@ -233,7 +233,7 @@ monitoring:
     interval: 30s
     path: /api/metrics
     port: 3000
-  
+
   prometheusRule:
     enabled: true
     rules:
@@ -243,17 +243,17 @@ monitoring:
         labels:
           severity: critical
         annotations:
-          summary: "SoulMatting Web App is down"
-          description: "SoulMatting Web App has been down for more than 5 minutes."
-      
+          summary: 'SoulMatting Web App is down'
+          description: 'SoulMatting Web App has been down for more than 5 minutes.'
+
       - alert: WebAppHighErrorRate
         expr: rate(http_requests_total{job="soulmatting-web",status=~"5.."}[5m]) > 0.1
         for: 5m
         labels:
           severity: warning
         annotations:
-          summary: "High error rate in SoulMatting Web App"
-          description: "Error rate is above 10% for more than 5 minutes."
+          summary: 'High error rate in SoulMatting Web App'
+          description: 'Error rate is above 10% for more than 5 minutes.'
 
 # =============================================================================
 # Dependencies
@@ -262,7 +262,7 @@ redis:
   enabled: false
   auth:
     enabled: true
-    password: "redis-password"
+    password: 'redis-password'
   master:
     persistence:
       enabled: true
@@ -271,8 +271,8 @@ redis:
 postgresql:
   enabled: false
   auth:
-    postgresPassword: "postgres-password"
-    database: "soulmatting"
+    postgresPassword: 'postgres-password'
+    database: 'soulmatting'
   primary:
     persistence:
       enabled: true

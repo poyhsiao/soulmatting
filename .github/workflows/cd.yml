@@ -8,7 +8,7 @@ name: Continuous Deployment
 
 on:
   workflow_run:
-    workflows: ["CI/CD Pipeline"]
+    workflows: ['CI/CD Pipeline']
     types:
       - completed
     branches: [main, develop]
@@ -41,12 +41,12 @@ jobs:
     name: Prepare Deployment
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
-    
+
     outputs:
       environment: ${{ steps.determine-env.outputs.environment }}
       services: ${{ steps.determine-services.outputs.services }}
       deploy_tag: ${{ steps.determine-tag.outputs.deploy_tag }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -92,7 +92,7 @@ jobs:
     if: needs.prepare.outputs.environment != 'none'
     environment:
       name: ${{ needs.prepare.outputs.environment }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -141,11 +141,11 @@ jobs:
     environment:
       name: ${{ needs.prepare.outputs.environment }}
       url: ${{ needs.prepare.outputs.environment == 'production' && 'https://soulmatting.com' || 'https://staging.soulmatting.com' }}
-    
+
     strategy:
       matrix:
         service: ${{ fromJSON(needs.prepare.outputs.services) }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -214,7 +214,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, deploy-k8s]
     if: needs.prepare.outputs.environment != 'none'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -269,11 +269,11 @@ jobs:
     if: failure() && needs.prepare.outputs.environment != 'none'
     environment:
       name: ${{ needs.prepare.outputs.environment }}
-    
+
     strategy:
       matrix:
         service: ${{ fromJSON(needs.prepare.outputs.services) }}
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -326,7 +326,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, deploy-k8s, post-deploy-tests]
     if: always() && needs.prepare.outputs.environment != 'none'
-    
+
     steps:
       - name: Determine deployment status
         id: status
@@ -366,12 +366,12 @@ jobs:
           subject: 'SoulMatting Deployment Failed - ${{ needs.prepare.outputs.environment }}'
           body: |
             Deployment to ${{ needs.prepare.outputs.environment }} has failed.
-            
+
             Repository: ${{ github.repository }}
             Commit: ${{ github.sha }}
             Author: ${{ github.actor }}
             Workflow: ${{ github.workflow }}
-            
+
             Please check the GitHub Actions logs for more details.
           to: ${{ secrets.NOTIFICATION_EMAIL }}
           from: 'SoulMatting CI/CD <noreply@soulmatting.com>'
@@ -384,7 +384,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [prepare, deploy-k8s, post-deploy-tests, notify]
     if: always() && needs.prepare.outputs.environment != 'none'
-    
+
     steps:
       - name: Clean up old deployments
         run: |
