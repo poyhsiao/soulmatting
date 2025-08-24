@@ -54,7 +54,9 @@ paths = [
   "helm/values-dev\\.yaml$",
   "helm/values-test\\.yaml$",
   "helm/values-staging\\.yaml$",
-  "helm/values-production\\.yaml$"
+  "helm/values-production\\.yaml$",
+  "docker-compose\\.yml$",
+  "docker-compose\\.yaml$"
 ]
 regexes = [
   "test",
@@ -76,5 +78,9 @@ regexes = [
   "postgresql://.*\\{\\{.*\\}\\}.*@",
   "redis://.*\\{\\{.*\\}\\}.*@",
   "\\$\\(POSTGRES_PASSWORD\\)",
-  "\\$\\(REDIS_PASSWORD\\)"
+  "\\$\\(REDIS_PASSWORD\\)",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+  "your-super-secret-jwt-token",
+  "supabase-demo",
+  "service_role"
 ]
