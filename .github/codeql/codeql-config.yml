@@ -17,7 +17,6 @@ queries:
     uses: security-and-quality
   - name: code-scanning
     uses: code-scanning
-  - uses: ./.github/codeql/custom-queries/
 
 # Paths to include in analysis
 paths:
