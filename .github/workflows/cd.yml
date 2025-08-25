@@ -341,13 +341,15 @@ jobs:
             echo "message=❌ Deployment to ${{ needs.prepare.outputs.environment }} failed!" >> $GITHUB_OUTPUT
           fi
 
-      - name: Send Slack notification
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ steps.status.outputs.status }}
-          text: ${{ steps.status.outputs.message }}
-          webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          fields: repo,message,commit,author,action,eventName,ref,workflow
+      # TEMPORARILY DISABLED: Slack notifications disabled due to GitHub Actions errors (run ids: #17197103321, #17197103316, #17197103314)
+      # TODO: Re-enable after fixing webhook configuration issues
+      # - name: Send Slack notification
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ steps.status.outputs.status }}
+      #     text: ${{ steps.status.outputs.message }}
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     fields: repo,message,commit,author,action,eventName,ref,workflow
 
       - name: Send Discord notification
         if: needs.prepare.outputs.environment == 'production'

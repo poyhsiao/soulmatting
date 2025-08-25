@@ -516,68 +516,71 @@ jobs:
             echo "severity=medium" >> $GITHUB_OUTPUT
           fi
 
-      - name: Send Slack alert
-        if: env.ALERT_WEBHOOK_URL != ''
-        run: |
-          # Prepare Slack message
-          SEVERITY_EMOJI=""
-          case "${{ steps.alert_data.outputs.severity }}" in
-            "critical") SEVERITY_EMOJI="🚨" ;;
-            "high") SEVERITY_EMOJI="⚠️" ;;
-            "medium") SEVERITY_EMOJI="⚡" ;;
-          esac
-
-          MESSAGE="{
-            \"text\": \"$SEVERITY_EMOJI SoulMatting Monitoring Alert\",
-            \"blocks\": [
-              {
-                \"type\": \"header\",
-                \"text\": {
-                  \"type\": \"plain_text\",
-                  \"text\": \"$SEVERITY_EMOJI SoulMatting Monitoring Alert\"
-                }
-              },
-              {
-                \"type\": \"section\",
-                \"fields\": [
-                  {
-                    \"type\": \"mrkdwn\",
-                    \"text\": \"*Severity:* ${{ steps.alert_data.outputs.severity }}\"
-                  },
-                  {
-                    \"type\": \"mrkdwn\",
-                    \"text\": \"*Environment:* ${{ needs.setup.outputs.environments }}\"
-                  },
-                  {
-                    \"type\": \"mrkdwn\",
-                    \"text\": \"*Failed Jobs:* ${{ steps.alert_data.outputs.failed_jobs }}\"
-                  },
-                  {
-                    \"type\": \"mrkdwn\",
-                    \"text\": \"*Timestamp:* $(date -u)\"
-                  }
-                ]
-              },
-              {
-                \"type\": \"actions\",
-                \"elements\": [
-                  {
-                    \"type\": \"button\",
-                    \"text\": {
-                      \"type\": \"plain_text\",
-                      \"text\": \"View Workflow\"
-                    },
-                    \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
-                  }
-                ]
-              }
-            ]
-          }"
-
-          # Send to Slack
-          curl -X POST -H 'Content-type: application/json' \
-            --data "$MESSAGE" \
-            "${{ env.ALERT_WEBHOOK_URL }}"
+      # Send Slack alert
+      # TEMPORARILY DISABLED: Slack notifications disabled due to GitHub Actions errors (run ids: #17197103321, #17197103316, #17197103314)
+      # TODO: Re-enable after fixing webhook configuration issues
+      # - name: Send Slack alert
+      #   if: env.ALERT_WEBHOOK_URL != ''
+      #   run: |
+      #     # Prepare Slack message
+      #     SEVERITY_EMOJI=""
+      #     case "${{ steps.alert_data.outputs.severity }}" in
+      #       "critical") SEVERITY_EMOJI="🚨" ;;
+      #       "high") SEVERITY_EMOJI="⚠️" ;;
+      #       "medium") SEVERITY_EMOJI="⚡" ;;
+      #     esac
+      #
+      #     MESSAGE="{
+      #       \"text\": \"$SEVERITY_EMOJI SoulMatting Monitoring Alert\",
+      #       \"blocks\": [
+      #         {
+      #           \"type\": \"header\",
+      #           \"text\": {
+      #             \"type\": \"plain_text\",
+      #             \"text\": \"$SEVERITY_EMOJI SoulMatting Monitoring Alert\"
+      #           }
+      #         },
+      #         {
+      #           \"type\": \"section\",
+      #           \"fields\": [
+      #             {
+      #               \"type\": \"mrkdwn\",
+      #               \"text\": \"*Severity:* ${{ steps.alert_data.outputs.severity }}\"
+      #             },
+      #             {
+      #               \"type\": \"mrkdwn\",
+      #               \"text\": \"*Environment:* ${{ needs.setup.outputs.environments }}\"
+      #             },
+      #             {
+      #               \"type\": \"mrkdwn\",
+      #               \"text\": \"*Failed Jobs:* ${{ steps.alert_data.outputs.failed_jobs }}\"
+      #             },
+      #             {
+      #               \"type\": \"mrkdwn\",
+      #               \"text\": \"*Timestamp:* $(date -u)\"
+      #             }
+      #           ]
+      #         },
+      #         {
+      #           \"type\": \"actions\",
+      #           \"elements\": [
+      #             {
+      #               \"type\": \"button\",
+      #               \"text\": {
+      #                 \"type\": \"plain_text\",
+      #                 \"text\": \"View Workflow\"
+      #               },
+      #               \"url\": \"${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+      #             }
+      #           ]
+      #         }
+      #       ]
+      #     }"
+      #
+      #     # Send to Slack
+      #     curl -X POST -H 'Content-type: application/json' \
+      #       --data "$MESSAGE" \
+      #       "${{ env.ALERT_WEBHOOK_URL }}"
 
       - name: Create GitHub issue
         if: steps.alert_data.outputs.severity == 'critical'

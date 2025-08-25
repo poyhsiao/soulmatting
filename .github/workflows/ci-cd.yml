@@ -412,11 +412,16 @@ jobs:
           echo "Cleaning up old container images..."
           # Add cleanup logic here
 
-      - name: Notify deployment status
-        if: always()
-        uses: 8398a7/action-slack@v3
-        with:
-          status: ${{ job.status }}
-          channel: '#deployments'
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      # Notify deployment status
+      # TEMPORARILY DISABLED: Slack notifications disabled due to GitHub Actions errors (run ids: #17197103321, #17197103316, #17197103314)
+      # TODO: Re-enable after fixing webhook configuration issues
+      # - name: Notify deployment status
+      #   if: always()
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ job.status }}
+      #     channel: '#deployments'
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     fields: repo,message,commit,author,action,eventName,ref,workflow
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
