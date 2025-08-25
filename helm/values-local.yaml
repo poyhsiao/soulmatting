@@ -84,7 +84,7 @@ auth:
   enabled: true
   replicaCount: 1
   image:
-    repository: ghcr.io/kimhsiao/soulmatting/auth-service
+    repository: ghcr.io/kimhsiao/soulmatting/auth
     tag: 'latest'
     pullPolicy: Always
 

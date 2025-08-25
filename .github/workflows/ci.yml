@@ -204,7 +204,7 @@ jobs:
     timeout-minutes: 45
     needs: [quality, test]
     # Skip E2E tests for undeveloped features
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.event.inputs.enable_service_tests == 'true'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && (github.event.inputs.enable_service_tests == 'true' || github.event.inputs.enable_service_tests == null)
 
     steps:
       - name: Checkout code
@@ -230,18 +230,28 @@ jobs:
       - name: Start services with Docker Compose
         run: |
           cp .env.example .env
+          echo "PLAYWRIGHT_BASE_URL=http://localhost:3000" >> .env
           docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d
           sleep 30
 
       - name: Wait for services to be ready
         run: |
-          timeout 300 bash -c 'until curl -f http://localhost:3000/health; do sleep 5; done'
-          timeout 300 bash -c 'until curl -f http://localhost:8000/health; do sleep 5; done'
+          echo "Waiting for database to be ready..."
+          timeout 300 bash -c 'until docker compose exec -T postgres pg_isready -U postgres; do sleep 5; done'
+          echo "Waiting for Redis to be ready..."
+          timeout 300 bash -c 'until docker compose exec -T redis redis-cli ping; do sleep 5; done'
+          echo "Waiting for web application to be ready..."
+          timeout 300 bash -c 'until curl -f http://localhost:3000 || curl -f http://localhost:3000/health; do sleep 5; done'
+          echo "All services are ready!"
+
+      - name: Install Playwright browsers
+        run: pnpm playwright install --with-deps
 
       - name: Run E2E tests
         run: pnpm test:e2e
         env:
           CI: true
+          PLAYWRIGHT_BASE_URL: http://localhost:3000
           BASE_URL: http://localhost:3000
 
       - name: Upload E2E test artifacts

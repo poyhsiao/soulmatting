@@ -115,7 +115,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm --filter @soulmatting/database prisma generate
+        run: pnpm run db:generate
         continue-on-error: true
 
       - name: Test database schema

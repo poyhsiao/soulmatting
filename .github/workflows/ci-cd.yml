@@ -29,6 +29,7 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   HELM_VERSION: v3.12.0
   KUBECTL_VERSION: v1.28.0
+  PNPM_VERSION: '10.15.0'
 
 # Define jobs
 jobs:
@@ -49,7 +50,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 10.15.0
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -116,7 +117,7 @@ jobs:
       - name: Install pnpm
         uses: pnpm/action-setup@v2
         with:
-          version: 10.15.0
+          version: ${{ env.PNPM_VERSION }}
 
       - name: Install dependencies
         run: |
@@ -124,7 +125,7 @@ jobs:
 
       - name: Generate Prisma client
         run: |
-          pnpm --filter @soulmatting/database prisma generate
+          pnpm run db:generate
 
       - name: Code linting (ESLint)
         run: |
@@ -222,7 +223,7 @@ jobs:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     strategy:
       matrix:
-        service: [web, auth-service]
+        service: [web, auth]
 
     steps:
       - name: Run Trivy vulnerability scanner
@@ -418,4 +419,4 @@ jobs:
           status: ${{ job.status }}
           channel: '#deployments'
         env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

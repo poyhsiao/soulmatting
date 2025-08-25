@@ -91,6 +91,7 @@ env:
   NODE_VERSION: '22'
   PYTHON_VERSION: '3.11'
   GO_VERSION: '1.21'
+  PNPM_VERSION: '10.15.0'
   TRIVY_VERSION: 'latest'
   SEMGREP_VERSION: 'latest'
   SNYK_VERSION: 'latest'
@@ -179,7 +180,7 @@ jobs:
 
       - name: Install pnpm
         if: matrix.tool == 'eslint-security'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 
@@ -324,7 +325,7 @@ jobs:
 
       - name: Install pnpm
         if: matrix.scanner != 'trivy'
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v2
         with:
           version: ${{ env.PNPM_VERSION }}
 

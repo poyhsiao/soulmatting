@@ -16,7 +16,7 @@ module.exports = {
   // Feature files
   default: {
     features: [
-      '/Users/kimhsiao/Templates/git/kimhsiao/soulmatting/tests/bdd/features/**/*.feature',
+      'tests/bdd/features/**/*.feature',
     ],
 
     // Require modules first
@@ -24,8 +24,8 @@ module.exports = {
 
     // Step definitions and support files
     require: [
-      'tests/bdd/step-definitions/step-definitions/**/*.js',
-      'tests/bdd/step-definitions/support/**/*.js',
+      'tests/bdd/step-definitions/**/*.{js,ts}',
+      'tests/bdd/support/**/*.{js,ts}',
     ],
   },
 

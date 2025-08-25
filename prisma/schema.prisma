@@ -1,0 +1,279 @@
+// SoulMatting Platform - Prisma Database Schema
+// Author: Kim Hsiao
+// Version: 1.0.0
+// Created: 2024-01-20
+// Last Updated: 2024-01-20
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User Management
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  username          String?   @unique
+  firstName         String?
+  lastName          String?
+  dateOfBirth       DateTime?
+  gender            Gender?
+  profilePicture    String?
+  bio               String?
+  location          String?
+  interests         String[]
+  preferences       Json?
+  isEmailVerified   Boolean   @default(false)
+  isProfileComplete Boolean   @default(false)
+  isActive          Boolean   @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  deletedAt         DateTime?
+
+  // Relations
+  profile           UserProfile?
+  sentMatches       Match[]          @relation("MatchSender")
+  receivedMatches   Match[]          @relation("MatchReceiver")
+  sentMessages      Message[]        @relation("MessageSender")
+  receivedMessages  Message[]        @relation("MessageReceiver")
+  notifications     Notification[]
+  reports           Report[]         @relation("ReportReporter")
+  reportedBy        Report[]         @relation("ReportReported")
+  sessions          UserSession[]
+  settings          UserSettings?
+
+  @@map("users")
+}
+
+model UserProfile {
+  id              String   @id @default(cuid())
+  userId          String   @unique
+  height          Int?
+  weight          Int?
+  occupation      String?
+  education       String?
+  religion        String?
+  smoking         Boolean?
+  drinking        Boolean?
+  exerciseFreq    String?
+  personalityType String?
+  zodiacSign      String?
+  languages       String[]
+  photos          String[]
+  verificationStatus VerificationStatus @default(PENDING)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+model UserSettings {
+  id                    String  @id @default(cuid())
+  userId                String  @unique
+  ageRangeMin           Int     @default(18)
+  ageRangeMax           Int     @default(99)
+  maxDistance           Int     @default(50)
+  showOnlineStatus      Boolean @default(true)
+  allowNotifications    Boolean @default(true)
+  allowEmailNotifications Boolean @default(true)
+  allowPushNotifications Boolean @default(true)
+  privacyLevel          PrivacyLevel @default(PUBLIC)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_settings")
+}
+
+// Matching System
+model Match {
+  id          String      @id @default(cuid())
+  senderId    String
+  receiverId  String
+  status      MatchStatus @default(PENDING)
+  matchScore  Float?
+  message     String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  expiresAt   DateTime?
+
+  // Relations
+  sender   User @relation("MatchSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("MatchReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@map("matches")
+}
+
+// Messaging System
+model Conversation {
+  id          String    @id @default(cuid())
+  participant1Id String
+  participant2Id String
+  lastMessageAt DateTime?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  messages Message[]
+
+  @@unique([participant1Id, participant2Id])
+  @@map("conversations")
+}
+
+model Message {
+  id             String          @id @default(cuid())
+  conversationId String
+  senderId       String
+  receiverId     String
+  content        String
+  messageType    MessageType     @default(TEXT)
+  attachments    String[]
+  isRead         Boolean         @default(false)
+  isDelivered    Boolean         @default(false)
+  readAt         DateTime?
+  deliveredAt    DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+
+  // Relations
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation("MessageSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver     User         @relation("MessageReceiver", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+}
+
+// Notification System
+model Notification {
+  id           String           @id @default(cuid())
+  userId       String
+  type         NotificationType
+  title        String
+  content      String
+  data         Json?
+  isRead       Boolean          @default(false)
+  readAt       DateTime?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+// Reporting System
+model Report {
+  id          String     @id @default(cuid())
+  reporterId  String
+  reportedId  String
+  reason      ReportReason
+  description String?
+  status      ReportStatus @default(PENDING)
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  reporter User @relation("ReportReporter", fields: [reporterId], references: [id], onDelete: Cascade)
+  reported User @relation("ReportReported", fields: [reportedId], references: [id], onDelete: Cascade)
+
+  @@map("reports")
+}
+
+// Session Management
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  isActive  Boolean  @default(true)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_sessions")
+}
+
+// Enums
+enum Gender {
+  MALE
+  FEMALE
+  NON_BINARY
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+enum PrivacyLevel {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
+enum MatchStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  VIDEO
+  AUDIO
+  FILE
+  LOCATION
+  STICKER
+  GIF
+}
+
+enum NotificationType {
+  MATCH_REQUEST
+  MATCH_ACCEPTED
+  NEW_MESSAGE
+  PROFILE_VIEW
+  SYSTEM_UPDATE
+  SECURITY_ALERT
+}
+
+enum ReportReason {
+  INAPPROPRIATE_CONTENT
+  HARASSMENT
+  SPAM
+  FAKE_PROFILE
+  UNDERAGE
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
