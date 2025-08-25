@@ -51,7 +51,7 @@
     "pre-commit": "lint-staged",
     "lint:staged": "lint-staged",
     "format:staged": "lint-staged --config .lintstagedrc.json",
-    "prepare": "husky"
+    "prepare": "husky || true"
   },
   "devDependencies": {
     "@cucumber/cucumber": "^10.9.0",
