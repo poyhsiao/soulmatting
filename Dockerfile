@@ -5,7 +5,7 @@
 # Last Updated: 2024-01-20
 
 # Build stage
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -29,7 +29,7 @@ COPY . .
 RUN pnpm build
 
 # Production stage
-FROM node:22-alpine AS production
+FROM node:24-alpine AS production
 
 # Install pnpm
 RUN npm install -g pnpm@10.15.0
