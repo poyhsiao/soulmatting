@@ -215,3 +215,5 @@ dependency-check-report/
 .vscode/
 .gemini/
 .turbo/
+
+playwright-report
