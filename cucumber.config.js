@@ -15,9 +15,7 @@
 module.exports = {
   // Feature files
   default: {
-    features: [
-      'tests/bdd/features/**/*.feature',
-    ],
+    features: ['tests/bdd/features/**/*.feature'],
 
     // Require modules first
     requireModule: ['ts-node/register'],
