@@ -272,7 +272,7 @@ importers:
         version: 6.21.0(eslint@8.57.1)(typescript@5.9.2)
       '@vitejs/plugin-react':
         specifier: ^4.7.0
-        version: 4.7.0(vite@5.4.19(@types/node@22.17.2)(terser@5.43.1))
+        version: 4.7.0(vite@5.4.19(@types/node@24.3.0)(terser@5.43.1))
       '@vitest/ui':
         specifier: ^1.6.1
         version: 1.6.1(vitest@1.6.1)
@@ -299,16 +299,16 @@ importers:
         version: 8.5.6
       tailwindcss:
         specifier: ^3.4.17
-        version: 3.4.17(ts-node@10.9.2(@types/node@22.17.2)(typescript@5.9.2))
+        version: 3.4.17(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2))
       typescript:
         specifier: 'catalog:'
         version: 5.9.2
       vite:
         specifier: ^5.4.19
-        version: 5.4.19(@types/node@22.17.2)(terser@5.43.1)
+        version: 5.4.19(@types/node@24.3.0)(terser@5.43.1)
       vitest:
         specifier: ^1.6.1
-        version: 1.6.1(@types/node@22.17.2)(@vitest/ui@1.6.1)(jsdom@24.1.3)(terser@5.43.1)
+        version: 1.6.1(@types/node@24.3.0)(@vitest/ui@1.6.1)(jsdom@24.1.3)(terser@5.43.1)
 
   packages/database:
     dependencies:
@@ -423,8 +423,8 @@ importers:
         specifier: ^7.2.0
         version: 7.2.0
       nodemailer:
-        specifier: ^6.10.1
-        version: 6.10.1
+        specifier: ^7.0.5
+        version: 7.0.5
       passport:
         specifier: ^0.7.0
         version: 0.7.0
@@ -475,8 +475,8 @@ importers:
         specifier: 'catalog:'
         version: 20.19.11
       '@types/nodemailer':
-        specifier: ^6.4.19
-        version: 6.4.19
+        specifier: ^7.0.1
+        version: 7.0.1
       '@types/passport-google-oauth20':
         specifier: ^2.0.16
         version: 2.0.16
@@ -964,8 +964,8 @@ importers:
         specifier: ^7.2.0
         version: 7.2.0
       nodemailer:
-        specifier: ^6.10.1
-        version: 6.10.1
+        specifier: ^7.0.5
+        version: 7.0.5
       redis:
         specifier: ^4.7.1
         version: 4.7.1
@@ -1001,8 +1001,8 @@ importers:
         specifier: 'catalog:'
         version: 20.19.11
       '@types/nodemailer':
-        specifier: ^6.4.19
-        version: 6.4.19
+        specifier: ^7.0.1
+        version: 7.0.1
       '@typescript-eslint/eslint-plugin':
         specifier: 'catalog:'
         version: 6.21.0(@typescript-eslint/parser@6.21.0(eslint@8.57.1)(typescript@5.9.2))(eslint@8.57.1)(typescript@5.9.2)
@@ -1355,8 +1355,8 @@ packages:
     resolution: {integrity: sha512-/nqCaiIT1VFGYM427i6SfvBiohC9qjD3JtGP3/hdg70V6RRN8VXNSQgpeFplBwXTOumbb4KxKZjTws+S+4yrig==}
     engines: {node: '>=18.0.0'}
 
-  '@aws-sdk/client-ses@3.873.0':
-    resolution: {integrity: sha512-m133jrCWPtMLSRYadK5gc6B4HqSP9EKZjCyq+sTlerN0vUBI/Uf5eA+6ZG3/04lIA7nOje+wCB8dTSZmiId55w==}
+  '@aws-sdk/client-sesv2@3.873.0':
+    resolution: {integrity: sha512-4NofVF7QjEQv0wX1mM2ZTVb0IxOZ2paAw2nLv3tPSlXKFtVF3AfMLOvOvL4ympCZSi1zC9FvBGrRrIr+X9wTfg==}
     engines: {node: '>=18.0.0'}
 
   '@aws-sdk/client-sso@3.873.0':
@@ -1415,6 +1415,10 @@ packages:
     resolution: {integrity: sha512-OtgY8EXOzRdEWR//WfPkA/fXl0+WwE8hq0y9iw2caNyKPtca85dzrrZWnPqyBK/cpImosrpR1iKMYr41XshsCg==}
     engines: {node: '>=18.0.0'}
 
+  '@aws-sdk/middleware-sdk-s3@3.873.0':
+    resolution: {integrity: sha512-bOoWGH57ORK2yKOqJMmxBV4b3yMK8Pc0/K2A98MNPuQedXaxxwzRfsT2Qw+PpfYkiijrrNFqDYmQRGntxJ2h8A==}
+    engines: {node: '>=18.0.0'}
+
   '@aws-sdk/middleware-user-agent@3.873.0':
     resolution: {integrity: sha512-gHqAMYpWkPhZLwqB3Yj83JKdL2Vsb64sryo8LN2UdpElpS+0fT4yjqSxKTfp7gkhN6TCIxF24HQgbPk5FMYJWw==}
     engines: {node: '>=18.0.0'}
@@ -1427,12 +1431,20 @@ packages:
     resolution: {integrity: sha512-q9sPoef+BBG6PJnc4x60vK/bfVwvRWsPgcoQyIra057S/QGjq5VkjvNk6H8xedf6vnKlXNBwq9BaANBXnldUJg==}
     engines: {node: '>=18.0.0'}
 
+  '@aws-sdk/signature-v4-multi-region@3.873.0':
+    resolution: {integrity: sha512-FQ5OIXw1rmDud7f/VO9y2Mg9rX1o4MnngRKUOD8mS9ALK4uxKrTczb4jA+uJLSLwTqMGs3bcB1RzbMW1zWTMwQ==}
+    engines: {node: '>=18.0.0'}
+
   '@aws-sdk/token-providers@3.873.0':
     resolution: {integrity: sha512-BWOCeFeV/Ba8fVhtwUw/0Hz4wMm9fjXnMb4Z2a5he/jFlz5mt1/rr6IQ4MyKgzOaz24YrvqsJW2a0VUKOaYDvg==}
     engines: {node: '>=18.0.0'}
 
   '@aws-sdk/types@3.862.0':
     resolution: {integrity: sha512-Bei+RL0cDxxV+lW2UezLbCYYNeJm6Nzee0TpW0FfyTRBhH9C1XQh4+x+IClriXvgBnRquTMMYsmJfvx8iyLKrg==}
+    engines: {node: '>=18.0.0'}
+
+  '@aws-sdk/util-arn-parser@3.873.0':
+    resolution: {integrity: sha512-qag+VTqnJWDn8zTAXX4wiVioa0hZDQMtbZcGRERVnLar4/3/VIKBhxX2XibNQXFu1ufgcRn4YntT/XEPecFWcg==}
     engines: {node: '>=18.0.0'}
 
   '@aws-sdk/util-endpoints@3.873.0':
@@ -3892,8 +3904,11 @@ packages:
   '@types/node@22.17.2':
     resolution: {integrity: sha512-gL6z5N9Jm9mhY+U2KXZpteb+09zyffliRkZyZOHODGATyC5B1Jt/7TzuuiLkFsSUMLbS1OLmlj/E+/3KF4Q/4w==}
 
-  '@types/nodemailer@6.4.19':
-    resolution: {integrity: sha512-Fi8DwmuAduTk1/1MpkR9EwS0SsDvYXx5RxivAVII1InDCIxmhj/iQm3W8S3EVb/0arnblr6PK0FK4wYa7bwdLg==}
+  '@types/node@24.3.0':
+    resolution: {integrity: sha512-aPTXCrfwnDLj4VvXrm+UUCQjNEvJgNA8s5F1cvwQU+3KNltTOkBm1j30uNLyqqPNe7gE3KFzImYoZEfLhp4Yow==}
+
+  '@types/nodemailer@7.0.1':
+    resolution: {integrity: sha512-UfHAghPmGZVzaL8x9y+mKZMWyHC399+iq0MOmya5tIyenWX3lcdSb60vOmp0DocR6gCDTYTozv/ULQnREyyjkg==}
 
   '@types/normalize-package-data@2.4.4':
     resolution: {integrity: sha512-37i+OaWTh9qeK4LSHPsyRC7NahnGotNuZvjLSgcPzblpHB3rrCJxAOgI5gCdKm7coonsaX1Of0ILiTcnZjbfxA==}
@@ -6941,8 +6956,8 @@ packages:
     resolution: {integrity: sha512-jn9vOIK/nfqoFCcpK89/VCVaLg1IHE6UVfDOzvqmANaJ/rWCTEdH8RZ1V278nv2jr36BJdyQXIAavBLXpzdlag==}
     engines: {node: '>=14'}
 
-  nodemailer@6.10.1:
-    resolution: {integrity: sha512-Z+iLaBGVaSjbIzQ4pX6XV41HrooLsQ10ZWPUehGmuantvzWoDVBnmsdUcOIDM1t+yPor5pDhVlDESgOMEGxhHA==}
+  nodemailer@7.0.5:
+    resolution: {integrity: sha512-nsrh2lO3j4GkLLXoeEksAMgAOqxOv6QumNRVQTJwKH4nuiww6iC2y7GyANs9kRAxCexg3+lTWM3PZ91iLlVjfg==}
     engines: {node: '>=6.0.0'}
 
   nopt@4.0.3:
@@ -8462,6 +8477,9 @@ packages:
   undici-types@6.21.0:
     resolution: {integrity: sha512-iwDZqg0QAGrg9Rav5H4n0M64c3mkR59cJ6wQp+7C4nI0gsmExaedaYLNO44eT4AtBBwjbTiGPMlt2Md0T9H9JQ==}
 
+  undici-types@7.10.0:
+    resolution: {integrity: sha512-t5Fy/nfn+14LuOc2KNYg75vZqClpAiqscVvMygNnlsHBFpSXdJaYtXMcdNLpl/Qvc3P2cB3s6lOV51nqsFq4ag==}
+
   undici@6.21.3:
     resolution: {integrity: sha512-gBLkYIlEnSp8pFbT64yFgGE6UIB9tAkhukC23PmMDCe5Nd+cRqKxSjw5y54MK2AZMgZfJWMaNE4nYUHgi1XEOw==}
     engines: {node: '>=18.17'}
@@ -9120,7 +9138,7 @@ snapshots:
     transitivePeerDependencies:
       - aws-crt
 
-  '@aws-sdk/client-ses@3.873.0':
+  '@aws-sdk/client-sesv2@3.873.0':
     dependencies:
       '@aws-crypto/sha256-browser': 5.2.0
       '@aws-crypto/sha256-js': 5.2.0
@@ -9131,6 +9149,7 @@ snapshots:
       '@aws-sdk/middleware-recursion-detection': 3.873.0
       '@aws-sdk/middleware-user-agent': 3.873.0
       '@aws-sdk/region-config-resolver': 3.873.0
+      '@aws-sdk/signature-v4-multi-region': 3.873.0
       '@aws-sdk/types': 3.862.0
       '@aws-sdk/util-endpoints': 3.873.0
       '@aws-sdk/util-user-agent-browser': 3.873.0
@@ -9160,7 +9179,6 @@ snapshots:
       '@smithy/util-middleware': 4.0.5
       '@smithy/util-retry': 4.0.7
       '@smithy/util-utf8': 4.0.0
-      '@smithy/util-waiter': 4.0.7
       tslib: 2.8.1
     transitivePeerDependencies:
       - aws-crt
@@ -9369,6 +9387,23 @@ snapshots:
       '@smithy/types': 4.3.2
       tslib: 2.8.1
 
+  '@aws-sdk/middleware-sdk-s3@3.873.0':
+    dependencies:
+      '@aws-sdk/core': 3.873.0
+      '@aws-sdk/types': 3.862.0
+      '@aws-sdk/util-arn-parser': 3.873.0
+      '@smithy/core': 3.8.0
+      '@smithy/node-config-provider': 4.1.4
+      '@smithy/protocol-http': 5.1.3
+      '@smithy/signature-v4': 5.1.3
+      '@smithy/smithy-client': 4.4.10
+      '@smithy/types': 4.3.2
+      '@smithy/util-config-provider': 4.0.0
+      '@smithy/util-middleware': 4.0.5
+      '@smithy/util-stream': 4.2.4
+      '@smithy/util-utf8': 4.0.0
+      tslib: 2.8.1
+
   '@aws-sdk/middleware-user-agent@3.873.0':
     dependencies:
       '@aws-sdk/core': 3.873.0
@@ -9431,6 +9466,15 @@ snapshots:
       '@smithy/util-middleware': 4.0.5
       tslib: 2.8.1
 
+  '@aws-sdk/signature-v4-multi-region@3.873.0':
+    dependencies:
+      '@aws-sdk/middleware-sdk-s3': 3.873.0
+      '@aws-sdk/types': 3.862.0
+      '@smithy/protocol-http': 5.1.3
+      '@smithy/signature-v4': 5.1.3
+      '@smithy/types': 4.3.2
+      tslib: 2.8.1
+
   '@aws-sdk/token-providers@3.873.0':
     dependencies:
       '@aws-sdk/core': 3.873.0
@@ -9446,6 +9490,10 @@ snapshots:
   '@aws-sdk/types@3.862.0':
     dependencies:
       '@smithy/types': 4.3.2
+      tslib: 2.8.1
+
+  '@aws-sdk/util-arn-parser@3.873.0':
+    dependencies:
       tslib: 2.8.1
 
   '@aws-sdk/util-endpoints@3.873.0':
@@ -12289,9 +12337,14 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@types/nodemailer@6.4.19':
+  '@types/node@24.3.0':
     dependencies:
-      '@aws-sdk/client-ses': 3.873.0
+      undici-types: 7.10.0
+    optional: true
+
+  '@types/nodemailer@7.0.1':
+    dependencies:
+      '@aws-sdk/client-sesv2': 3.873.0
       '@types/node': 20.19.11
     transitivePeerDependencies:
       - aws-crt
@@ -12529,7 +12582,7 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@vitejs/plugin-react@4.7.0(vite@5.4.19(@types/node@22.17.2)(terser@5.43.1))':
+  '@vitejs/plugin-react@4.7.0(vite@5.4.19(@types/node@24.3.0)(terser@5.43.1))':
     dependencies:
       '@babel/core': 7.28.3
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.3)
@@ -12537,7 +12590,7 @@ snapshots:
       '@rolldown/pluginutils': 1.0.0-beta.27
       '@types/babel__core': 7.20.5
       react-refresh: 0.17.0
-      vite: 5.4.19(@types/node@22.17.2)(terser@5.43.1)
+      vite: 5.4.19(@types/node@24.3.0)(terser@5.43.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -12572,7 +12625,7 @@ snapshots:
       pathe: 1.1.2
       picocolors: 1.1.1
       sirv: 2.0.4
-      vitest: 1.6.1(@types/node@22.17.2)(@vitest/ui@1.6.1)(jsdom@24.1.3)(terser@5.43.1)
+      vitest: 1.6.1(@types/node@24.3.0)(@vitest/ui@1.6.1)(jsdom@24.1.3)(terser@5.43.1)
 
   '@vitest/utils@1.6.1':
     dependencies:
@@ -16075,7 +16128,7 @@ snapshots:
     dependencies:
       '@babel/parser': 7.28.3
 
-  nodemailer@6.10.1: {}
+  nodemailer@7.0.5: {}
 
   nopt@4.0.3:
     dependencies:
@@ -16388,13 +16441,13 @@ snapshots:
       camelcase-css: 2.0.1
       postcss: 8.5.6
 
-  postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.17.2)(typescript@5.9.2)):
+  postcss-load-config@4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2)):
     dependencies:
       lilconfig: 3.1.3
       yaml: 2.8.1
     optionalDependencies:
       postcss: 8.5.6
-      ts-node: 10.9.2(@types/node@22.17.2)(typescript@5.9.2)
+      ts-node: 10.9.2(@types/node@24.3.0)(typescript@5.9.2)
 
   postcss-nested@6.2.0(postcss@8.5.6):
     dependencies:
@@ -17355,7 +17408,7 @@ snapshots:
 
   tailwind-merge@2.6.0: {}
 
-  tailwindcss@3.4.17(ts-node@10.9.2(@types/node@22.17.2)(typescript@5.9.2)):
+  tailwindcss@3.4.17(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2)):
     dependencies:
       '@alloc/quick-lru': 5.2.0
       arg: 5.0.2
@@ -17374,7 +17427,7 @@ snapshots:
       postcss: 8.5.6
       postcss-import: 15.1.0(postcss@8.5.6)
       postcss-js: 4.0.1(postcss@8.5.6)
-      postcss-load-config: 4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@22.17.2)(typescript@5.9.2))
+      postcss-load-config: 4.0.2(postcss@8.5.6)(ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2))
       postcss-nested: 6.2.0(postcss@8.5.6)
       postcss-selector-parser: 6.1.2
       resolve: 1.22.10
@@ -17578,14 +17631,14 @@ snapshots:
       v8-compile-cache-lib: 3.0.1
       yn: 3.1.1
 
-  ts-node@10.9.2(@types/node@22.17.2)(typescript@5.9.2):
+  ts-node@10.9.2(@types/node@24.3.0)(typescript@5.9.2):
     dependencies:
       '@cspotcode/source-map-support': 0.8.1
       '@tsconfig/node10': 1.0.11
       '@tsconfig/node12': 1.0.11
       '@tsconfig/node14': 1.0.3
       '@tsconfig/node16': 1.0.4
-      '@types/node': 22.17.2
+      '@types/node': 24.3.0
       acorn: 8.15.0
       acorn-walk: 8.3.4
       arg: 4.1.3
@@ -17701,6 +17754,9 @@ snapshots:
 
   undici-types@6.21.0: {}
 
+  undici-types@7.10.0:
+    optional: true
+
   undici@6.21.3: {}
 
   undici@7.15.0: {}
@@ -17801,13 +17857,13 @@ snapshots:
 
   vary@1.1.2: {}
 
-  vite-node@1.6.1(@types/node@22.17.2)(terser@5.43.1):
+  vite-node@1.6.1(@types/node@24.3.0)(terser@5.43.1):
     dependencies:
       cac: 6.7.14
       debug: 4.4.1(supports-color@8.1.1)
       pathe: 1.1.2
       picocolors: 1.1.1
-      vite: 5.4.19(@types/node@22.17.2)(terser@5.43.1)
+      vite: 5.4.19(@types/node@24.3.0)(terser@5.43.1)
     transitivePeerDependencies:
       - '@types/node'
       - less
@@ -17819,17 +17875,17 @@ snapshots:
       - supports-color
       - terser
 
-  vite@5.4.19(@types/node@22.17.2)(terser@5.43.1):
+  vite@5.4.19(@types/node@24.3.0)(terser@5.43.1):
     dependencies:
       esbuild: 0.25.9
       postcss: 8.5.6
       rollup: 4.48.0
     optionalDependencies:
-      '@types/node': 22.17.2
+      '@types/node': 24.3.0
       fsevents: 2.3.3
       terser: 5.43.1
 
-  vitest@1.6.1(@types/node@22.17.2)(@vitest/ui@1.6.1)(jsdom@24.1.3)(terser@5.43.1):
+  vitest@1.6.1(@types/node@24.3.0)(@vitest/ui@1.6.1)(jsdom@24.1.3)(terser@5.43.1):
     dependencies:
       '@vitest/expect': 1.6.1
       '@vitest/runner': 1.6.1
@@ -17848,11 +17904,11 @@ snapshots:
       strip-literal: 2.1.1
       tinybench: 2.9.0
       tinypool: 0.8.4
-      vite: 5.4.19(@types/node@22.17.2)(terser@5.43.1)
-      vite-node: 1.6.1(@types/node@22.17.2)(terser@5.43.1)
+      vite: 5.4.19(@types/node@24.3.0)(terser@5.43.1)
+      vite-node: 1.6.1(@types/node@24.3.0)(terser@5.43.1)
       why-is-node-running: 2.3.0
     optionalDependencies:
-      '@types/node': 22.17.2
+      '@types/node': 24.3.0
       '@vitest/ui': 1.6.1(vitest@1.6.1)
       jsdom: 24.1.3
     transitivePeerDependencies:
