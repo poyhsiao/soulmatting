@@ -1,0 +1,302 @@
+# SoulMatting Web Frontend - Production Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# =============================================================================
+# Application Configuration
+# =============================================================================
+app:
+  environment: production
+
+# =============================================================================
+# Image Configuration
+# =============================================================================
+image:
+  pullPolicy: Always
+
+# =============================================================================
+# Deployment Configuration
+# =============================================================================
+deployment:
+  replicaCount: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    nginx.ingress.kubernetes.io/rate-limit: '100'
+    nginx.ingress.kubernetes.io/rate-limit-window: '1m'
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://api.soulmatting.com wss://ws.soulmatting.com https://www.google-analytics.com";
+  hosts:
+    - host: soulmatting.com
+      paths:
+        - path: /
+          pathType: Prefix
+    - host: www.soulmatting.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: soulmatting-com-tls
+      hosts:
+        - soulmatting.com
+        - www.soulmatting.com
+
+# =============================================================================
+# Resource Management
+# =============================================================================
+resources:
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+  requests:
+    cpu: 500m
+    memory: 512Mi
+
+# =============================================================================
+# Auto Scaling
+# =============================================================================
+autoscaling:
+  enabled: true
+  minReplicas: 3
+  maxReplicas: 20
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Max
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+env:
+  NODE_ENV: production
+  PORT: '3000'
+  NEXT_TELEMETRY_DISABLED: '1'
+  LOG_LEVEL: 'info'
+  ENABLE_ANALYTICS: 'true'
+  ENABLE_MONITORING: 'true'
+
+# =============================================================================
+# ConfigMap Data
+# =============================================================================
+configMap:
+  data:
+    NEXT_PUBLIC_APP_NAME: 'SoulMatting'
+    NEXT_PUBLIC_APP_VERSION: '1.0.0'
+    NEXT_PUBLIC_API_URL: 'https://api.soulmatting.com'
+    NEXT_PUBLIC_WS_URL: 'wss://ws.soulmatting.com'
+    NEXT_PUBLIC_SUPABASE_URL: 'https://soulmatting.supabase.co'
+    NEXT_PUBLIC_CDN_URL: 'https://cdn.soulmatting.com'
+    NEXT_PUBLIC_SENTRY_DSN: 'https://your-sentry-dsn@sentry.io/project-id'
+    NEXT_PUBLIC_GOOGLE_ANALYTICS_ID: 'G-XXXXXXXXXX'
+    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: 'your-production-google-maps-key'
+    NEXT_PUBLIC_FACEBOOK_APP_ID: 'your-facebook-app-id'
+    NEXT_PUBLIC_GOOGLE_CLIENT_ID: 'your-google-client-id'
+    NEXT_PUBLIC_ENVIRONMENT: 'production'
+    NEXT_PUBLIC_FEATURE_FLAGS: 'premium:true,matching:true,messaging:true'
+
+# =============================================================================
+# Node Selection
+# =============================================================================
+nodeSelector:
+  node-type: web
+  environment: production
+
+tolerations:
+  - key: 'web-workload'
+    operator: 'Equal'
+    value: 'true'
+    effect: 'NoSchedule'
+
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/arch
+              operator: In
+              values:
+                - amd64
+            - key: node-type
+              operator: In
+              values:
+                - web
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+            - key: app.kubernetes.io/name
+              operator: In
+              values:
+                - soulmatting-web
+        topologyKey: kubernetes.io/hostname
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - soulmatting-web
+          topologyKey: topology.kubernetes.io/zone
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+networkPolicy:
+  enabled: true
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    - to: []
+      ports:
+        - protocol: TCP
+          port: 53
+        - protocol: UDP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: soulmatting-production
+      ports:
+        - protocol: TCP
+          port: 80
+        - protocol: TCP
+          port: 443
+        - protocol: TCP
+          port: 5432
+        - protocol: TCP
+          port: 6379
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 15s
+    path: /api/metrics
+    port: 3000
+    labels:
+      environment: production
+      team: platform
+
+  prometheusRule:
+    enabled: true
+    rules:
+      - alert: WebAppDown
+        expr: up{job="soulmatting-web",environment="production"} == 0
+        for: 2m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: 'SoulMatting Web App is down in production'
+          description: 'SoulMatting Web App has been down for more than 2 minutes in production.'
+          runbook_url: 'https://runbooks.soulmatting.com/web-app-down'
+
+      - alert: WebAppHighErrorRate
+        expr: rate(http_requests_total{job="soulmatting-web",environment="production",status=~"5.."}[5m]) > 0.05
+        for: 3m
+        labels:
+          severity: critical
+          team: platform
+        annotations:
+          summary: 'High error rate in SoulMatting Web App production'
+          description: 'Error rate is above 5% for more than 3 minutes in production.'
+          runbook_url: 'https://runbooks.soulmatting.com/high-error-rate'
+
+      - alert: WebAppHighLatency
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="soulmatting-web",environment="production"}[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: 'High latency in SoulMatting Web App production'
+          description: '95th percentile latency is above 2 seconds for more than 5 minutes.'
+
+      - alert: WebAppHighMemoryUsage
+        expr: (container_memory_working_set_bytes{pod=~"soulmatting-web-.*",container="soulmatting-web"} / container_spec_memory_limit_bytes{pod=~"soulmatting-web-.*",container="soulmatting-web"}) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: 'High memory usage in SoulMatting Web App production'
+          description: 'Memory usage is above 90% for more than 5 minutes.'
+
+      - alert: WebAppHighCPUUsage
+        expr: (rate(container_cpu_usage_seconds_total{pod=~"soulmatting-web-.*",container="soulmatting-web"}[5m]) / container_spec_cpu_quota{pod=~"soulmatting-web-.*",container="soulmatting-web"} * container_spec_cpu_period{pod=~"soulmatting-web-.*",container="soulmatting-web"}) > 0.8
+        for: 10m
+        labels:
+          severity: warning
+          team: platform
+        annotations:
+          summary: 'High CPU usage in SoulMatting Web App production'
+          description: 'CPU usage is above 80% for more than 10 minutes.'
+
+# =============================================================================
+# Dependencies
+# =============================================================================
+redis:
+  enabled: false # Use external Redis cluster
+
+postgresql:
+  enabled: false # Use external PostgreSQL cluster

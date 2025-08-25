@@ -1,0 +1,904 @@
+# =============================================================================
+# SoulMatting Platform - Dependency Update Workflow
+# =============================================================================
+# This workflow automatically updates dependencies, checks for security
+# vulnerabilities, and creates pull requests for dependency updates.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 🔄 Dependency Update
+
+on:
+  # Scheduled dependency updates
+  schedule:
+    # Run every Monday at 9:00 AM UTC
+    - cron: '0 9 * * 1'
+    # Run security updates daily at 6:00 AM UTC
+    - cron: '0 6 * * *'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      update_type:
+        description: 'Type of dependency update'
+        required: true
+        type: choice
+        options:
+          - all
+          - security
+          - major
+          - minor
+          - patch
+          - frontend
+          - backend
+          - docker
+      auto_merge:
+        description: 'Auto-merge safe updates'
+        required: false
+        type: boolean
+        default: false
+      create_pr:
+        description: 'Create pull request for updates'
+        required: false
+        type: boolean
+        default: true
+      run_tests:
+        description: 'Run tests after updates'
+        required: false
+        type: boolean
+        default: true
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
+  PNPM_VERSION: '10.15.0'
+  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+jobs:
+  # =============================================================================
+  # Dependency Update Setup
+  # =============================================================================
+  setup:
+    name: Dependency Update Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      update_type: ${{ steps.setup.outputs.update_type }}
+      auto_merge: ${{ steps.setup.outputs.auto_merge }}
+      create_pr: ${{ steps.setup.outputs.create_pr }}
+      run_tests: ${{ steps.setup.outputs.run_tests }}
+      is_security_update: ${{ steps.setup.outputs.is_security_update }}
+      branch_name: ${{ steps.setup.outputs.branch_name }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup parameters
+        id: setup
+        run: |
+          # Determine update type
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            UPDATE_TYPE="${{ github.event.inputs.update_type }}"
+            AUTO_MERGE="${{ github.event.inputs.auto_merge }}"
+            CREATE_PR="${{ github.event.inputs.create_pr }}"
+            RUN_TESTS="${{ github.event.inputs.run_tests }}"
+          elif [ "${{ github.event.schedule }}" == "0 6 * * *" ]; then
+            # Daily security updates
+            UPDATE_TYPE="security"
+            AUTO_MERGE="true"
+            CREATE_PR="true"
+            RUN_TESTS="true"
+          else
+            # Weekly full updates
+            UPDATE_TYPE="all"
+            AUTO_MERGE="false"
+            CREATE_PR="true"
+            RUN_TESTS="true"
+          fi
+
+          # Check if this is a security update
+          IS_SECURITY_UPDATE="false"
+          if [ "$UPDATE_TYPE" == "security" ]; then
+            IS_SECURITY_UPDATE="true"
+          fi
+
+          # Generate branch name
+          TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
+          BRANCH_NAME="dependency-update/${UPDATE_TYPE}-${TIMESTAMP}"
+
+          echo "🔄 Dependency Update Configuration:"
+          echo "- Update Type: $UPDATE_TYPE"
+          echo "- Auto Merge: $AUTO_MERGE"
+          echo "- Create PR: $CREATE_PR"
+          echo "- Run Tests: $RUN_TESTS"
+          echo "- Is Security Update: $IS_SECURITY_UPDATE"
+          echo "- Branch Name: $BRANCH_NAME"
+
+          # Set outputs
+          echo "update_type=$UPDATE_TYPE" >> $GITHUB_OUTPUT
+          echo "auto_merge=$AUTO_MERGE" >> $GITHUB_OUTPUT
+          echo "create_pr=$CREATE_PR" >> $GITHUB_OUTPUT
+          echo "run_tests=$RUN_TESTS" >> $GITHUB_OUTPUT
+          echo "is_security_update=$IS_SECURITY_UPDATE" >> $GITHUB_OUTPUT
+          echo "branch_name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Frontend Dependency Updates
+  # =============================================================================
+  frontend_updates:
+    name: Frontend Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: |
+      needs.setup.outputs.update_type == 'all' ||
+      needs.setup.outputs.update_type == 'frontend' ||
+      needs.setup.outputs.update_type == 'security' ||
+      needs.setup.outputs.update_type == 'major' ||
+      needs.setup.outputs.update_type == 'minor' ||
+      needs.setup.outputs.update_type == 'patch'
+
+    outputs:
+      has_updates: ${{ steps.check_updates.outputs.has_updates }}
+      update_summary: ${{ steps.check_updates.outputs.update_summary }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          echo "📦 Installing current dependencies"
+          pnpm install --frozen-lockfile
+
+      - name: Check for security vulnerabilities
+        if: needs.setup.outputs.is_security_update == 'true'
+        run: |
+          echo "🔍 Checking for security vulnerabilities"
+
+          # Run npm audit
+          pnpm audit --audit-level moderate --json > security-audit.json || true
+
+          # Check if there are security issues
+          SECURITY_ISSUES=$(jq '.vulnerabilities | length' security-audit.json 2>/dev/null || echo "0")
+
+          if [ "$SECURITY_ISSUES" -gt 0 ]; then
+            echo "⚠️ Found $SECURITY_ISSUES security vulnerabilities"
+            echo "HAS_SECURITY_ISSUES=true" >> $GITHUB_ENV
+          else
+            echo "✅ No security vulnerabilities found"
+            echo "HAS_SECURITY_ISSUES=false" >> $GITHUB_ENV
+          fi
+
+      - name: Update dependencies
+        id: update_deps
+        run: |
+          echo "🔄 Updating frontend dependencies"
+
+          # Create backup of current package files
+          cp package.json package.json.backup
+          cp pnpm-lock.yaml pnpm-lock.yaml.backup
+
+          # Update based on type
+          case "${{ needs.setup.outputs.update_type }}" in
+            "security")
+              echo "🔒 Updating security vulnerabilities only"
+              if [ "$HAS_SECURITY_ISSUES" == "true" ]; then
+                pnpm audit --fix
+              fi
+              ;;
+            "patch")
+              echo "🩹 Updating patch versions"
+              pnpm update --latest --depth 0
+              ;;
+            "minor")
+              echo "🔧 Updating minor versions"
+              pnpm update --latest
+              ;;
+            "major")
+              echo "🚀 Updating major versions"
+              # Use npm-check-updates for major updates
+              npx npm-check-updates -u
+              pnpm install
+              ;;
+            *)
+              echo "📦 Updating all dependencies"
+              # First try security fixes
+              pnpm audit --fix || true
+              # Then update to latest compatible versions
+              pnpm update --latest
+              ;;
+          esac
+
+          echo "✅ Dependencies updated"
+
+      - name: Check for changes
+        id: check_updates
+        run: |
+          echo "🔍 Checking for dependency changes"
+
+          # Check if package files changed
+          if ! diff -q package.json package.json.backup >/dev/null 2>&1 || \
+             ! diff -q pnpm-lock.yaml pnpm-lock.yaml.backup >/dev/null 2>&1; then
+            echo "📝 Dependencies have been updated"
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            
+            # Generate update summary
+            echo "📊 Generating update summary"
+            
+            # Compare package.json changes
+            if command -v jq >/dev/null 2>&1; then
+              # Extract dependency changes
+              OLD_DEPS=$(jq -r '.dependencies // {} | to_entries[] | "\(.key): \(.value)"' package.json.backup | sort)
+              NEW_DEPS=$(jq -r '.dependencies // {} | to_entries[] | "\(.key): \(.value)"' package.json | sort)
+              
+              OLD_DEV_DEPS=$(jq -r '.devDependencies // {} | to_entries[] | "\(.key): \(.value)"' package.json.backup | sort)
+              NEW_DEV_DEPS=$(jq -r '.devDependencies // {} | to_entries[] | "\(.key): \(.value)"' package.json | sort)
+              
+              # Create summary
+              SUMMARY="Frontend Dependencies Updated:\n"
+              
+              # Check for dependency changes
+              CHANGED_DEPS=$(comm -13 <(echo "$OLD_DEPS") <(echo "$NEW_DEPS") | head -10)
+              if [ -n "$CHANGED_DEPS" ]; then
+                SUMMARY="${SUMMARY}\nProduction Dependencies:\n$CHANGED_DEPS"
+              fi
+              
+              # Check for dev dependency changes
+              CHANGED_DEV_DEPS=$(comm -13 <(echo "$OLD_DEV_DEPS") <(echo "$NEW_DEV_DEPS") | head -10)
+              if [ -n "$CHANGED_DEV_DEPS" ]; then
+                SUMMARY="${SUMMARY}\nDevelopment Dependencies:\n$CHANGED_DEV_DEPS"
+              fi
+              
+              echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+              echo -e "$SUMMARY" >> $GITHUB_OUTPUT
+              echo "EOF" >> $GITHUB_OUTPUT
+            else
+              echo "update_summary=Frontend dependencies updated" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "📝 No dependency updates needed"
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "update_summary=No frontend dependency updates needed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests after updates
+        if: steps.check_updates.outputs.has_updates == 'true' && needs.setup.outputs.run_tests == 'true'
+        run: |
+          echo "🧪 Running tests after dependency updates"
+
+          # Install updated dependencies
+          pnpm install
+
+          # Run type checking
+          echo "🔍 Running TypeScript type checking"
+          pnpm run type-check || {
+            echo "❌ Type checking failed after dependency updates"
+            exit 1
+          }
+
+          # Run linting
+          echo "🔍 Running ESLint"
+          pnpm run lint || {
+            echo "❌ Linting failed after dependency updates"
+            exit 1
+          }
+
+          # Run unit tests
+          echo "🧪 Running unit tests"
+          pnpm run test:unit || {
+            echo "❌ Unit tests failed after dependency updates"
+            exit 1
+          }
+
+          # Try to build
+          echo "🏗️ Building application"
+          pnpm run build || {
+            echo "❌ Build failed after dependency updates"
+            exit 1
+          }
+
+          echo "✅ All tests passed after dependency updates"
+
+      - name: Upload frontend update results
+        if: steps.check_updates.outputs.has_updates == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dependency-updates
+          path: |
+            package.json
+            pnpm-lock.yaml
+            security-audit.json
+          retention-days: 30
+
+  # =============================================================================
+  # Backend Dependency Updates
+  # =============================================================================
+  backend_updates:
+    name: Backend Dependencies
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: |
+      needs.setup.outputs.update_type == 'all' ||
+      needs.setup.outputs.update_type == 'backend' ||
+      needs.setup.outputs.update_type == 'security' ||
+      needs.setup.outputs.update_type == 'major' ||
+      needs.setup.outputs.update_type == 'minor' ||
+      needs.setup.outputs.update_type == 'patch'
+
+    strategy:
+      matrix:
+        service:
+          [
+            auth-service,
+            user-service,
+            matching-service,
+            messaging-service,
+            notification-service,
+          ]
+      fail-fast: false
+
+    outputs:
+      has_updates: ${{ steps.check_updates.outputs.has_updates }}
+      update_summary: ${{ steps.check_updates.outputs.update_summary }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install pip-tools and security tools
+        run: |
+          echo "📦 Installing dependency management tools"
+          pip install --upgrade pip
+          pip install pip-tools safety bandit pip-audit
+
+      - name: Navigate to service directory
+        run: |
+          echo "📁 Working on ${{ matrix.service }}"
+          cd services/${{ matrix.service }}
+
+      - name: Check for security vulnerabilities
+        if: needs.setup.outputs.is_security_update == 'true'
+        run: |
+          echo "🔍 Checking for security vulnerabilities in ${{ matrix.service }}"
+
+          cd services/${{ matrix.service }}
+
+          # Check with safety
+          if [ -f "requirements.txt" ]; then
+            echo "🔍 Running safety check"
+            safety check -r requirements.txt --json > security-safety.json || true
+            
+            # Check with pip-audit
+            echo "🔍 Running pip-audit check"
+            pip-audit -r requirements.txt --format=json --output=security-audit.json || true
+            
+            # Check if there are security issues
+            SAFETY_ISSUES=$(jq '.vulnerabilities | length' security-safety.json 2>/dev/null || echo "0")
+            AUDIT_ISSUES=$(jq '.vulnerabilities | length' security-audit.json 2>/dev/null || echo "0")
+            
+            if [ "$SAFETY_ISSUES" -gt 0 ] || [ "$AUDIT_ISSUES" -gt 0 ]; then
+              echo "⚠️ Found security vulnerabilities in ${{ matrix.service }}"
+              echo "HAS_SECURITY_ISSUES=true" >> $GITHUB_ENV
+            else
+              echo "✅ No security vulnerabilities found in ${{ matrix.service }}"
+              echo "HAS_SECURITY_ISSUES=false" >> $GITHUB_ENV
+            fi
+          fi
+
+      - name: Update dependencies
+        id: update_deps
+        run: |
+          echo "🔄 Updating backend dependencies for ${{ matrix.service }}"
+
+          cd services/${{ matrix.service }}
+
+          # Create backup of current requirements
+          if [ -f "requirements.txt" ]; then
+            cp requirements.txt requirements.txt.backup
+          fi
+          if [ -f "requirements-dev.txt" ]; then
+            cp requirements-dev.txt requirements-dev.txt.backup
+          fi
+
+          # Update based on type
+          case "${{ needs.setup.outputs.update_type }}" in
+            "security")
+              echo "🔒 Updating security vulnerabilities only"
+              if [ "$HAS_SECURITY_ISSUES" == "true" ] && [ -f "requirements.txt" ]; then
+                # Try to update only vulnerable packages
+                pip-audit -r requirements.txt --fix --dry-run > security-fixes.txt || true
+                if [ -s security-fixes.txt ]; then
+                  # Apply security fixes
+                  pip install --upgrade $(cat security-fixes.txt | grep -E '^[a-zA-Z]' | cut -d' ' -f1) || true
+                  pip freeze > requirements.txt
+                fi
+              fi
+              ;;
+            "patch"|"minor"|"major")
+              echo "📦 Updating ${{ needs.setup.outputs.update_type }} versions"
+              if [ -f "requirements.in" ]; then
+                # Use pip-tools for controlled updates
+                pip-compile --upgrade requirements.in
+                if [ -f "requirements-dev.in" ]; then
+                  pip-compile --upgrade requirements-dev.in
+                fi
+              elif [ -f "requirements.txt" ]; then
+                # Direct requirements.txt update
+                pip install --upgrade -r requirements.txt
+                pip freeze > requirements.txt
+              fi
+              ;;
+            *)
+              echo "📦 Updating all dependencies"
+              # First try security fixes
+              if [ -f "requirements.txt" ]; then
+                pip-audit -r requirements.txt --fix --dry-run > security-fixes.txt || true
+                if [ -s security-fixes.txt ]; then
+                  pip install --upgrade $(cat security-fixes.txt | grep -E '^[a-zA-Z]' | cut -d' ' -f1) || true
+                fi
+              fi
+              
+              # Then update all dependencies
+              if [ -f "requirements.in" ]; then
+                pip-compile --upgrade requirements.in
+                if [ -f "requirements-dev.in" ]; then
+                  pip-compile --upgrade requirements-dev.in
+                fi
+              elif [ -f "requirements.txt" ]; then
+                pip install --upgrade -r requirements.txt
+                pip freeze > requirements.txt
+              fi
+              ;;
+          esac
+
+          echo "✅ Dependencies updated for ${{ matrix.service }}"
+
+      - name: Check for changes
+        id: check_updates
+        run: |
+          echo "🔍 Checking for dependency changes in ${{ matrix.service }}"
+
+          cd services/${{ matrix.service }}
+
+          HAS_CHANGES=false
+
+          # Check if requirements files changed
+          if [ -f "requirements.txt" ] && [ -f "requirements.txt.backup" ]; then
+            if ! diff -q requirements.txt requirements.txt.backup >/dev/null 2>&1; then
+              HAS_CHANGES=true
+            fi
+          fi
+
+          if [ -f "requirements-dev.txt" ] && [ -f "requirements-dev.txt.backup" ]; then
+            if ! diff -q requirements-dev.txt requirements-dev.txt.backup >/dev/null 2>&1; then
+              HAS_CHANGES=true
+            fi
+          fi
+
+          if [ "$HAS_CHANGES" == "true" ]; then
+            echo "📝 Dependencies have been updated for ${{ matrix.service }}"
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            
+            # Generate update summary
+            SUMMARY="Backend Dependencies Updated for ${{ matrix.service }}:\n"
+            
+            if [ -f "requirements.txt" ] && [ -f "requirements.txt.backup" ]; then
+              CHANGED_DEPS=$(diff requirements.txt.backup requirements.txt | grep '^>' | head -10 | sed 's/^> //' || true)
+              if [ -n "$CHANGED_DEPS" ]; then
+                SUMMARY="${SUMMARY}\nProduction Dependencies:\n$CHANGED_DEPS"
+              fi
+            fi
+            
+            if [ -f "requirements-dev.txt" ] && [ -f "requirements-dev.txt.backup" ]; then
+              CHANGED_DEV_DEPS=$(diff requirements-dev.txt.backup requirements-dev.txt | grep '^>' | head -10 | sed 's/^> //' || true)
+              if [ -n "$CHANGED_DEV_DEPS" ]; then
+                SUMMARY="${SUMMARY}\nDevelopment Dependencies:\n$CHANGED_DEV_DEPS"
+              fi
+            fi
+            
+            echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$SUMMARY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "📝 No dependency updates needed for ${{ matrix.service }}"
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "update_summary=No backend dependency updates needed for ${{ matrix.service }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run tests after updates
+        if: steps.check_updates.outputs.has_updates == 'true' && needs.setup.outputs.run_tests == 'true'
+        run: |
+          echo "🧪 Running tests after dependency updates for ${{ matrix.service }}"
+
+          cd services/${{ matrix.service }}
+
+          # Install updated dependencies
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
+          if [ -f "requirements-dev.txt" ]; then
+            pip install -r requirements-dev.txt
+          fi
+
+          # Run linting
+          echo "🔍 Running flake8"
+          flake8 . || {
+            echo "❌ Linting failed after dependency updates"
+            exit 1
+          }
+
+          # Run type checking
+          echo "🔍 Running mypy"
+          mypy . || {
+            echo "❌ Type checking failed after dependency updates"
+            exit 1
+          }
+
+          # Run security checks
+          echo "🔍 Running bandit security check"
+          bandit -r . -f json -o bandit-report.json || {
+            echo "❌ Security check failed after dependency updates"
+            exit 1
+          }
+
+          # Run unit tests
+          echo "🧪 Running unit tests"
+          pytest tests/unit/ || {
+            echo "❌ Unit tests failed after dependency updates"
+            exit 1
+          }
+
+          echo "✅ All tests passed after dependency updates for ${{ matrix.service }}"
+
+      - name: Upload backend update results
+        if: steps.check_updates.outputs.has_updates == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-dependency-updates-${{ matrix.service }}
+          path: |
+            services/${{ matrix.service }}/requirements*.txt
+            services/${{ matrix.service }}/security-*.json
+            services/${{ matrix.service }}/bandit-report.json
+          retention-days: 30
+
+  # =============================================================================
+  # Docker Image Updates
+  # =============================================================================
+  docker_updates:
+    name: Docker Images
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: setup
+    if: |
+      needs.setup.outputs.update_type == 'all' ||
+      needs.setup.outputs.update_type == 'docker'
+
+    outputs:
+      has_updates: ${{ steps.check_updates.outputs.has_updates }}
+      update_summary: ${{ steps.check_updates.outputs.update_summary }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Check for Docker image updates
+        id: check_updates
+        run: |
+          echo "🐳 Checking for Docker image updates"
+
+          # Find all Dockerfiles
+          DOCKERFILES=$(find . -name "Dockerfile*" -type f)
+
+          HAS_UPDATES=false
+          UPDATE_SUMMARY="Docker Image Updates:\n"
+
+          for dockerfile in $DOCKERFILES; do
+            echo "🔍 Checking $dockerfile"
+            
+            # Extract base images
+            BASE_IMAGES=$(grep -E '^FROM' "$dockerfile" | awk '{print $2}' | grep -v '^\$' || true)
+            
+            for image in $BASE_IMAGES; do
+              if [[ "$image" == *":"* ]]; then
+                IMAGE_NAME=$(echo "$image" | cut -d':' -f1)
+                CURRENT_TAG=$(echo "$image" | cut -d':' -f2)
+                
+                echo "🔍 Checking $IMAGE_NAME:$CURRENT_TAG"
+                
+                # Get latest tag for the image
+                if [[ "$IMAGE_NAME" == "node" ]]; then
+                  LATEST_TAG="20-alpine"
+                elif [[ "$IMAGE_NAME" == "python" ]]; then
+                  LATEST_TAG="3.11-slim"
+                elif [[ "$IMAGE_NAME" == "postgres" ]]; then
+                  LATEST_TAG="15-alpine"
+                elif [[ "$IMAGE_NAME" == "redis" ]]; then
+                  LATEST_TAG="7-alpine"
+                elif [[ "$IMAGE_NAME" == "nginx" ]]; then
+                  LATEST_TAG="alpine"
+                else
+                  # Try to get latest tag from Docker Hub API
+                  LATEST_TAG=$(curl -s "https://registry.hub.docker.com/v2/repositories/$IMAGE_NAME/tags/?page_size=1&ordering=-last_updated" | jq -r '.results[0].name' 2>/dev/null || echo "$CURRENT_TAG")
+                fi
+                
+                if [ "$CURRENT_TAG" != "$LATEST_TAG" ] && [ "$LATEST_TAG" != "null" ] && [ -n "$LATEST_TAG" ]; then
+                  echo "📝 Update available: $IMAGE_NAME:$CURRENT_TAG -> $IMAGE_NAME:$LATEST_TAG"
+                  HAS_UPDATES=true
+                  UPDATE_SUMMARY="${UPDATE_SUMMARY}\n- $dockerfile: $IMAGE_NAME:$CURRENT_TAG -> $IMAGE_NAME:$LATEST_TAG"
+                  
+                  # Update the Dockerfile
+                  sed -i "s|FROM $IMAGE_NAME:$CURRENT_TAG|FROM $IMAGE_NAME:$LATEST_TAG|g" "$dockerfile"
+                else
+                  echo "✅ $IMAGE_NAME:$CURRENT_TAG is up to date"
+                fi
+              fi
+            done
+          done
+
+          if [ "$HAS_UPDATES" == "true" ]; then
+            echo "📝 Docker images have been updated"
+            echo "has_updates=true" >> $GITHUB_OUTPUT
+            echo "update_summary<<EOF" >> $GITHUB_OUTPUT
+            echo -e "$UPDATE_SUMMARY" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "📝 No Docker image updates needed"
+            echo "has_updates=false" >> $GITHUB_OUTPUT
+            echo "update_summary=No Docker image updates needed" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Test Docker builds after updates
+        if: steps.check_updates.outputs.has_updates == 'true' && needs.setup.outputs.run_tests == 'true'
+        run: |
+          echo "🐳 Testing Docker builds after updates"
+
+          # Test building updated Dockerfiles
+          DOCKERFILES=$(find . -name "Dockerfile*" -type f)
+
+          for dockerfile in $DOCKERFILES; do
+            DOCKERFILE_DIR=$(dirname "$dockerfile")
+            DOCKERFILE_NAME=$(basename "$dockerfile")
+            
+            echo "🏗️ Testing build for $dockerfile"
+            
+            # Build the Docker image
+            docker build -f "$dockerfile" -t "test-image-$(basename $DOCKERFILE_DIR)" "$DOCKERFILE_DIR" || {
+              echo "❌ Docker build failed for $dockerfile"
+              exit 1
+            }
+            
+            echo "✅ Docker build successful for $dockerfile"
+          done
+
+          echo "✅ All Docker builds passed after updates"
+
+      - name: Upload Docker update results
+        if: steps.check_updates.outputs.has_updates == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-dependency-updates
+          path: |
+            **/Dockerfile*
+            docker-compose*.yml
+          retention-days: 30
+
+  # =============================================================================
+  # Create Pull Request
+  # =============================================================================
+  create_pull_request:
+    name: Create Pull Request
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, frontend_updates, backend_updates, docker_updates]
+    if: |
+      always() && !cancelled() &&
+      needs.setup.outputs.create_pr == 'true' &&
+      (
+        needs.frontend_updates.outputs.has_updates == 'true' ||
+        needs.backend_updates.outputs.has_updates == 'true' ||
+        needs.docker_updates.outputs.has_updates == 'true'
+      )
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Download all update artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dependency-updates
+
+      - name: Apply dependency updates
+        run: |
+          echo "📝 Applying dependency updates"
+
+          # Apply frontend updates
+          if [ -d "dependency-updates/frontend-dependency-updates" ]; then
+            echo "📦 Applying frontend updates"
+            cp dependency-updates/frontend-dependency-updates/package.json . || true
+            cp dependency-updates/frontend-dependency-updates/pnpm-lock.yaml . || true
+          fi
+
+          # Apply backend updates
+          for service in auth-service user-service matching-service messaging-service notification-service; do
+            if [ -d "dependency-updates/backend-dependency-updates-$service" ]; then
+              echo "📦 Applying backend updates for $service"
+              cp dependency-updates/backend-dependency-updates-$service/requirements*.txt services/$service/ || true
+            fi
+          done
+
+          # Apply Docker updates
+          if [ -d "dependency-updates/docker-dependency-updates" ]; then
+            echo "🐳 Applying Docker updates"
+            find dependency-updates/docker-dependency-updates -name "Dockerfile*" -exec cp {} . \; || true
+            cp dependency-updates/docker-dependency-updates/docker-compose*.yml . || true
+          fi
+
+      - name: Create update branch
+        run: |
+          echo "🌿 Creating update branch"
+
+          # Configure git
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          # Create and switch to update branch
+          git checkout -b "${{ needs.setup.outputs.branch_name }}"
+
+          # Add all changes
+          git add .
+
+          # Check if there are changes to commit
+          if git diff --staged --quiet; then
+            echo "📝 No changes to commit"
+            exit 0
+          fi
+
+          # Commit changes
+          COMMIT_MESSAGE="🔄 Update dependencies (${{ needs.setup.outputs.update_type }})"
+
+          if [ "${{ needs.setup.outputs.is_security_update }}" == "true" ]; then
+            COMMIT_MESSAGE="🔒 Security update: $COMMIT_MESSAGE"
+          fi
+
+          git commit -m "$COMMIT_MESSAGE"
+
+          # Push branch
+          git push origin "${{ needs.setup.outputs.branch_name }}"
+
+      - name: Create pull request
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ needs.setup.outputs.branch_name }}
+          title: '🔄 Dependency Update (${{ needs.setup.outputs.update_type }})'
+          body: |
+            ## 🔄 Dependency Update Report
+
+            **Update Type:** ${{ needs.setup.outputs.update_type }}
+            **Triggered By:** ${{ github.actor }}
+            **Date:** $(date -u)
+
+            ### 📊 Update Summary
+
+            ${{ needs.frontend_updates.outputs.has_updates == 'true' && '✅ Frontend dependencies updated' || '⏭️ Frontend dependencies skipped' }}
+            ${{ needs.backend_updates.outputs.has_updates == 'true' && '✅ Backend dependencies updated' || '⏭️ Backend dependencies skipped' }}
+            ${{ needs.docker_updates.outputs.has_updates == 'true' && '✅ Docker images updated' || '⏭️ Docker images skipped' }}
+
+            ### 📝 Detailed Changes
+
+            ${{ needs.frontend_updates.outputs.update_summary || '' }}
+
+            ${{ needs.backend_updates.outputs.update_summary || '' }}
+
+            ${{ needs.docker_updates.outputs.update_summary || '' }}
+
+            ### 🧪 Testing
+
+            ${{ needs.setup.outputs.run_tests == 'true' && '✅ All tests passed after updates' || '⏭️ Tests skipped' }}
+
+            ### 🔒 Security
+
+            ${{ needs.setup.outputs.is_security_update == 'true' && '🔒 This is a security update' || '📦 Regular dependency update' }}
+
+            ---
+
+            *This pull request was automatically created by the dependency update workflow.*
+          labels: |
+            dependencies
+            ${{ needs.setup.outputs.is_security_update == 'true' && 'security' || 'enhancement' }}
+            automated
+          assignees: ${{ github.actor }}
+          draft: false
+
+      - name: Auto-merge safe updates
+        if: needs.setup.outputs.auto_merge == 'true' && needs.setup.outputs.is_security_update == 'true'
+        run: |
+          echo "🤖 Auto-merging security updates"
+
+          # Wait a moment for PR to be created
+          sleep 10
+
+          # Get the PR number
+          PR_NUMBER=$(gh pr list --head "${{ needs.setup.outputs.branch_name }}" --json number --jq '.[0].number')
+
+          if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ]; then
+            echo "🔀 Auto-merging PR #$PR_NUMBER"
+            gh pr merge "$PR_NUMBER" --auto --squash
+          else
+            echo "❌ Could not find PR to auto-merge"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate GitHub step summary
+        run: |
+          echo "# 🔄 Dependency Update Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Update Type:** ${{ needs.setup.outputs.update_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Security Update:** ${{ needs.setup.outputs.is_security_update }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Auto Merge:** ${{ needs.setup.outputs.auto_merge }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📊 Update Results" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.frontend_updates.outputs.has_updates }}" == "true" ]; then
+            echo "✅ Frontend dependencies updated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Frontend dependencies - no updates needed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.backend_updates.outputs.has_updates }}" == "true" ]; then
+            echo "✅ Backend dependencies updated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Backend dependencies - no updates needed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.docker_updates.outputs.has_updates }}" == "true" ]; then
+            echo "✅ Docker images updated" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ Docker images - no updates needed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed update information is available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY

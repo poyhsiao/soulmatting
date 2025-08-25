@@ -1,0 +1,219 @@
+# SoulMatting Auth Service - Default Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# =============================================================================
+# Application Configuration
+# =============================================================================
+app:
+  name: soulmatting-auth-service
+  version: '1.0.0'
+  environment: development
+
+# =============================================================================
+# Image Configuration
+# =============================================================================
+image:
+  repository: ghcr.io/kimhsiao/soulmatting/auth-service
+  tag: latest
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+# =============================================================================
+# Deployment Configuration
+# =============================================================================
+deployment:
+  replicaCount: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+  annotations: {}
+  labels: {}
+
+  podAnnotations: {}
+  podLabels: {}
+
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1001
+    fsGroup: 1001
+
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1001
+    capabilities:
+      drop:
+        - ALL
+
+# =============================================================================
+# Service Configuration
+# =============================================================================
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 3001
+  annotations: {}
+  labels: {}
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/force-ssl-redirect: 'true'
+    nginx.ingress.kubernetes.io/proxy-body-size: '10m'
+    cert-manager.io/cluster-issuer: 'letsencrypt-prod'
+  hosts:
+    - host: auth.soulmatting.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: soulmatting-auth-service-tls
+      hosts:
+        - auth.soulmatting.local
+
+# =============================================================================
+# Resource Management
+# =============================================================================
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# =============================================================================
+# Auto Scaling
+# =============================================================================
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# =============================================================================
+# Health Checks
+# =============================================================================
+healthCheck:
+  enabled: true
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: 3001
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readinessProbe:
+    httpGet:
+      path: /ready
+      port: 3001
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+env:
+  NODE_ENV: production
+  PORT: 3001
+  LOG_LEVEL: info
+
+# =============================================================================
+# Secrets
+# =============================================================================
+secrets:
+  enabled: true
+  name: soulmatting-auth-service-secrets
+  data: {}
+
+# =============================================================================
+# ConfigMap
+# =============================================================================
+configMap:
+  enabled: true
+  name: soulmatting-auth-service-config
+  data: {}
+
+# =============================================================================
+# Persistence
+# =============================================================================
+persistence:
+  enabled: false
+  storageClass: ''
+  accessMode: ReadWriteOnce
+  size: 1Gi
+
+# =============================================================================
+# Service Account
+# =============================================================================
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ''
+
+# =============================================================================
+# Pod Disruption Budget
+# =============================================================================
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# =============================================================================
+# Network Policy
+# =============================================================================
+networkPolicy:
+  enabled: false
+  ingress: []
+  egress: []
+
+# =============================================================================
+# Monitoring
+# =============================================================================
+monitoring:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+    interval: 30s
+    path: /metrics
+    port: 3001
+
+# =============================================================================
+# External Dependencies
+# =============================================================================
+redis:
+  enabled: false
+  auth:
+    enabled: true
+    password: ''
+  master:
+    persistence:
+      enabled: true
+      size: 8Gi
+
+postgresql:
+  enabled: false
+  auth:
+    postgresPassword: ''
+    username: soulmatting
+    password: ''
+    database: soulmatting_auth
+  primary:
+    persistence:
+      enabled: true
+      size: 20Gi

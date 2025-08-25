@@ -3,9 +3,10 @@
 **Version:** 1.0.0  
 **Created:** 2025-01-21  
 **Updated:** 2025-01-21  
-**Author:** Kim Hsiao  
+**Author:** Kim Hsiao
 
 ## Changelog
+
 - v1.0.0 (2025-01-21): Initial system design specification
 
 ---
@@ -14,7 +15,9 @@
 
 ### 1.1 High-Level Architecture
 
-SoulMatting follows a **modern microservices architecture** with NestJS-based services, event-driven communication, and containerized deployment using Docker and Docker Compose for self-hosted environments.
+SoulMatting follows a **modern microservices architecture** with NestJS-based services, event-driven
+communication, and containerized deployment using Docker and Docker Compose for self-hosted
+environments.
 
 ```mermaid
 graph TB
@@ -22,19 +25,19 @@ graph TB
         WEB["React 18 + TypeScript\n- Vite Build Tool\n- TanStack Query\n- Zustand State\n- React Router v6"]
         PWA["Progressive Web App\n- Service Workers\n- Offline Support"]
     end
-    
+
     subgraph "Edge & CDN Layer"
         CDN["CDN - MinIO/S3\n- Static Assets\n- Image Optimization"]
         LB["Load Balancer\n- Nginx/Traefik\n- SSL Termination"]
     end
-    
+
     subgraph "API Gateway Layer"
         KONG["Kong Gateway (Supabase)\n- API Gateway\n- Rate Limiting\n- Authentication"]
         GATEWAY["NestJS API Gateway\n- @nestjs/microservices\n- OpenAPI/Swagger\n- Service Orchestration"]
         AUTH_MW["GoTrue Auth\n- Supabase Auth\n- JWT Strategy"]
         VALIDATION["Validation Layer\n- class-validator\n- class-transformer"]
     end
-    
+
     subgraph "Microservices Layer"
         AUTH_SVC["Auth Service\n- @nestjs/jwt\n- @nestjs/passport\n- bcrypt"]
         USER_SVC["User Service\n- Prisma ORM\n- Profile Management"]
@@ -44,32 +47,32 @@ graph TB
         MEDIA_SVC["Media Service\n- Image Processing\n- File Upload"]
         NOTIFICATION_SVC["Notification Service\n- Push Notifications\n- Email Service"]
     end
-    
+
     subgraph "Data Layer"
-        POSTGRES["PostgreSQL 15 + Supabase\n- Primary Database\n- PostgREST API\n- Real-time Subscriptions"]
+        POSTGRES["PostgreSQL 16 + Supabase\n- Primary Database\n- PostgREST API\n- Real-time Subscriptions"]
         REDIS["Redis 7\n- Caching Layer\n- Session Store\n- Bull Queue"]
         MINIO["MinIO\n- Object Storage\n- S3 Compatible\n- Supabase Storage"]
         SUPABASE_RT["Supabase Realtime\n- Live Updates\n- WebSocket Events"]
     end
-    
+
     subgraph "Message Queue Layer"
         BULL["Bull Queue (Redis)\n- Job Processing\n- Background Tasks\n- Event Handling"]
         SUPABASE_FUNCS["Supabase Edge Functions\n- Serverless Functions\n- Event Triggers"]
     end
-    
+
     subgraph "External Services"
         OAUTH["OAuth Providers\n- Google\n- Discord"]
         EMAIL["Email Service\n- SMTP/SendGrid"]
         WEBRTC["WebRTC\n- Video/Audio Calls"]
     end
-    
+
     WEB --> CDN
     WEB --> LB
     LB --> KONG
     KONG --> GATEWAY
     KONG --> AUTH_MW
     GATEWAY --> VALIDATION
-    
+
     GATEWAY --> AUTH_SVC
     GATEWAY --> USER_SVC
     GATEWAY --> MATCH_SVC
@@ -77,11 +80,11 @@ graph TB
     GATEWAY --> SEARCH_SVC
     GATEWAY --> MEDIA_SVC
     GATEWAY --> NOTIFICATION_SVC
-    
+
     AUTH_MW --> POSTGRES
     AUTH_SVC --> POSTGRES
     AUTH_SVC --> REDIS
-    
+
     KONG --> SUPABASE_RT
     SUPABASE_RT --> POSTGRES
     USER_SVC --> POSTGRES
@@ -93,7 +96,7 @@ graph TB
     SEARCH_SVC --> ELASTICSEARCH
     MEDIA_SVC --> MINIO
     NOTIFICATION_SVC --> REDIS
-    
+
     AUTH_SVC --> RABBITMQ
     USER_SVC --> RABBITMQ
     MATCH_SVC --> RABBITMQ
@@ -101,9 +104,9 @@ graph TB
     SEARCH_SVC --> RABBITMQ
     MEDIA_SVC --> RABBITMQ
     NOTIFICATION_SVC --> RABBITMQ
-    
+
     RABBITMQ --> BULL
-    
+
     AUTH_SVC --> OAUTH
     NOTIFICATION_SVC --> EMAIL
     MEDIA_SVC --> MINIO
@@ -113,6 +116,7 @@ graph TB
 ### 1.2 Architecture Principles
 
 #### 1.2.1 Core Principles
+
 - **Microservices:** Independent, loosely coupled NestJS services with clear boundaries
 - **Event-Driven:** Asynchronous communication via RabbitMQ and event patterns
 - **API-First:** RESTful APIs with OpenAPI/Swagger documentation and validation
@@ -123,6 +127,7 @@ graph TB
 - **Self-Hosted Ready:** Designed for easy deployment in self-hosted environments
 
 #### 1.2.2 Design Patterns & Architecture
+
 - **Domain-Driven Design (DDD):** Service boundaries align with business domains
 - **CQRS (Command Query Responsibility Segregation):** Separate read/write operations
 - **Event Sourcing:** Event-driven state management and audit trails
@@ -141,6 +146,7 @@ graph TB
 ### 2.1 Authentication Service
 
 #### 2.1.1 Service Responsibilities
+
 - User registration and login with comprehensive validation
 - JWT token management (access/refresh) with rotation
 - Multi-factor authentication (2FA) using TOTP
@@ -151,6 +157,7 @@ graph TB
 - Audit logging for security events
 
 #### 2.1.2 NestJS Service Architecture
+
 ```typescript
 // auth.module.ts
 @Module({
@@ -170,20 +177,14 @@ graph TB
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    JwtStrategy,
-    LocalStrategy,
-    GoogleStrategy,
-    DiscordStrategy,
-    AuthGuard,
-  ],
+  providers: [AuthService, JwtStrategy, LocalStrategy, GoogleStrategy, DiscordStrategy, AuthGuard],
   exports: [AuthService, JwtStrategy],
 })
 export class AuthModule {}
 ```
 
 #### 2.1.3 API Endpoints with Decorators
+
 ```typescript
 // Authentication Endpoints
 @Post('register')
@@ -259,6 +260,7 @@ revokeSession(@Param('sessionId') sessionId: string, @Req() req: Request): Promi
 ```
 
 #### 2.1.4 Prisma Schema & DTOs
+
 ```prisma
 // schema.prisma
 model User {
@@ -377,19 +379,20 @@ export class AuthResponse {
 ```
 
 #### 2.1.4 Security Implementation
+
 ```typescript
 // JWT Configuration
 const JWT_CONFIG = {
   accessToken: {
     secret: process.env.JWT_ACCESS_SECRET,
     expiresIn: '15m',
-    algorithm: 'HS256'
+    algorithm: 'HS256',
   },
   refreshToken: {
     secret: process.env.JWT_REFRESH_SECRET,
     expiresIn: '7d',
-    algorithm: 'HS256'
-  }
+    algorithm: 'HS256',
+  },
 };
 
 // Password Security
@@ -399,20 +402,21 @@ const PASSWORD_CONFIG = {
   requireUppercase: true,
   requireLowercase: true,
   requireNumbers: true,
-  requireSymbols: true
+  requireSymbols: true,
 };
 
 // Rate Limiting
 const RATE_LIMITS = {
-  login: { windowMs: 15 * 60 * 1000, max: 5 },      // 5 attempts per 15 minutes
-  register: { windowMs: 60 * 60 * 1000, max: 3 },   // 3 attempts per hour
-  forgotPassword: { windowMs: 60 * 60 * 1000, max: 3 }
+  login: { windowMs: 15 * 60 * 1000, max: 5 }, // 5 attempts per 15 minutes
+  register: { windowMs: 60 * 60 * 1000, max: 3 }, // 3 attempts per hour
+  forgotPassword: { windowMs: 60 * 60 * 1000, max: 3 },
 };
 ```
 
 ### 2.2 User Profile Service
 
 #### 2.2.1 NestJS Service Architecture
+
 ```typescript
 // profile.module.ts
 @Module({
@@ -422,7 +426,7 @@ const RATE_LIMITS = {
       storage: diskStorage({
         destination: './uploads/photos',
         filename: (req, file, cb) => {
-          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
           cb(null, `${uniqueSuffix}-${file.originalname}`);
         },
       }),
@@ -432,18 +436,14 @@ const RATE_LIMITS = {
     }),
   ],
   controllers: [ProfileController],
-  providers: [
-    ProfileService,
-    PhotoService,
-    LocationService,
-    ImageProcessingService,
-  ],
+  providers: [ProfileService, PhotoService, LocationService, ImageProcessingService],
   exports: [ProfileService],
 })
 export class ProfileModule {}
 ```
 
 #### 2.2.2 Service Responsibilities
+
 - **Profile Management**: CRUD operations for user profiles with validation
 - **Photo Management**: Upload, processing, optimization, and CDN integration
 - **Interest & Preferences**: Dynamic interest matching and preference algorithms
@@ -453,6 +453,7 @@ export class ProfileModule {}
 - **Content Moderation**: AI-powered photo and text content screening
 
 #### 2.2.3 RESTful API Endpoints
+
 ```typescript
 // profile.controller.ts
 @Controller('profiles')
@@ -475,9 +476,7 @@ export class ProfileController {
   @Get(':id/public')
   @Public()
   @ApiOperation({ summary: 'Get public profile view' })
-  async getPublicProfile(
-    @Param('id', ParseUUIDPipe) id: string
-  ): Promise<PublicProfileResponse> {}
+  async getPublicProfile(@Param('id', ParseUUIDPipe) id: string): Promise<PublicProfileResponse> {}
 
   @Post('photos')
   @UseInterceptors(FileInterceptor('photo'))
@@ -544,19 +543,18 @@ export class ProfileController {
 
   @Get('verification-status')
   @ApiOperation({ summary: 'Get verification status' })
-  async getVerificationStatus(
-    @User() user: JwtPayload
-  ): Promise<VerificationStatusResponse> {}
+  async getVerificationStatus(@User() user: JwtPayload): Promise<VerificationStatusResponse> {}
 }
 ```
 
 #### 2.2.4 Prisma Models & DTOs
+
 ```typescript
 // Prisma Schema (schema.prisma)
 model UserProfile {
   id          String   @id @default(uuid())
   userId      String   @unique @map("user_id")
-  
+
   // Basic Information
   displayName String   @map("display_name") @db.VarChar(50)
   firstName   String   @map("first_name") @db.VarChar(30)
@@ -567,20 +565,20 @@ model UserProfile {
   education   String?  @db.VarChar(100)
   bio         String?  @db.VarChar(500)
   location    Json?
-  
+
   isVerified  Boolean  @default(false) @map("is_verified")
   isActive    Boolean  @default(true) @map("is_active")
-  
+
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
-  
+
   // Relations
   user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   photos      Photo[]
   interests   Interest[]
   preferences UserPreferences?
   privacy     PrivacySettings?
-  
+
   @@map("user_profiles")
 }
 
@@ -604,10 +602,10 @@ model Photo {
   isVerified       Boolean           @default(false) @map("is_verified")
   moderationStatus ModerationStatus  @default(pending) @map("moderation_status")
   uploadedAt       DateTime          @default(now()) @map("uploaded_at")
-  
+
   // Relations
   userProfile      UserProfile       @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  
+
   @@map("photos")
 }
 
@@ -624,10 +622,10 @@ model Interest {
   name          String
   weight        Int         @default(5)
   addedAt       DateTime    @default(now()) @map("added_at")
-  
+
   // Relations
   userProfile   UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  
+
   @@map("interests")
 }
 
@@ -642,10 +640,10 @@ model UserPreferences {
   lifestyle         Json
   createdAt         DateTime    @default(now()) @map("created_at")
   updatedAt         DateTime    @updatedAt @map("updated_at")
-  
+
   // Relations
   userProfile       UserProfile @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  
+
   @@map("user_preferences")
 }
 
@@ -661,10 +659,10 @@ model PrivacySettings {
   showOnlineStatus  Boolean           @default(true) @map("show_online_status")
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
-  
+
   // Relations
   userProfile       UserProfile       @relation(fields: [userProfileId], references: [id], onDelete: Cascade)
-  
+
   @@map("privacy_settings")
 }
 
@@ -785,6 +783,7 @@ export class LifestylePreferencesDto {
 ### 2.3 Matching Service
 
 #### 2.3.1 NestJS Service Architecture
+
 ```typescript
 // matching.module.ts
 @Module({
@@ -830,6 +829,7 @@ export class MatchingModule {}
 ```
 
 #### 2.3.2 Service Responsibilities
+
 - **Advanced Compatibility Algorithm**: Multi-factor scoring with ML-based optimization
 - **Real-time Recommendations**: Dynamic queue management with personalization
 - **Behavioral Learning**: User interaction pattern analysis and preference inference
@@ -839,7 +839,8 @@ export class MatchingModule {}
 - **A/B Testing**: Algorithm variant testing for continuous improvement
 
 #### 2.3.3 RESTful API Endpoints
-```typescript
+
+````typescript
 @Controller('matches')
 @UseGuards(JwtAuthGuard)
 @ApiTags('Matching')
@@ -981,7 +982,7 @@ model Match {
   matchedAt           DateTime?   @map("matched_at")
   createdAt           DateTime    @default(now()) @map("created_at")
   updatedAt           DateTime    @updatedAt @map("updated_at")
-  
+
   @@unique([userId, targetUserId], name: "user_target_unique")
   @@index([userId, action], name: "user_action_idx")
   @@index([isMutual, matchedAt], name: "mutual_match_idx")
@@ -1002,7 +1003,7 @@ model UserAction {
   previousAction String?    @map("previous_action")
   metadata       Json?      @map("metadata")
   createdAt      DateTime   @default(now()) @map("created_at")
-  
+
   @@index([userId, createdAt], name: "user_time_idx")
   @@index([action, createdAt], name: "action_time_idx")
   @@map("user_actions")
@@ -1027,7 +1028,7 @@ model CompatibilityScore {
   algorithmVersion String   @default("1.0") @map("algorithm_version")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
-  
+
   @@map("compatibility_scores")
 }
 
@@ -1046,13 +1047,13 @@ model UserBehavior {
   preferences  Json     // { implicitInterests: string[], preferredAgeRange: [number, number], preferredDistance: number, activityPatterns: { peakHours: number[], daysActive: string[], sessionDuration: number } }
   feedback     Json     // { reportedUsers: string[], blockedUsers: string[], unmatchedUsers: string[] }
   lastActive   DateTime @map("last_active")
-  
+
   // Relations
   user         User     @relation(fields: [userId], references: [id])
-  
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
-  
+
   @@index([lastActive])
   @@map("user_behaviors")
 }
@@ -1085,48 +1086,38 @@ interface UserBehaviorData {
     unmatchedUsers: string[];    // Users unmatched
   };
 }
-```
+````
 
 #### 2.3.4 Recommendation Engine
+
 ```typescript
 // Recommendation Algorithm
 class RecommendationEngine {
-  async generateRecommendations(
-    userId: string, 
-    limit: number = 20
-  ): Promise<UserRecommendation[]> {
+  async generateRecommendations(userId: string, limit: number = 20): Promise<UserRecommendation[]> {
     // 1. Get user profile and preferences
     const user = await this.getUserProfile(userId);
     const criteria = await this.getMatchingCriteria(userId);
-    
+
     // 2. Apply basic filters
     const candidates = await this.getFilteredCandidates(criteria);
-    
+
     // 3. Calculate compatibility scores
     const scoredCandidates = await Promise.all(
-      candidates.map(candidate => 
-        this.calculateCompatibility(user, candidate, criteria)
-      )
+      candidates.map(candidate => this.calculateCompatibility(user, candidate, criteria))
     );
-    
+
     // 4. Apply ML-based ranking
-    const rankedCandidates = await this.applyMLRanking(
-      userId, 
-      scoredCandidates
-    );
-    
+    const rankedCandidates = await this.applyMLRanking(userId, scoredCandidates);
+
     // 5. Apply diversity and freshness
-    const diversifiedResults = this.applyDiversification(
-      rankedCandidates, 
-      limit
-    );
-    
+    const diversifiedResults = this.applyDiversification(rankedCandidates, limit);
+
     return diversifiedResults;
   }
-  
+
   private async calculateCompatibility(
-    user: UserProfile, 
-    candidate: UserProfile, 
+    user: UserProfile,
+    candidate: UserProfile,
     criteria: MatchingCriteria
   ): Promise<CompatibilityScore> {
     const scores = {
@@ -1135,19 +1126,18 @@ class RecommendationEngine {
       age: this.calculateAgeScore(user, candidate, criteria),
       lifestyle: this.calculateLifestyleScore(user, candidate),
       values: this.calculateValueScore(user, candidate),
-      personality: this.calculatePersonalityScore(user, candidate)
+      personality: this.calculatePersonalityScore(user, candidate),
     };
-    
+
     // Weighted overall score
-    const overall = Object.entries(scores).reduce(
-      (sum, [key, score]) => sum + (score * criteria.weights[key]), 
-      0
-    ) / Object.values(criteria.weights).reduce((a, b) => a + b, 0);
-    
+    const overall =
+      Object.entries(scores).reduce((sum, [key, score]) => sum + score * criteria.weights[key], 0) /
+      Object.values(criteria.weights).reduce((a, b) => a + b, 0);
+
     return {
       overall,
       breakdown: scores,
-      factors: this.getCompatibilityFactors(user, candidate)
+      factors: this.getCompatibilityFactors(user, candidate),
     };
   }
 }
@@ -1156,6 +1146,7 @@ class RecommendationEngine {
 ### 2.4 Communication Service
 
 #### 2.4.1 NestJS Service Architecture
+
 ```typescript
 // communication.module.ts
 @Module({
@@ -1211,6 +1202,7 @@ export class CommunicationModule {}
 ```
 
 #### 2.4.2 Service Responsibilities
+
 - **Real-time Messaging**: WebSocket-based instant messaging with delivery confirmations
 - **End-to-End Encryption**: Message encryption using AES-256-GCM with key rotation
 - **Media Sharing**: File upload/download with automatic compression and CDN integration
@@ -1221,7 +1213,8 @@ export class CommunicationModule {}
 - **Push Notifications**: Cross-platform notification delivery for offline users
 
 #### 2.4.3 WebSocket Gateway
-```typescript
+
+````typescript
 @WebSocketGateway({
   cors: {
     origin: process.env.FRONTEND_URL,
@@ -1245,7 +1238,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
       const token = client.handshake.auth.token;
       const payload = this.jwtService.verify(token);
       client.data.userId = payload.sub;
-      
+
       await this.presenceService.setUserOnline(payload.sub, client.id);
       client.emit('connection:established', { status: 'connected' });
     } catch (error) {
@@ -1267,14 +1260,14 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     const hasAccess = await this.communicationService.hasConversationAccess(
-      userId, 
+      userId,
       data.conversationId
     );
-    
+
     if (hasAccess) {
       client.join(data.conversationId);
       await this.communicationService.markMessagesAsRead(
-        userId, 
+        userId,
         data.conversationId
       );
     }
@@ -1287,14 +1280,14 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     const message = await this.communicationService.sendMessage(userId, data);
-    
+
     // Emit to conversation participants
     this.server.to(data.conversationId).emit('message:received', message);
-    
+
     // Send push notification to offline users
     await this.communicationService.notifyOfflineUsers(
-      data.conversationId, 
-      userId, 
+      data.conversationId,
+      userId,
       message
     );
   }
@@ -1319,7 +1312,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     await this.communicationService.markMessageAsRead(userId, data.messageId);
-    
+
     this.server.to(data.conversationId).emit('message:read', {
       messageId: data.messageId,
       userId,
@@ -1335,7 +1328,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     const call = await this.communicationService.initiateCall(userId, data);
-    
+
     // Notify call participants
     data.participantIds.forEach(participantId => {
       this.server.to(participantId).emit('call:incoming', {
@@ -1354,7 +1347,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     const call = await this.communicationService.acceptCall(userId, data.callId);
-    
+
     this.server.to(call.conversationId).emit('call:accepted', {
       callId: data.callId,
       acceptedBy: userId,
@@ -1369,7 +1362,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     await this.communicationService.rejectCall(userId, data.callId);
-    
+
     this.server.emit('call:rejected', {
       callId: data.callId,
       rejectedBy: userId,
@@ -1383,7 +1376,7 @@ export class CommunicationGateway implements OnGatewayConnection, OnGatewayDisco
   ) {
     const userId = client.data.userId;
     const call = await this.communicationService.endCall(userId, data.callId);
-    
+
     this.server.to(call.conversationId).emit('call:ended', {
       callId: data.callId,
       endedBy: userId,
@@ -1606,9 +1599,10 @@ export class CommunicationController {
     return this.communicationService.updatePresence(user.id, updatePresenceDto);
   }
 }
-```
+````
 
 #### 2.4.5 Data Models (Prisma Models)
+
 ```prisma
 // Conversation Model
 model Conversation {
@@ -1622,14 +1616,14 @@ model Conversation {
   isArchived      Boolean  @default(false)
   isEncrypted     Boolean  @default(false)
   settings        Json?    // { muteUntil?: Date, customNotifications?: boolean, disappearingMessages?: number }
-  
+
   // Relations
   messages        Message[]
   calls           Call[]
-  
+
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  
+
   @@index([lastActivity])
   @@index([type])
   @@map("conversations")
@@ -1657,15 +1651,15 @@ model Message {
   editedAt          DateTime?
   deletedAt         DateTime?
   replyToMessageId  String?     @db.Uuid
-  
+
   // Relations
   conversation      Conversation @relation(fields: [conversationId], references: [id])
   sender            User         @relation(fields: [senderId], references: [id])
   readReceipts      MessageRead[]
-  
+
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
-  
+
   @@index([conversationId, createdAt])
   @@index([senderId])
   @@index([type])
@@ -1697,11 +1691,11 @@ model MessageRead {
   messageId String   @db.Uuid
   userId    String   @db.Uuid
   readAt    DateTime @default(now())
-  
+
   // Relations
   message   Message  @relation(fields: [messageId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
-  
+
   @@unique([messageId, userId])
   @@map("message_reads")
 }
@@ -1720,14 +1714,14 @@ model Call {
   webrtcData     Json?      // { offer?: string, answer?: string, iceCandidates?: string[], stunServers?: string[], turnServers?: string[] }
   quality        Json?      // { averageBitrate: number, packetLoss: number, latency: number, jitter: number }
   endReason      String?    @db.Text
-  
+
   // Relations
   conversation   Conversation @relation(fields: [conversationId], references: [id])
   initiator      User         @relation(fields: [initiatorId], references: [id])
-  
+
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  
+
   @@index([conversationId])
   @@index([initiatorId])
   @@index([status])
@@ -1758,12 +1752,12 @@ model UserPresence {
   lastSeen        DateTime      @default(now())
   activeSocketIds String[]?
   customStatus    String?       @db.Text
-  
+
   // Relations
   user            User          @relation(fields: [userId], references: [id])
-  
+
   updatedAt       DateTime      @updatedAt
-  
+
   @@map("user_presence")
 }
 
@@ -1776,6 +1770,7 @@ enum PresenceStatus {
 ```
 
 #### 2.4.6 DTOs (Data Transfer Objects)
+
 ```typescript
 // Conversation DTOs
 export class CreateConversationDto {
@@ -1853,7 +1848,10 @@ export class SendMessageDto {
   @Length(1, 4000)
   content: string;
 
-  @ApiProperty({ description: 'Message type', enum: ['text', 'image', 'video', 'file', 'location', 'voice', 'sticker'] })
+  @ApiProperty({
+    description: 'Message type',
+    enum: ['text', 'image', 'video', 'file', 'location', 'voice', 'sticker'],
+  })
   @IsEnum(['text', 'image', 'video', 'file', 'location', 'voice', 'sticker'])
   type: 'text' | 'image' | 'video' | 'file' | 'location' | 'voice' | 'sticker';
 
@@ -1995,6 +1993,7 @@ export class UpdatePresenceDto {
 ### 2.5 Search & Discovery Service
 
 #### 2.5.1 NestJS Service Architecture
+
 ```typescript
 // search.module.ts
 @Module({
@@ -2044,9 +2043,11 @@ export class SearchModule {}
 ```
 
 #### 2.5.2 Service Responsibilities
+
 - **Advanced Search**: Multi-criteria search with fuzzy matching, autocomplete, and semantic search
 - **Geo-spatial Discovery**: Location-based user discovery with radius filtering and map integration
-- **Smart Filtering**: Dynamic filters based on preferences, compatibility scores, and behavioral patterns
+- **Smart Filtering**: Dynamic filters based on preferences, compatibility scores, and behavioral
+  patterns
 - **Search Analytics**: Track search patterns, popular filters, and conversion metrics
 - **Real-time Indexing**: Automatic index updates when user profiles change
 - **Personalized Discovery**: AI-driven discovery based on user behavior and preferences
@@ -2054,6 +2055,7 @@ export class SearchModule {}
 - **Trending Insights**: Identify trending interests, locations, and user patterns
 
 #### 2.5.3 RESTful API Endpoints
+
 ```typescript
 @Controller('search')
 @UseGuards(JwtAuthGuard)
@@ -2061,84 +2063,62 @@ export class SearchModule {}
 export class SearchController {
   constructor(
     private readonly searchService: SearchService,
-    private readonly searchAnalyticsService: SearchAnalyticsService,
+    private readonly searchAnalyticsService: SearchAnalyticsService
   ) {}
 
   @Get('users')
   @ApiOperation({ summary: 'Search users with filters' })
   @ApiResponse({ status: 200, description: 'Search results retrieved successfully' })
-  async searchUsers(
-    @User() user: UserEntity,
-    @Query() searchDto: UserSearchDto,
-  ) {
+  async searchUsers(@User() user: UserEntity, @Query() searchDto: UserSearchDto) {
     return this.searchService.searchUsers(user.id, searchDto);
   }
 
   @Get('users/nearby')
   @ApiOperation({ summary: 'Find nearby users' })
   @ApiResponse({ status: 200, description: 'Nearby users retrieved successfully' })
-  async findNearbyUsers(
-    @User() user: UserEntity,
-    @Query() nearbyDto: NearbySearchDto,
-  ) {
+  async findNearbyUsers(@User() user: UserEntity, @Query() nearbyDto: NearbySearchDto) {
     return this.searchService.findNearbyUsers(user.id, nearbyDto);
   }
 
   @Get('interests')
   @ApiOperation({ summary: 'Search interests with autocomplete' })
   @ApiResponse({ status: 200, description: 'Interest suggestions retrieved' })
-  async searchInterests(
-    @Query() interestSearchDto: InterestSearchDto,
-  ) {
+  async searchInterests(@Query() interestSearchDto: InterestSearchDto) {
     return this.searchService.searchInterests(interestSearchDto);
   }
 
   @Get('suggestions')
   @ApiOperation({ summary: 'Get search suggestions' })
   @ApiResponse({ status: 200, description: 'Search suggestions retrieved' })
-  async getSearchSuggestions(
-    @User() user: UserEntity,
-    @Query('query') query: string,
-  ) {
+  async getSearchSuggestions(@User() user: UserEntity, @Query('query') query: string) {
     return this.searchService.getSearchSuggestions(user.id, query);
   }
 
   @Post('history')
   @ApiOperation({ summary: 'Save search query' })
   @ApiResponse({ status: 201, description: 'Search query saved successfully' })
-  async saveSearchQuery(
-    @User() user: UserEntity,
-    @Body() saveSearchDto: SaveSearchDto,
-  ) {
+  async saveSearchQuery(@User() user: UserEntity, @Body() saveSearchDto: SaveSearchDto) {
     return this.searchService.saveSearchQuery(user.id, saveSearchDto);
   }
 
   @Get('history')
   @ApiOperation({ summary: 'Get search history' })
   @ApiResponse({ status: 200, description: 'Search history retrieved successfully' })
-  async getSearchHistory(
-    @User() user: UserEntity,
-    @Query() paginationDto: PaginationDto,
-  ) {
+  async getSearchHistory(@User() user: UserEntity, @Query() paginationDto: PaginationDto) {
     return this.searchService.getSearchHistory(user.id, paginationDto);
   }
 
   @Delete('history/:id')
   @ApiOperation({ summary: 'Delete search history item' })
   @ApiResponse({ status: 200, description: 'Search history item deleted' })
-  async deleteSearchHistory(
-    @User() user: UserEntity,
-    @Param('id') historyId: string,
-  ) {
+  async deleteSearchHistory(@User() user: UserEntity, @Param('id') historyId: string) {
     return this.searchService.deleteSearchHistory(user.id, historyId);
   }
 
   @Get('trending')
   @ApiOperation({ summary: 'Get trending searches and interests' })
   @ApiResponse({ status: 200, description: 'Trending data retrieved successfully' })
-  async getTrendingData(
-    @Query() trendingDto: TrendingDto,
-  ) {
+  async getTrendingData(@Query() trendingDto: TrendingDto) {
     return this.searchAnalyticsService.getTrendingData(trendingDto);
   }
 }
@@ -2147,37 +2127,26 @@ export class SearchController {
 @UseGuards(JwtAuthGuard)
 @ApiTags('Discovery')
 export class DiscoveryController {
-  constructor(
-    private readonly discoveryService: DiscoveryService,
-  ) {}
+  constructor(private readonly discoveryService: DiscoveryService) {}
 
   @Get('explore')
   @ApiOperation({ summary: 'Explore users with smart recommendations' })
   @ApiResponse({ status: 200, description: 'Discovery results retrieved successfully' })
-  async exploreUsers(
-    @User() user: UserEntity,
-    @Query() exploreDto: ExploreDto,
-  ) {
+  async exploreUsers(@User() user: UserEntity, @Query() exploreDto: ExploreDto) {
     return this.discoveryService.exploreUsers(user.id, exploreDto);
   }
 
   @Get('featured')
   @ApiOperation({ summary: 'Get featured users' })
   @ApiResponse({ status: 200, description: 'Featured users retrieved successfully' })
-  async getFeaturedUsers(
-    @User() user: UserEntity,
-    @Query() featuredDto: FeaturedDto,
-  ) {
+  async getFeaturedUsers(@User() user: UserEntity, @Query() featuredDto: FeaturedDto) {
     return this.discoveryService.getFeaturedUsers(user.id, featuredDto);
   }
 
   @Get('similar')
   @ApiOperation({ summary: 'Find users similar to current user' })
   @ApiResponse({ status: 200, description: 'Similar users retrieved successfully' })
-  async findSimilarUsers(
-    @User() user: UserEntity,
-    @Query() similarDto: SimilarUsersDto,
-  ) {
+  async findSimilarUsers(@User() user: UserEntity, @Query() similarDto: SimilarUsersDto) {
     return this.discoveryService.findSimilarUsers(user.id, similarDto);
   }
 
@@ -2186,7 +2155,7 @@ export class DiscoveryController {
   @ApiResponse({ status: 201, description: 'Feedback recorded successfully' })
   async recordDiscoveryFeedback(
     @User() user: UserEntity,
-    @Body() feedbackDto: DiscoveryFeedbackDto,
+    @Body() feedbackDto: DiscoveryFeedbackDto
   ) {
     return this.discoveryService.recordFeedback(user.id, feedbackDto);
   }
@@ -2194,6 +2163,7 @@ export class DiscoveryController {
 ```
 
 #### 2.5.4 Search Architecture
+
 ```mermaid
 graph LR
     subgraph "Search Service"
@@ -2202,33 +2172,34 @@ graph LR
         QUERY[Query Processor]
         ANALYTICS[Search Analytics]
     end
-    
+
     subgraph "Search Engines"
         MEILI[Meilisearch]
         ELASTIC[Elasticsearch]
         REDIS[Redis Cache]
     end
-    
+
     subgraph "Data Sources"
         POSTGRES[(PostgreSQL)]
         QUEUE[Bull Queue]
     end
-    
+
     API --> QUERY
     QUERY --> MEILI
     QUERY --> ELASTIC
     QUERY --> REDIS
-    
+
     INDEXER --> MEILI
     INDEXER --> ELASTIC
-    
+
     POSTGRES --> INDEXER
     QUEUE --> INDEXER
-    
+
     ANALYTICS --> POSTGRES
 ```
 
 #### 2.5.5 Data Models (Prisma Schema)
+
 ```prisma
 // SearchHistory Model
 model SearchHistory {
@@ -2238,12 +2209,12 @@ model SearchHistory {
   filters         Json     // { ageRange?: [number, number], distance?: number, interests?: string[], location?: { city?: string, state?: string, country?: string }, verified?: boolean, lastActive?: string }
   resultsCount    Int      @map("results_count")
   clickedProfiles String[] @map("clicked_profiles")
-  
+
   // Relations
   user            User     @relation(fields: [userId], references: [id])
-  
+
   createdAt       DateTime @default(now()) @map("created_at")
-  
+
   @@index([userId, createdAt])
   @@index([query])
   @@map("search_history")
@@ -2259,13 +2230,13 @@ model SavedSearch {
   notificationEnabled Boolean  @default(false) @map("notification_enabled")
   lastRun             DateTime? @map("last_run")
   newResultsCount     Int      @default(0) @map("new_results_count")
-  
+
   // Relations
   user                User     @relation(fields: [userId], references: [id])
-  
+
   createdAt           DateTime @default(now()) @map("created_at")
   updatedAt           DateTime @updatedAt @map("updated_at")
-  
+
   @@index([userId])
   @@map("saved_searches")
 }
@@ -2278,13 +2249,13 @@ model UserInteraction {
   interactionType InteractionType   @map("interaction_type")
   context         Json?             // { source: 'search' | 'discovery' | 'recommendations' | 'nearby', searchQuery?: string, filters?: Record<string, any>, position?: number, sessionId?: string }
   timeSpent       Int?              @map("time_spent") // seconds
-  
+
   // Relations
   user            User              @relation("UserInteractions", fields: [userId], references: [id])
   targetUser      User              @relation("TargetUserInteractions", fields: [targetUserId], references: [id])
-  
+
   createdAt       DateTime          @default(now()) @map("created_at")
-  
+
   @@unique([userId, targetUserId])
   @@index([interactionType, createdAt])
   @@map("user_interactions")
@@ -2302,6 +2273,7 @@ enum InteractionType {
 ```
 
 #### 2.5.6 Search Indexes
+
 ```typescript
 // Meilisearch User Index
 interface UserSearchDocument {
@@ -2320,10 +2292,10 @@ interface UserSearchDocument {
   verified: boolean;
   lastActive: Date;
   photos: {
-    primary: string;             // Primary photo URL
-    count: number;               // Total photo count
+    primary: string; // Primary photo URL
+    count: number; // Total photo count
   };
-  compatibility?: number;       // Pre-calculated for current user
+  compatibility?: number; // Pre-calculated for current user
 }
 
 // Elasticsearch Geo Index
@@ -2339,8 +2311,8 @@ interface GeoSearchDocument {
   };
   interests: string[];
   verified: boolean;
-  lastActive: number;           // Unix timestamp
-  distance?: number;            // Calculated distance from searcher
+  lastActive: number; // Unix timestamp
+  distance?: number; // Calculated distance from searcher
 }
 
 // Interest Index
@@ -2350,11 +2322,12 @@ interface InterestSearchDocument {
   category: string;
   popularity: number;
   relatedInterests: string[];
-  userCount: number;            // Number of users with this interest
+  userCount: number; // Number of users with this interest
 }
 ```
 
 #### 2.5.7 DTOs (Data Transfer Objects)
+
 ```typescript
 // user-search.dto.ts
 export class UserSearchDto {
@@ -2398,7 +2371,11 @@ export class UserSearchDto {
   @IsBoolean()
   verified?: boolean;
 
-  @ApiProperty({ description: 'Last active filter', required: false, enum: ['1d', '3d', '1w', '1m'] })
+  @ApiProperty({
+    description: 'Last active filter',
+    required: false,
+    enum: ['1d', '3d', '1w', '1m'],
+  })
   @IsOptional()
   @IsEnum(['1d', '3d', '1w', '1m'])
   lastActive?: '1d' | '3d' | '1w' | '1m';
@@ -2418,7 +2395,11 @@ export class UserSearchDto {
   @Transform(({ value }) => parseInt(value))
   limit?: number = 20;
 
-  @ApiProperty({ description: 'Sort by field', required: false, enum: ['relevance', 'distance', 'lastActive', 'compatibility'] })
+  @ApiProperty({
+    description: 'Sort by field',
+    required: false,
+    enum: ['relevance', 'distance', 'lastActive', 'compatibility'],
+  })
   @IsOptional()
   @IsEnum(['relevance', 'distance', 'lastActive', 'compatibility'])
   sortBy?: 'relevance' | 'distance' | 'lastActive' | 'compatibility';
@@ -2588,7 +2569,10 @@ export class ExploreDto {
 
 // featured.dto.ts
 export class FeaturedDto {
-  @ApiProperty({ description: 'Featured category', enum: ['verified', 'popular', 'recent', 'compatible'] })
+  @ApiProperty({
+    description: 'Featured category',
+    enum: ['verified', 'popular', 'recent', 'compatible'],
+  })
   @IsEnum(['verified', 'popular', 'recent', 'compatible'])
   category: 'verified' | 'popular' | 'recent' | 'compatible';
 
@@ -2610,7 +2594,10 @@ export class FeaturedDto {
 
 // similar-users.dto.ts
 export class SimilarUsersDto {
-  @ApiProperty({ description: 'Similarity criteria', enum: ['interests', 'location', 'behavior', 'all'] })
+  @ApiProperty({
+    description: 'Similarity criteria',
+    enum: ['interests', 'location', 'behavior', 'all'],
+  })
   @IsEnum(['interests', 'location', 'behavior', 'all'])
   criteria: 'interests' | 'location' | 'behavior' | 'all';
 
@@ -2643,7 +2630,10 @@ export class DiscoveryFeedbackDto {
   @IsUUID(4)
   targetUserId: string;
 
-  @ApiProperty({ description: 'Feedback type', enum: ['like', 'dislike', 'not_interested', 'report'] })
+  @ApiProperty({
+    description: 'Feedback type',
+    enum: ['like', 'dislike', 'not_interested', 'report'],
+  })
   @IsEnum(['like', 'dislike', 'not_interested', 'report'])
   feedbackType: 'like' | 'dislike' | 'not_interested' | 'report';
 
@@ -2660,7 +2650,10 @@ export class DiscoveryFeedbackDto {
 }
 
 export class DiscoveryContextDto {
-  @ApiProperty({ description: 'Discovery source', enum: ['explore', 'featured', 'similar', 'nearby'] })
+  @ApiProperty({
+    description: 'Discovery source',
+    enum: ['explore', 'featured', 'similar', 'nearby'],
+  })
   @IsEnum(['explore', 'featured', 'similar', 'nearby'])
   source: 'explore' | 'featured' | 'similar' | 'nearby';
 
@@ -2727,6 +2720,7 @@ export class PaginationDto {
 ### 3.1 PostgreSQL Schema
 
 #### 3.1.1 Core Tables
+
 ```sql
 -- Users table (Authentication)
 CREATE TABLE users (
@@ -2812,6 +2806,7 @@ CREATE TABLE reports (
 ```
 
 #### 3.1.2 Indexes and Performance
+
 ```sql
 -- Performance indexes
 CREATE INDEX idx_users_email ON users(email);
@@ -2832,6 +2827,7 @@ CREATE INDEX idx_matches_user_action ON matches(user_id, action);
 ### 3.2 MongoDB Collections
 
 #### 3.2.1 User Profiles Extended
+
 ```javascript
 // users_extended collection
 {
@@ -2900,6 +2896,7 @@ CREATE INDEX idx_matches_user_action ON matches(user_id, action);
 ```
 
 #### 3.2.2 Conversations and Messages
+
 ```javascript
 // conversations collection
 {
@@ -2962,10 +2959,11 @@ CREATE INDEX idx_matches_user_action ON matches(user_id, action);
 ### 3.3 Redis Data Structures
 
 #### 3.3.1 Session Management
+
 ```typescript
 // Session storage
 interface RedisSession {
-  key: `session:${string}`;     // session:${sessionId}
+  key: `session:${string}`; // session:${sessionId}
   value: {
     userId: string;
     accessToken: string;
@@ -2974,18 +2972,19 @@ interface RedisSession {
     ipAddress: string;
     userAgent: string;
   };
-  ttl: number;                  // Time to live in seconds
+  ttl: number; // Time to live in seconds
 }
 
 // User sessions index
 interface UserSessions {
   key: `user:sessions:${string}`; // user:sessions:${userId}
-  value: string[];              // Array of session IDs
+  value: string[]; // Array of session IDs
   type: 'set';
 }
 ```
 
 #### 3.3.2 Real-time Data
+
 ```typescript
 // Online users
 interface OnlineUsers {
@@ -2996,42 +2995,43 @@ interface OnlineUsers {
 
 // Typing indicators
 interface TypingIndicators {
-  key: `typing:${string}`;      // typing:${conversationId}
+  key: `typing:${string}`; // typing:${conversationId}
   value: Record<string, number>; // userId -> timestamp
   type: 'hash';
-  ttl: 10;                      // 10 seconds TTL
+  ttl: 10; // 10 seconds TTL
 }
 
 // Match queue
 interface MatchQueue {
   key: `matches:queue:${string}`; // matches:queue:${userId}
-  value: string[];              // Array of recommended user IDs
+  value: string[]; // Array of recommended user IDs
   type: 'list';
-  ttl: 3600;                    // 1 hour TTL
+  ttl: 3600; // 1 hour TTL
 }
 ```
 
 #### 3.3.3 Caching
+
 ```typescript
 // User profile cache
 interface ProfileCache {
-  key: `profile:${string}`;     // profile:${userId}
-  value: UserProfile;           // Serialized profile data
-  ttl: 1800;                    // 30 minutes TTL
+  key: `profile:${string}`; // profile:${userId}
+  value: UserProfile; // Serialized profile data
+  ttl: 1800; // 30 minutes TTL
 }
 
 // Search results cache
 interface SearchCache {
-  key: `search:${string}`;      // search:${hash of query}
+  key: `search:${string}`; // search:${hash of query}
   value: SearchResult[];
-  ttl: 300;                     // 5 minutes TTL
+  ttl: 300; // 5 minutes TTL
 }
 
 // Compatibility scores cache
 interface CompatibilityCache {
   key: `compatibility:${string}:${string}`; // compatibility:${userId1}:${userId2}
   value: CompatibilityScore;
-  ttl: 86400;                   // 24 hours TTL
+  ttl: 86400; // 24 hours TTL
 }
 ```
 
@@ -3042,20 +3042,21 @@ interface CompatibilityCache {
 ### 4.1 Authentication & Authorization
 
 #### 4.1.1 JWT Implementation
+
 ```typescript
 // JWT Token Structure
 interface AccessTokenPayload {
-  sub: string;                  // User ID
+  sub: string; // User ID
   email: string;
   role: string;
   permissions: string[];
-  iat: number;                  // Issued at
-  exp: number;                  // Expires at
-  jti: string;                  // JWT ID
+  iat: number; // Issued at
+  exp: number; // Expires at
+  jti: string; // JWT ID
 }
 
 interface RefreshTokenPayload {
-  sub: string;                  // User ID
+  sub: string; // User ID
   sessionId: string;
   iat: number;
   exp: number;
@@ -3069,26 +3070,27 @@ const TOKEN_CONFIG = {
     algorithm: 'HS256',
     expiresIn: '15m',
     issuer: 'soulmatting-api',
-    audience: 'soulmatting-client'
+    audience: 'soulmatting-client',
   },
   refreshToken: {
     secret: process.env.JWT_REFRESH_SECRET,
     algorithm: 'HS256',
     expiresIn: '7d',
     issuer: 'soulmatting-api',
-    audience: 'soulmatting-client'
-  }
+    audience: 'soulmatting-client',
+  },
 };
 ```
 
 #### 4.1.2 Role-Based Access Control (RBAC)
+
 ```typescript
 // Role definitions
 enum Role {
   USER = 'user',
   MODERATOR = 'moderator',
   ADMIN = 'admin',
-  SUPER_ADMIN = 'super_admin'
+  SUPER_ADMIN = 'super_admin',
 }
 
 // Permission definitions
@@ -3097,23 +3099,23 @@ enum Permission {
   PROFILE_READ = 'profile:read',
   PROFILE_WRITE = 'profile:write',
   PROFILE_DELETE = 'profile:delete',
-  
+
   // Matching permissions
   MATCH_VIEW = 'match:view',
   MATCH_ACTION = 'match:action',
-  
+
   // Communication permissions
   MESSAGE_SEND = 'message:send',
   MESSAGE_READ = 'message:read',
-  
+
   // Moderation permissions
   USER_MODERATE = 'user:moderate',
   CONTENT_MODERATE = 'content:moderate',
-  
+
   // Admin permissions
   ADMIN_READ = 'admin:read',
   ADMIN_WRITE = 'admin:write',
-  SYSTEM_CONFIG = 'system:config'
+  SYSTEM_CONFIG = 'system:config',
 }
 
 // Role-Permission mapping
@@ -3124,28 +3126,26 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     Permission.MATCH_VIEW,
     Permission.MATCH_ACTION,
     Permission.MESSAGE_SEND,
-    Permission.MESSAGE_READ
+    Permission.MESSAGE_READ,
   ],
   [Role.MODERATOR]: [
     ...ROLE_PERMISSIONS[Role.USER],
     Permission.USER_MODERATE,
-    Permission.CONTENT_MODERATE
+    Permission.CONTENT_MODERATE,
   ],
   [Role.ADMIN]: [
     ...ROLE_PERMISSIONS[Role.MODERATOR],
     Permission.ADMIN_READ,
-    Permission.ADMIN_WRITE
+    Permission.ADMIN_WRITE,
   ],
-  [Role.SUPER_ADMIN]: [
-    ...ROLE_PERMISSIONS[Role.ADMIN],
-    Permission.SYSTEM_CONFIG
-  ]
+  [Role.SUPER_ADMIN]: [...ROLE_PERMISSIONS[Role.ADMIN], Permission.SYSTEM_CONFIG],
 };
 ```
 
 ### 4.2 Data Encryption
 
 #### 4.2.1 Encryption at Rest
+
 ```typescript
 // Database encryption configuration
 const ENCRYPTION_CONFIG = {
@@ -3154,53 +3154,50 @@ const ENCRYPTION_CONFIG = {
   iterations: 100000,
   saltLength: 32,
   ivLength: 16,
-  tagLength: 16
+  tagLength: 16,
 };
 
 // Sensitive field encryption
 class FieldEncryption {
   private readonly key: Buffer;
-  
+
   constructor(masterKey: string) {
     this.key = crypto.scryptSync(masterKey, 'salt', 32);
   }
-  
+
   encrypt(plaintext: string): EncryptedData {
     const iv = crypto.randomBytes(ENCRYPTION_CONFIG.ivLength);
     const cipher = crypto.createCipher(ENCRYPTION_CONFIG.algorithm, this.key, { iv });
-    
+
     let encrypted = cipher.update(plaintext, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const tag = cipher.getAuthTag();
-    
+
     return {
       data: encrypted,
       iv: iv.toString('hex'),
       tag: tag.toString('hex'),
-      algorithm: ENCRYPTION_CONFIG.algorithm
+      algorithm: ENCRYPTION_CONFIG.algorithm,
     };
   }
-  
+
   decrypt(encryptedData: EncryptedData): string {
-    const decipher = crypto.createDecipher(
-      encryptedData.algorithm,
-      this.key,
-      {
-        iv: Buffer.from(encryptedData.iv, 'hex'),
-        authTag: Buffer.from(encryptedData.tag, 'hex')
-      }
-    );
-    
+    const decipher = crypto.createDecipher(encryptedData.algorithm, this.key, {
+      iv: Buffer.from(encryptedData.iv, 'hex'),
+      authTag: Buffer.from(encryptedData.tag, 'hex'),
+    });
+
     let decrypted = decipher.update(encryptedData.data, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   }
 }
 ```
 
 #### 4.2.2 Message Encryption
+
 ```typescript
 // End-to-end message encryption
 class MessageEncryption {
@@ -3210,53 +3207,43 @@ class MessageEncryption {
       modulusLength: 2048,
       publicKeyEncoding: {
         type: 'spki',
-        format: 'pem'
+        format: 'pem',
       },
       privateKeyEncoding: {
         type: 'pkcs8',
-        format: 'pem'
-      }
+        format: 'pem',
+      },
     });
   }
-  
+
   // Encrypt message for conversation
-  static encryptMessage(
-    message: string,
-    conversationKey: string
-  ): EncryptedMessage {
+  static encryptMessage(message: string, conversationKey: string): EncryptedMessage {
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipher('aes-256-gcm', conversationKey, { iv });
-    
+
     let encrypted = cipher.update(message, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    
+
     const tag = cipher.getAuthTag();
-    
+
     return {
       content: encrypted,
       iv: iv.toString('hex'),
       tag: tag.toString('hex'),
-      algorithm: 'aes-256-gcm'
+      algorithm: 'aes-256-gcm',
     };
   }
-  
+
   // Decrypt message
-  static decryptMessage(
-    encryptedMessage: EncryptedMessage,
-    conversationKey: string
-  ): string {
-    const decipher = crypto.createDecipher(
-      encryptedMessage.algorithm,
-      conversationKey,
-      {
-        iv: Buffer.from(encryptedMessage.iv, 'hex'),
-        authTag: Buffer.from(encryptedMessage.tag, 'hex')
-      }
-    );
-    
+  static decryptMessage(encryptedMessage: EncryptedMessage, conversationKey: string): string {
+    const decipher = crypto.createDecipher(encryptedMessage.algorithm, conversationKey, {
+      iv: Buffer.from(encryptedMessage.iv, 'hex'),
+      authTag: Buffer.from(encryptedMessage.tag, 'hex'),
+    });
+
     let decrypted = decipher.update(encryptedMessage.content, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
-    
+
     return decrypted;
   }
 }
@@ -3265,6 +3252,7 @@ class MessageEncryption {
 ### 4.3 Input Validation & Sanitization
 
 #### 4.3.1 Request Validation
+
 ```typescript
 // Input validation schemas
 const ValidationSchemas = {
@@ -3273,70 +3261,70 @@ const ValidationSchemas = {
       type: 'string',
       format: 'email',
       maxLength: 255,
-      required: true
+      required: true,
     },
     password: {
       type: 'string',
       minLength: 8,
       maxLength: 128,
       pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]',
-      required: true
+      required: true,
     },
     firstName: {
       type: 'string',
       minLength: 1,
       maxLength: 50,
-      pattern: '^[a-zA-Z\\s\\-\']+$',
-      required: true
+      pattern: "^[a-zA-Z\\s\\-']+$",
+      required: true,
     },
     lastName: {
       type: 'string',
       minLength: 1,
       maxLength: 50,
-      pattern: '^[a-zA-Z\\s\\-\']+$',
-      required: true
+      pattern: "^[a-zA-Z\\s\\-']+$",
+      required: true,
     },
     dateOfBirth: {
       type: 'string',
       format: 'date',
-      required: true
-    }
+      required: true,
+    },
   },
-  
+
   profileUpdate: {
     displayName: {
       type: 'string',
       minLength: 1,
       maxLength: 100,
-      pattern: '^[a-zA-Z0-9\\s\\-\']+$'
+      pattern: "^[a-zA-Z0-9\\s\\-']+$",
     },
     bio: {
       type: 'string',
-      maxLength: 500
+      maxLength: 500,
     },
     occupation: {
       type: 'string',
-      maxLength: 100
+      maxLength: 100,
     },
     education: {
       type: 'string',
-      maxLength: 100
-    }
+      maxLength: 100,
+    },
   },
-  
+
   messageCreate: {
     content: {
       type: 'string',
       minLength: 1,
       maxLength: 1000,
-      required: true
+      required: true,
     },
     type: {
       type: 'string',
       enum: ['text', 'image', 'video', 'file'],
-      required: true
-    }
-  }
+      required: true,
+    },
+  },
 };
 
 // Sanitization functions
@@ -3344,27 +3332,24 @@ class InputSanitizer {
   static sanitizeHtml(input: string): string {
     return DOMPurify.sanitize(input, {
       ALLOWED_TAGS: [],
-      ALLOWED_ATTR: []
+      ALLOWED_ATTR: [],
     });
   }
-  
+
   static sanitizeFilename(filename: string): string {
     return filename
       .replace(/[^a-zA-Z0-9.-]/g, '_')
       .replace(/_{2,}/g, '_')
       .substring(0, 255);
   }
-  
-  static validateAndSanitizeInput<T>(
-    input: any,
-    schema: ValidationSchema
-  ): T {
+
+  static validateAndSanitizeInput<T>(input: any, schema: ValidationSchema): T {
     // Validate against schema
     const validationResult = validate(input, schema);
     if (!validationResult.valid) {
       throw new ValidationError(validationResult.errors);
     }
-    
+
     // Sanitize string fields
     const sanitized = { ...input };
     Object.keys(sanitized).forEach(key => {
@@ -3372,7 +3357,7 @@ class InputSanitizer {
         sanitized[key] = this.sanitizeHtml(sanitized[key]).trim();
       }
     });
-    
+
     return sanitized as T;
   }
 }
@@ -3385,26 +3370,27 @@ class InputSanitizer {
 ### 5.1 Caching Strategy
 
 #### 5.1.1 Multi-Level Caching
+
 ```typescript
 // Cache hierarchy
 interface CacheStrategy {
-  l1: 'memory';                 // In-memory cache (fastest)
-  l2: 'redis';                  // Redis cache (fast)
-  l3: 'database';               // Database (slowest)
+  l1: 'memory'; // In-memory cache (fastest)
+  l2: 'redis'; // Redis cache (fast)
+  l3: 'database'; // Database (slowest)
 }
 
 // Cache implementation
 class CacheManager {
   private memoryCache: Map<string, CacheEntry>;
   private redisClient: Redis;
-  
+
   async get<T>(key: string): Promise<T | null> {
     // L1: Check memory cache
     const memoryResult = this.memoryCache.get(key);
     if (memoryResult && !this.isExpired(memoryResult)) {
       return memoryResult.value as T;
     }
-    
+
     // L2: Check Redis cache
     const redisResult = await this.redisClient.get(key);
     if (redisResult) {
@@ -3412,74 +3398,61 @@ class CacheManager {
       // Store in memory cache for faster access
       this.memoryCache.set(key, {
         value: parsed,
-        expiresAt: Date.now() + 300000 // 5 minutes
+        expiresAt: Date.now() + 300000, // 5 minutes
       });
       return parsed;
     }
-    
+
     return null;
   }
-  
-  async set<T>(
-    key: string, 
-    value: T, 
-    ttl: number = 3600
-  ): Promise<void> {
+
+  async set<T>(key: string, value: T, ttl: number = 3600): Promise<void> {
     // Store in both caches
     this.memoryCache.set(key, {
       value,
-      expiresAt: Date.now() + Math.min(ttl * 1000, 300000)
+      expiresAt: Date.now() + Math.min(ttl * 1000, 300000),
     });
-    
-    await this.redisClient.setex(
-      key, 
-      ttl, 
-      JSON.stringify(value)
-    );
+
+    await this.redisClient.setex(key, ttl, JSON.stringify(value));
   }
 }
 ```
 
 #### 5.1.2 Cache Patterns
+
 ```typescript
 // Cache-aside pattern for user profiles
 class UserProfileService {
   async getProfile(userId: string): Promise<UserProfile> {
     const cacheKey = `profile:${userId}`;
-    
+
     // Try cache first
     let profile = await this.cache.get<UserProfile>(cacheKey);
     if (profile) {
       return profile;
     }
-    
+
     // Load from database
     profile = await this.database.getUserProfile(userId);
     if (profile) {
       // Cache for 30 minutes
       await this.cache.set(cacheKey, profile, 1800);
     }
-    
+
     return profile;
   }
-  
-  async updateProfile(
-    userId: string, 
-    updates: Partial<UserProfile>
-  ): Promise<UserProfile> {
+
+  async updateProfile(userId: string, updates: Partial<UserProfile>): Promise<UserProfile> {
     // Update database
-    const updatedProfile = await this.database.updateUserProfile(
-      userId, 
-      updates
-    );
-    
+    const updatedProfile = await this.database.updateUserProfile(userId, updates);
+
     // Invalidate cache
     const cacheKey = `profile:${userId}`;
     await this.cache.delete(cacheKey);
-    
+
     // Optionally warm cache
     await this.cache.set(cacheKey, updatedProfile, 1800);
-    
+
     return updatedProfile;
   }
 }
@@ -3493,17 +3466,17 @@ class MatchService {
   ): Promise<void> {
     // Write to database
     await this.database.recordMatch(userId, targetUserId, action);
-    
+
     // Update cache immediately
     const cacheKey = `matches:${userId}`;
-    const cachedMatches = await this.cache.get<Match[]>(cacheKey) || [];
+    const cachedMatches = (await this.cache.get<Match[]>(cacheKey)) || [];
     cachedMatches.push({
       userId,
       targetUserId,
       action,
-      createdAt: new Date()
+      createdAt: new Date(),
     });
-    
+
     await this.cache.set(cacheKey, cachedMatches, 3600);
   }
 }
@@ -3512,12 +3485,13 @@ class MatchService {
 ### 5.2 Database Optimization
 
 #### 5.2.1 Query Optimization
+
 ```sql
 -- Optimized queries with proper indexing
 
 -- Get potential matches with geographic filtering
 EXPLAIN ANALYZE
-SELECT 
+SELECT
     up.id,
     up.display_name,
     up.date_of_birth,
@@ -3527,7 +3501,7 @@ SELECT
         ST_Point($1, $2)
     ) as distance
 FROM user_profiles up
-WHERE 
+WHERE
     up.is_active = true
     AND up.is_verified = true
     AND up.user_id != $3
@@ -3537,8 +3511,8 @@ WHERE
         $4  -- max distance in meters
     )
     AND NOT EXISTS (
-        SELECT 1 FROM matches m 
-        WHERE m.user_id = $3 
+        SELECT 1 FROM matches m
+        WHERE m.user_id = $3
         AND m.target_user_id = up.user_id
     )
 ORDER BY distance
@@ -3546,7 +3520,7 @@ LIMIT $5;
 
 -- Get conversation with recent messages
 EXPLAIN ANALYZE
-SELECT 
+SELECT
     c.id as conversation_id,
     c.participants,
     c.updated_at,
@@ -3567,6 +3541,7 @@ ORDER BY c.updated_at DESC;
 ```
 
 #### 5.2.2 Connection Pooling
+
 ```typescript
 // Database connection configuration
 const DATABASE_CONFIG = {
@@ -3577,33 +3552,36 @@ const DATABASE_CONFIG = {
     username: process.env.POSTGRES_USER,
     password: process.env.POSTGRES_PASSWORD,
     pool: {
-      min: 5,                     // Minimum connections
-      max: 20,                    // Maximum connections
-      idle: 10000,                // Idle timeout (10 seconds)
-      acquire: 60000,             // Acquire timeout (60 seconds)
-      evict: 1000                 // Eviction interval (1 second)
+      min: 5, // Minimum connections
+      max: 20, // Maximum connections
+      idle: 10000, // Idle timeout (10 seconds)
+      acquire: 60000, // Acquire timeout (60 seconds)
+      evict: 1000, // Eviction interval (1 second)
     },
     dialectOptions: {
-      ssl: process.env.NODE_ENV === 'production' ? {
-        require: true,
-        rejectUnauthorized: false
-      } : false
-    }
+      ssl:
+        process.env.NODE_ENV === 'production'
+          ? {
+              require: true,
+              rejectUnauthorized: false,
+            }
+          : false,
+    },
   },
-  
+
   mongodb: {
     uri: process.env.MONGODB_URI,
     options: {
-      maxPoolSize: 20,            // Maximum connections
-      minPoolSize: 5,             // Minimum connections
-      maxIdleTimeMS: 30000,       // Close connections after 30 seconds
+      maxPoolSize: 20, // Maximum connections
+      minPoolSize: 5, // Minimum connections
+      maxIdleTimeMS: 30000, // Close connections after 30 seconds
       serverSelectionTimeoutMS: 5000, // How long to try selecting a server
-      socketTimeoutMS: 45000,     // How long a send or receive on a socket can take
-      bufferMaxEntries: 0,        // Disable mongoose buffering
-      bufferCommands: false       // Disable mongoose buffering
-    }
+      socketTimeoutMS: 45000, // How long a send or receive on a socket can take
+      bufferMaxEntries: 0, // Disable mongoose buffering
+      bufferCommands: false, // Disable mongoose buffering
+    },
   },
-  
+
   redis: {
     host: process.env.REDIS_HOST,
     port: parseInt(process.env.REDIS_PORT || '6379'),
@@ -3616,8 +3594,8 @@ const DATABASE_CONFIG = {
     keepAlive: 30000,
     family: 4,
     connectTimeout: 10000,
-    commandTimeout: 5000
-  }
+    commandTimeout: 5000,
+  },
 };
 ```
 
@@ -3628,6 +3606,7 @@ const DATABASE_CONFIG = {
 ### 6.1 Metrics Collection
 
 #### 6.1.1 Application Metrics
+
 ```typescript
 // Prometheus metrics configuration
 interface MetricsConfig {
@@ -3635,13 +3614,13 @@ interface MetricsConfig {
   httpRequestDuration: Histogram;
   httpRequestTotal: Counter;
   httpRequestErrors: Counter;
-  
+
   // Business metrics
   userRegistrations: Counter;
   matchesCreated: Counter;
   messagesExchanged: Counter;
   activeUsers: Gauge;
-  
+
   // System metrics
   databaseConnections: Gauge;
   cacheHitRate: Gauge;
@@ -3651,65 +3630,56 @@ interface MetricsConfig {
 // Metrics implementation
 class MetricsService {
   private metrics: MetricsConfig;
-  
+
   constructor() {
     this.metrics = {
       httpRequestDuration: new prometheus.Histogram({
         name: 'http_request_duration_seconds',
         help: 'Duration of HTTP requests in seconds',
         labelNames: ['method', 'route', 'status_code'],
-        buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10]
+        buckets: [0.1, 0.3, 0.5, 0.7, 1, 3, 5, 7, 10],
       }),
-      
+
       httpRequestTotal: new prometheus.Counter({
         name: 'http_requests_total',
         help: 'Total number of HTTP requests',
-        labelNames: ['method', 'route', 'status_code']
+        labelNames: ['method', 'route', 'status_code'],
       }),
-      
+
       userRegistrations: new prometheus.Counter({
         name: 'user_registrations_total',
         help: 'Total number of user registrations',
-        labelNames: ['provider']
+        labelNames: ['provider'],
       }),
-      
+
       matchesCreated: new prometheus.Counter({
         name: 'matches_created_total',
         help: 'Total number of matches created',
-        labelNames: ['type']
+        labelNames: ['type'],
       }),
-      
+
       activeUsers: new prometheus.Gauge({
         name: 'active_users_current',
         help: 'Current number of active users',
-        labelNames: ['timeframe']
-      })
+        labelNames: ['timeframe'],
+      }),
     };
   }
-  
-  recordHttpRequest(
-    method: string,
-    route: string,
-    statusCode: number,
-    duration: number
-  ): void {
-    this.metrics.httpRequestDuration
-      .labels(method, route, statusCode.toString())
-      .observe(duration);
-      
-    this.metrics.httpRequestTotal
-      .labels(method, route, statusCode.toString())
-      .inc();
+
+  recordHttpRequest(method: string, route: string, statusCode: number, duration: number): void {
+    this.metrics.httpRequestDuration.labels(method, route, statusCode.toString()).observe(duration);
+
+    this.metrics.httpRequestTotal.labels(method, route, statusCode.toString()).inc();
   }
-  
+
   recordUserRegistration(provider: string): void {
     this.metrics.userRegistrations.labels(provider).inc();
   }
-  
+
   recordMatch(type: string): void {
     this.metrics.matchesCreated.labels(type).inc();
   }
-  
+
   updateActiveUsers(count: number, timeframe: string): void {
     this.metrics.activeUsers.labels(timeframe).set(count);
   }
@@ -3717,6 +3687,7 @@ class MetricsService {
 ```
 
 #### 6.1.2 Distributed Tracing
+
 ```typescript
 // OpenTelemetry configuration
 const tracing = require('@opentelemetry/tracing');
@@ -3725,7 +3696,7 @@ const { NodeSDK } = require('@opentelemetry/auto-instrumentations-node');
 const sdk = new NodeSDK({
   serviceName: 'soulmatting-api',
   traceExporter: new tracing.JaegerExporter({
-    endpoint: process.env.JAEGER_ENDPOINT
+    endpoint: process.env.JAEGER_ENDPOINT,
   }),
   instrumentations: [
     // Auto-instrument common libraries
@@ -3733,8 +3704,8 @@ const sdk = new NodeSDK({
     require('@opentelemetry/instrumentation-express'),
     require('@opentelemetry/instrumentation-pg'),
     require('@opentelemetry/instrumentation-redis'),
-    require('@opentelemetry/instrumentation-mongodb')
-  ]
+    require('@opentelemetry/instrumentation-mongodb'),
+  ],
 });
 
 // Custom span creation
@@ -3745,30 +3716,30 @@ class TracingService {
     attributes?: Record<string, string>
   ): Promise<any> {
     const tracer = tracing.trace.getTracer('soulmatting-api');
-    
-    return tracer.startActiveSpan(name, async (span) => {
+
+    return tracer.startActiveSpan(name, async span => {
       try {
         if (attributes) {
           span.setAttributes(attributes);
         }
-        
+
         const result = await operation();
         span.setStatus({ code: tracing.SpanStatusCode.OK });
         return result;
       } catch (error) {
         span.setStatus({
-           code: tracing.SpanStatusCode.ERROR,
-           message: error.message
-         });
-         span.recordException(error);
-         throw error;
-       } finally {
-         span.end();
-       }
-     });
-   }
- }
- ```
+          code: tracing.SpanStatusCode.ERROR,
+          message: error.message,
+        });
+        span.recordException(error);
+        throw error;
+      } finally {
+        span.end();
+      }
+    });
+  }
+}
+```
 
 ---
 
@@ -3777,6 +3748,7 @@ class TracingService {
 ### 7.1 RESTful API Guidelines
 
 #### 7.1.1 URL Structure
+
 ```typescript
 // Resource-based URLs
 GET    /api/v1/users/:id                    // Get user by ID
@@ -3799,6 +3771,7 @@ POST   /api/v1/conversations/:id/messages   // Send message
 ```
 
 #### 7.1.2 HTTP Status Codes
+
 ```typescript
 // Success responses
 200 OK          // Successful GET, PUT, PATCH
@@ -3821,6 +3794,7 @@ POST   /api/v1/conversations/:id/messages   // Send message
 ```
 
 #### 7.1.3 Response Format
+
 ```typescript
 // Success response format
 interface SuccessResponse<T> {
@@ -3890,6 +3864,7 @@ interface ErrorResponse {
 ### 7.2 API Versioning
 
 #### 7.2.1 Version Strategy
+
 ```typescript
 // URL versioning (preferred)
 /api/v1/users
@@ -3928,6 +3903,7 @@ interface APIVersions {
 ### 8.1 Container Strategy
 
 #### 8.1.1 Docker Configuration
+
 ```dockerfile
 # Multi-stage Dockerfile for Node.js services
 FROM node:20-alpine AS builder
@@ -3962,6 +3938,7 @@ CMD ["node", "dist/main"]
 ```
 
 #### 8.1.2 Kubernetes Deployment
+
 ```yaml
 # k8s/deployment.yaml
 apiVersion: apps/v1
@@ -3988,9 +3965,9 @@ spec:
         app: soulmatting-api
         version: v1.0.0
       annotations:
-        prometheus.io/scrape: "true"
-        prometheus.io/port: "3000"
-        prometheus.io/path: "/metrics"
+        prometheus.io/scrape: 'true'
+        prometheus.io/port: '3000'
+        prometheus.io/path: '/metrics'
     spec:
       serviceAccountName: soulmatting-api
       securityContext:
@@ -3998,86 +3975,87 @@ spec:
         runAsUser: 1001
         fsGroup: 1001
       containers:
-      - name: api
-        image: soulmatting/api:1.0.0
-        imagePullPolicy: Always
-        ports:
-        - name: http
-          containerPort: 3000
-          protocol: TCP
-        env:
-        - name: NODE_ENV
-          value: "production"
-        - name: DATABASE_URL
-          valueFrom:
-            secretKeyRef:
-              name: database-secret
-              key: url
-        - name: REDIS_URL
-          valueFrom:
-            secretKeyRef:
-              name: redis-secret
-              key: url
-        - name: JWT_SECRET
-          valueFrom:
-            secretKeyRef:
-              name: jwt-secret
-              key: secret
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: http
-          initialDelaySeconds: 30
-          periodSeconds: 10
-          timeoutSeconds: 5
-          failureThreshold: 3
-        readinessProbe:
-          httpGet:
-            path: /health/ready
-            port: http
-          initialDelaySeconds: 5
-          periodSeconds: 5
-          timeoutSeconds: 3
-          failureThreshold: 3
-        securityContext:
-          allowPrivilegeEscalation: false
-          readOnlyRootFilesystem: true
-          capabilities:
-            drop:
-            - ALL
-        volumeMounts:
-        - name: tmp
-          mountPath: /tmp
-        - name: cache
-          mountPath: /app/.cache
+        - name: api
+          image: soulmatting/api:1.0.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: 'production'
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: database-secret
+                  key: url
+            - name: REDIS_URL
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: url
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jwt-secret
+                  key: secret
+          resources:
+            requests:
+              memory: '256Mi'
+              cpu: '250m'
+            limits:
+              memory: '512Mi'
+              cpu: '500m'
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /app/.cache
       volumes:
-      - name: tmp
-        emptyDir: {}
-      - name: cache
-        emptyDir: {}
+        - name: tmp
+          emptyDir: {}
+        - name: cache
+          emptyDir: {}
       nodeSelector:
         kubernetes.io/os: linux
       tolerations:
-      - key: "node.kubernetes.io/not-ready"
-        operator: "Exists"
-        effect: "NoExecute"
-        tolerationSeconds: 300
-      - key: "node.kubernetes.io/unreachable"
-        operator: "Exists"
-        effect: "NoExecute"
-        tolerationSeconds: 300
+        - key: 'node.kubernetes.io/not-ready'
+          operator: 'Exists'
+          effect: 'NoExecute'
+          tolerationSeconds: 300
+        - key: 'node.kubernetes.io/unreachable'
+          operator: 'Exists'
+          effect: 'NoExecute'
+          tolerationSeconds: 300
 ```
 
 ### 8.2 Infrastructure as Code
 
 #### 8.2.1 Terraform Configuration
+
 ```hcl
 # infrastructure/main.tf
 terraform {
@@ -4092,7 +4070,7 @@ terraform {
       version = "~> 2.0"
     }
   }
-  
+
   backend "s3" {
     bucket = "soulmatting-terraform-state"
     key    = "production/terraform.tfstate"
@@ -4103,21 +4081,21 @@ terraform {
 # EKS Cluster
 module "eks" {
   source = "terraform-aws-modules/eks/aws"
-  
+
   cluster_name    = "soulmatting-production"
   cluster_version = "1.28"
-  
+
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.private_subnets
-  
+
   node_groups = {
     main = {
       desired_capacity = 3
       max_capacity     = 10
       min_capacity     = 3
-      
+
       instance_types = ["t3.medium"]
-      
+
       k8s_labels = {
         Environment = "production"
         Application = "soulmatting"
@@ -4129,29 +4107,29 @@ module "eks" {
 # RDS PostgreSQL
 module "rds" {
   source = "terraform-aws-modules/rds/aws"
-  
+
   identifier = "soulmatting-production"
-  
+
   engine         = "postgres"
   engine_version = "15.4"
   instance_class = "db.t3.medium"
-  
+
   allocated_storage     = 100
   max_allocated_storage = 1000
   storage_encrypted     = true
-  
+
   db_name  = "soulmatting"
   username = "soulmatting"
-  
+
   vpc_security_group_ids = [module.rds_security_group.security_group_id]
   db_subnet_group_name   = module.vpc.database_subnet_group
-  
+
   backup_retention_period = 7
   backup_window          = "03:00-04:00"
   maintenance_window     = "sun:04:00-sun:05:00"
-  
+
   deletion_protection = true
-  
+
   tags = {
     Environment = "production"
     Application = "soulmatting"
@@ -4161,21 +4139,21 @@ module "rds" {
 # ElastiCache Redis
 module "redis" {
   source = "terraform-aws-modules/elasticache/aws"
-  
+
   cluster_id = "soulmatting-production"
-  
+
   engine         = "redis"
   engine_version = "7.0"
   node_type      = "cache.t3.micro"
-  
+
   num_cache_nodes = 1
-  
+
   subnet_group_name = module.vpc.elasticache_subnet_group
   security_group_ids = [module.redis_security_group.security_group_id]
-  
+
   at_rest_encryption_enabled = true
   transit_encryption_enabled = true
-  
+
   tags = {
     Environment = "production"
     Application = "soulmatting"
@@ -4190,6 +4168,7 @@ module "redis" {
 ### 9.1 Git Workflow
 
 #### 9.1.1 Branch Strategy
+
 ```bash
 # Main branches
 main          # Production-ready code
@@ -4214,6 +4193,7 @@ git tag v1.1.0
 ```
 
 #### 9.1.2 Commit Convention
+
 ```bash
 # Commit message format
 <type>(<scope>): <subject>
@@ -4241,14 +4221,11 @@ refactor(database): optimize user query performance
 ### 9.2 Code Quality
 
 #### 9.2.1 Linting Configuration
+
 ```json
 // .eslintrc.json
 {
-  "extends": [
-    "@nestjs/eslint-config",
-    "@typescript-eslint/recommended",
-    "prettier"
-  ],
+  "extends": ["@nestjs/eslint-config", "@typescript-eslint/recommended", "prettier"],
   "rules": {
     "@typescript-eslint/no-unused-vars": "error",
     "@typescript-eslint/explicit-function-return-type": "warn",
@@ -4269,6 +4246,7 @@ refactor(database): optimize user query performance
 ```
 
 #### 9.2.2 Testing Strategy
+
 ```typescript
 // Test pyramid structure
 interface TestStrategy {
@@ -4293,31 +4271,31 @@ interface TestStrategy {
 describe('MatchingService', () => {
   let service: MatchingService;
   let mockUserRepository: jest.Mocked<UserRepository>;
-  
+
   beforeEach(async () => {
     const module = await Test.createTestingModule({
       providers: [
         MatchingService,
         {
           provide: UserRepository,
-          useValue: createMockRepository()
-        }
-      ]
+          useValue: createMockRepository(),
+        },
+      ],
     }).compile();
-    
+
     service = module.get<MatchingService>(MatchingService);
     mockUserRepository = module.get(UserRepository);
   });
-  
+
   describe('calculateCompatibility', () => {
     it('should return high compatibility for users with shared interests', async () => {
       // Arrange
       const user1 = createMockUser({ interests: ['hiking', 'photography'] });
       const user2 = createMockUser({ interests: ['hiking', 'travel'] });
-      
+
       // Act
       const compatibility = await service.calculateCompatibility(user1, user2);
-      
+
       // Assert
       expect(compatibility.overall).toBeGreaterThan(70);
       expect(compatibility.breakdown.interests).toBeGreaterThan(50);
@@ -4333,6 +4311,7 @@ describe('MatchingService', () => {
 ### 10.1 OWASP Top 10 Mitigation
 
 #### 10.1.1 Security Controls
+
 ```typescript
 // Security middleware stack
 interface SecurityControls {
@@ -4367,23 +4346,26 @@ class SecurityHeadersMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
     // HSTS
     res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-    
+
     // Content Security Policy
-    res.setHeader('Content-Security-Policy', [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline'",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https:",
-      "connect-src 'self' wss:",
-      "frame-ancestors 'none'"
-    ].join('; '));
-    
+    res.setHeader(
+      'Content-Security-Policy',
+      [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https:",
+        "connect-src 'self' wss:",
+        "frame-ancestors 'none'",
+      ].join('; ')
+    );
+
     // Other security headers
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '1; mode=block');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-    
+
     next();
   }
 }
@@ -4392,6 +4374,7 @@ class SecurityHeadersMiddleware {
 ### 10.2 Privacy Compliance
 
 #### 10.2.1 GDPR Implementation
+
 ```typescript
 // Privacy controls
 interface PrivacyControls {
@@ -4424,13 +4407,13 @@ class DataRetentionService {
   async enforceRetentionPolicy(): Promise<void> {
     // Delete inactive user accounts after 2 years
     await this.deleteInactiveUsers(730); // days
-    
+
     // Anonymize old messages after 1 year
     await this.anonymizeOldMessages(365);
-    
+
     // Purge deleted user data after 30 days
     await this.purgeDeletedUserData(30);
-    
+
     // Clean up temporary files after 7 days
     await this.cleanupTempFiles(7);
   }
@@ -4444,6 +4427,7 @@ class DataRetentionService {
 ### 11.1 Horizontal Scaling
 
 #### 11.1.1 Service Scaling Strategy
+
 ```typescript
 // Auto-scaling configuration
 interface ScalingStrategy {
@@ -4488,6 +4472,7 @@ interface ScalingStrategy {
 ```
 
 #### 11.1.2 Load Balancing
+
 ```yaml
 # Load balancer configuration
 apiVersion: v1
@@ -4495,28 +4480,29 @@ kind: Service
 metadata:
   name: soulmatting-api-lb
   annotations:
-    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
-    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
-    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-type: 'nlb'
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: 'tcp'
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: 'true'
 spec:
   type: LoadBalancer
   ports:
-  - port: 80
-    targetPort: 3000
-    protocol: TCP
-  - port: 443
-    targetPort: 3000
-    protocol: TCP
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+    - port: 443
+      targetPort: 3000
+      protocol: TCP
   selector:
     app: soulmatting-api
   sessionAffinity: None
   loadBalancerSourceRanges:
-  - 0.0.0.0/0
+    - 0.0.0.0/0
 ```
 
 ### 11.2 Performance Optimization
 
 #### 11.2.1 Database Optimization
+
 ```sql
 -- Database partitioning strategy
 -- Partition messages by date
@@ -4534,12 +4520,12 @@ CREATE TABLE matches_1 PARTITION OF matches
 FOR VALUES WITH (MODULUS 4, REMAINDER 1);
 
 -- Optimize frequently used queries
-CREATE INDEX CONCURRENTLY idx_messages_conversation_created 
-ON messages (conversation_id, created_at DESC) 
+CREATE INDEX CONCURRENTLY idx_messages_conversation_created
+ON messages (conversation_id, created_at DESC)
 WHERE deleted_at IS NULL;
 
-CREATE INDEX CONCURRENTLY idx_user_profiles_location_active 
-ON user_profiles USING GIST (location) 
+CREATE INDEX CONCURRENTLY idx_user_profiles_location_active
+ON user_profiles USING GIST (location)
 WHERE is_active = true AND is_verified = true;
 ```
 
@@ -4550,6 +4536,7 @@ WHERE is_active = true AND is_verified = true;
 ### 12.1 Backup Strategy
 
 #### 12.1.1 Automated Backups
+
 ```bash
 #!/bin/bash
 # backup.sh - Comprehensive backup script
@@ -4599,18 +4586,21 @@ echo "Backup completed successfully"
 ```
 
 #### 12.1.2 Recovery Procedures
+
 ```typescript
 // Recovery time objectives
 interface RecoveryObjectives {
-  RTO: { // Recovery Time Objective
-    critical: '1 hour';      // Authentication, core API
-    important: '4 hours';    // Matching, messaging
-    normal: '24 hours';      // Analytics, reporting
+  RTO: {
+    // Recovery Time Objective
+    critical: '1 hour'; // Authentication, core API
+    important: '4 hours'; // Matching, messaging
+    normal: '24 hours'; // Analytics, reporting
   };
-  RPO: { // Recovery Point Objective
-    userData: '15 minutes';  // User profiles, messages
-    analytics: '1 hour';     // Usage analytics
-    logs: '4 hours';         // Application logs
+  RPO: {
+    // Recovery Point Objective
+    userData: '15 minutes'; // User profiles, messages
+    analytics: '1 hour'; // Usage analytics
+    logs: '4 hours'; // Application logs
   };
 }
 
@@ -4632,24 +4622,24 @@ class DisasterRecoveryService {
         break;
     }
   }
-  
+
   private async recoverDatabase(): Promise<void> {
     // 1. Assess damage
     const healthCheck = await this.assessDatabaseHealth();
-    
+
     // 2. Failover to read replica if needed
     if (healthCheck.primaryDown) {
       await this.promoteReadReplica();
     }
-    
+
     // 3. Restore from backup if necessary
     if (healthCheck.dataCorrupted) {
       await this.restoreFromLatestBackup();
     }
-    
+
     // 4. Verify data integrity
     await this.verifyDataIntegrity();
-    
+
     // 5. Resume normal operations
     await this.resumeNormalOperations();
   }
@@ -4660,9 +4650,11 @@ class DisasterRecoveryService {
 
 ## 13. Conclusion
 
-This system design document provides a comprehensive blueprint for the SoulMatting platform, covering all aspects from architecture to deployment. The design emphasizes:
+This system design document provides a comprehensive blueprint for the SoulMatting platform,
+covering all aspects from architecture to deployment. The design emphasizes:
 
 ### 13.1 Key Strengths
+
 - **Scalability**: Microservices architecture with horizontal scaling capabilities
 - **Security**: Multi-layered security with encryption, authentication, and authorization
 - **Performance**: Optimized caching, database design, and query optimization
@@ -4670,12 +4662,14 @@ This system design document provides a comprehensive blueprint for the SoulMatti
 - **Maintainability**: Clean code practices, testing strategies, and documentation
 
 ### 13.2 Implementation Roadmap
+
 1. **Phase 1**: Core services (Auth, User, Basic Matching)
 2. **Phase 2**: Communication and advanced matching
 3. **Phase 3**: Search, analytics, and optimization
 4. **Phase 4**: Advanced features and scaling
 
 ### 13.3 Success Metrics
+
 - **Performance**: < 200ms API response time, 99.9% uptime
 - **Scalability**: Support 100K+ concurrent users
 - **Security**: Zero security incidents, SOC 2 compliance
@@ -4686,4 +4680,5 @@ This system design document provides a comprehensive blueprint for the SoulMatti
 **Document Status:** Complete  
 **Next Review Date:** 2025-04-21  
 **Architecture Review Required:** Senior Engineers, DevOps Team, Security Team  
-**Version Control:** This document is version controlled and should be updated with any architectural changes.
+**Version Control:** This document is version controlled and should be updated with any
+architectural changes.

@@ -1,0 +1,846 @@
+# =============================================================================
+# SoulMatting Platform - Infrastructure as Code Workflow
+# =============================================================================
+# This workflow manages infrastructure provisioning, updates, and destruction
+# using Terraform for cloud resources and Ansible for configuration management.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 🏗️ Infrastructure as Code
+
+on:
+  # Manual trigger for infrastructure operations
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Infrastructure action to perform'
+        required: true
+        type: choice
+        options:
+          - plan
+          - apply
+          - destroy
+          - validate
+          - drift-detect
+          - cost-estimate
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      terraform_target:
+        description: 'Terraform target resource (optional)'
+        required: false
+        type: string
+      auto_approve:
+        description: 'Auto-approve changes (use with caution)'
+        required: false
+        type: boolean
+        default: false
+      force_unlock:
+        description: 'Force unlock Terraform state'
+        required: false
+        type: boolean
+        default: false
+  
+  # Trigger on infrastructure code changes
+  push:
+    paths:
+      - 'infrastructure/**'
+      - 'environments/*/terraform.tfvars'
+      - 'environments/*/config.yml'
+    branches:
+      - main
+      - develop
+  
+  # Pull request validation
+  pull_request:
+    paths:
+      - 'infrastructure/**'
+      - 'environments/*/terraform.tfvars'
+      - 'environments/*/config.yml'
+    branches:
+      - main
+      - develop
+  
+  # Scheduled drift detection
+  schedule:
+    # Daily drift detection at 3:00 AM UTC
+    - cron: '0 3 * * *'
+
+env:
+  TERRAFORM_VERSION: '1.6.0'
+  TERRAGRUNT_VERSION: '0.53.0'
+  ANSIBLE_VERSION: '8.0.0'
+  PYTHON_VERSION: '3.11'
+  TF_IN_AUTOMATION: 'true'
+  TF_INPUT: 'false'
+
+jobs:
+  # =============================================================================
+  # Infrastructure Setup and Validation
+  # =============================================================================
+  setup:
+    name: Infrastructure Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    
+    outputs:
+      action: ${{ steps.setup.outputs.action }}
+      environment: ${{ steps.setup.outputs.environment }}
+      terraform_target: ${{ steps.setup.outputs.terraform_target }}
+      auto_approve: ${{ steps.setup.outputs.auto_approve }}
+      force_unlock: ${{ steps.setup.outputs.force_unlock }}
+      changed_files: ${{ steps.changes.outputs.changed_files }}
+      terraform_changed: ${{ steps.changes.outputs.terraform_changed }}
+      ansible_changed: ${{ steps.changes.outputs.ansible_changed }}
+      environments_changed: ${{ steps.changes.outputs.environments_changed }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup parameters
+        id: setup
+        run: |
+          # Determine action and parameters
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ACTION="${{ github.event.inputs.action }}"
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            TERRAFORM_TARGET="${{ github.event.inputs.terraform_target }}"
+            AUTO_APPROVE="${{ github.event.inputs.auto_approve }}"
+            FORCE_UNLOCK="${{ github.event.inputs.force_unlock }}"
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            # Scheduled drift detection
+            ACTION="drift-detect"
+            ENVIRONMENT="production"
+            TERRAFORM_TARGET=""
+            AUTO_APPROVE="false"
+            FORCE_UNLOCK="false"
+          elif [ "${{ github.event_name }}" == "pull_request" ]; then
+            # PR validation
+            ACTION="validate"
+            ENVIRONMENT="development"
+            TERRAFORM_TARGET=""
+            AUTO_APPROVE="false"
+            FORCE_UNLOCK="false"
+          else
+            # Push trigger - plan for affected environments
+            ACTION="plan"
+            if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+              ENVIRONMENT="production"
+            else
+              ENVIRONMENT="development"
+            fi
+            TERRAFORM_TARGET=""
+            AUTO_APPROVE="false"
+            FORCE_UNLOCK="false"
+          fi
+          
+          echo "🏗️ Infrastructure Configuration:"
+          echo "- Action: $ACTION"
+          echo "- Environment: $ENVIRONMENT"
+          echo "- Terraform Target: $TERRAFORM_TARGET"
+          echo "- Auto Approve: $AUTO_APPROVE"
+          echo "- Force Unlock: $FORCE_UNLOCK"
+          
+          # Set outputs
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "terraform_target=$TERRAFORM_TARGET" >> $GITHUB_OUTPUT
+          echo "auto_approve=$AUTO_APPROVE" >> $GITHUB_OUTPUT
+          echo "force_unlock=$FORCE_UNLOCK" >> $GITHUB_OUTPUT
+
+      - name: Detect changes
+        id: changes
+        run: |
+          echo "🔍 Detecting infrastructure changes"
+          
+          # Get changed files
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }})
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            CHANGED_FILES=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }})
+          else
+            CHANGED_FILES=""
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check for Terraform changes
+          TERRAFORM_CHANGED="false"
+          if echo "$CHANGED_FILES" | grep -E '^infrastructure/terraform/' >/dev/null; then
+            TERRAFORM_CHANGED="true"
+          fi
+          
+          # Check for Ansible changes
+          ANSIBLE_CHANGED="false"
+          if echo "$CHANGED_FILES" | grep -E '^infrastructure/ansible/' >/dev/null; then
+            ANSIBLE_CHANGED="true"
+          fi
+          
+          # Check for environment configuration changes
+          ENVIRONMENTS_CHANGED="false"
+          if echo "$CHANGED_FILES" | grep -E '^environments/' >/dev/null; then
+            ENVIRONMENTS_CHANGED="true"
+          fi
+          
+          echo "📊 Change Detection Results:"
+          echo "- Terraform Changed: $TERRAFORM_CHANGED"
+          echo "- Ansible Changed: $ANSIBLE_CHANGED"
+          echo "- Environments Changed: $ENVIRONMENTS_CHANGED"
+          
+          # Set outputs
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "terraform_changed=$TERRAFORM_CHANGED" >> $GITHUB_OUTPUT
+          echo "ansible_changed=$ANSIBLE_CHANGED" >> $GITHUB_OUTPUT
+          echo "environments_changed=$ENVIRONMENTS_CHANGED" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Terraform Operations
+  # =============================================================================
+  terraform:
+    name: Terraform Operations
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    needs: setup
+    if: |
+      needs.setup.outputs.terraform_changed == 'true' ||
+      needs.setup.outputs.environments_changed == 'true' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule'
+    
+    environment:
+      name: ${{ needs.setup.outputs.environment }}
+      url: ${{ steps.terraform.outputs.application_url }}
+    
+    outputs:
+      plan_output: ${{ steps.plan.outputs.plan_output }}
+      plan_exitcode: ${{ steps.plan.outputs.plan_exitcode }}
+      apply_output: ${{ steps.apply.outputs.apply_output }}
+      drift_detected: ${{ steps.drift.outputs.drift_detected }}
+      cost_estimate: ${{ steps.cost.outputs.cost_estimate }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      - name: Setup Terragrunt
+        run: |
+          echo "📦 Installing Terragrunt"
+          wget -O terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v${{ env.TERRAGRUNT_VERSION }}/terragrunt_linux_amd64
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/
+          terragrunt --version
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Validate Terraform configuration
+        run: |
+          echo "🔍 Validating Terraform configuration"
+          
+          cd infrastructure/terraform
+          
+          # Format check
+          terraform fmt -check -recursive
+          echo "✅ Terraform format check passed"
+          
+          # Initialize and validate
+          terraform init -backend=false
+          terraform validate
+          echo "✅ Terraform validation passed"
+
+      - name: Initialize Terraform
+        run: |
+          echo "🏗️ Initializing Terraform for ${{ needs.setup.outputs.environment }}"
+          
+          cd infrastructure/terraform
+          
+          # Initialize with environment-specific backend
+          terraform init \
+            -backend-config="bucket=soulmatting-terraform-state" \
+            -backend-config="key=soulmatting/${{ needs.setup.outputs.environment }}/terraform.tfstate" \
+            -backend-config="region=us-west-2" \
+            -backend-config="dynamodb_table=soulmatting-terraform-locks"
+          
+          echo "✅ Terraform initialized"
+
+      - name: Force unlock Terraform state (if requested)
+        if: needs.setup.outputs.force_unlock == 'true'
+        run: |
+          echo "🔓 Force unlocking Terraform state"
+          
+          cd infrastructure/terraform
+          
+          # Force unlock (requires lock ID - this is a placeholder)
+          # terraform force-unlock -force $LOCK_ID
+          echo "⚠️ Force unlock requested but requires manual intervention"
+          echo "Please provide the lock ID if needed"
+
+      - name: Terraform plan
+        id: plan
+        if: |
+          needs.setup.outputs.action == 'plan' ||
+          needs.setup.outputs.action == 'apply' ||
+          needs.setup.outputs.action == 'validate' ||
+          needs.setup.outputs.action == 'drift-detect'
+        run: |
+          echo "📋 Creating Terraform plan for ${{ needs.setup.outputs.environment }}"
+          
+          cd infrastructure/terraform
+          
+          # Prepare plan command
+          PLAN_CMD="terraform plan"
+          PLAN_CMD="$PLAN_CMD -var-file=\"../../environments/${{ needs.setup.outputs.environment }}/terraform.tfvars\""
+          PLAN_CMD="$PLAN_CMD -var=\"environment=${{ needs.setup.outputs.environment }}\""
+          PLAN_CMD="$PLAN_CMD -out=\"${{ needs.setup.outputs.environment }}.tfplan\""
+          
+          # Add target if specified
+          if [ -n "${{ needs.setup.outputs.terraform_target }}" ]; then
+            PLAN_CMD="$PLAN_CMD -target=\"${{ needs.setup.outputs.terraform_target }}\""
+          fi
+          
+          # Add detailed exit code for drift detection
+          if [ "${{ needs.setup.outputs.action }}" == "drift-detect" ]; then
+            PLAN_CMD="$PLAN_CMD -detailed-exitcode"
+          fi
+          
+          echo "Executing: $PLAN_CMD"
+          
+          # Execute plan and capture output
+          set +e
+          PLAN_OUTPUT=$(eval $PLAN_CMD 2>&1)
+          PLAN_EXITCODE=$?
+          set -e
+          
+          echo "Plan exit code: $PLAN_EXITCODE"
+          echo "Plan output:"
+          echo "$PLAN_OUTPUT"
+          
+          # Set outputs
+          echo "plan_exitcode=$PLAN_EXITCODE" >> $GITHUB_OUTPUT
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$PLAN_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Handle exit codes
+          if [ "${{ needs.setup.outputs.action }}" == "drift-detect" ]; then
+            case $PLAN_EXITCODE in
+              0)
+                echo "✅ No changes detected - infrastructure is up to date"
+                ;;
+              1)
+                echo "❌ Terraform plan failed"
+                exit 1
+                ;;
+              2)
+                echo "⚠️ Drift detected - infrastructure changes found"
+                ;;
+            esac
+          else
+            if [ $PLAN_EXITCODE -ne 0 ]; then
+              echo "❌ Terraform plan failed"
+              exit 1
+            fi
+            echo "✅ Terraform plan completed successfully"
+          fi
+
+      - name: Detect infrastructure drift
+        id: drift
+        if: needs.setup.outputs.action == 'drift-detect'
+        run: |
+          echo "🔍 Analyzing infrastructure drift"
+          
+          PLAN_EXITCODE="${{ steps.plan.outputs.plan_exitcode }}"
+          DRIFT_DETECTED="false"
+          
+          if [ "$PLAN_EXITCODE" == "2" ]; then
+            DRIFT_DETECTED="true"
+            echo "⚠️ Infrastructure drift detected!"
+            
+            # Parse plan output for changes
+            echo "📊 Drift Analysis:"
+            echo "${{ steps.plan.outputs.plan_output }}" | grep -E "(Plan:|will be|must be)" || true
+          else
+            echo "✅ No infrastructure drift detected"
+          fi
+          
+          echo "drift_detected=$DRIFT_DETECTED" >> $GITHUB_OUTPUT
+
+      - name: Cost estimation
+        id: cost
+        if: |
+          needs.setup.outputs.action == 'cost-estimate' ||
+          (needs.setup.outputs.action == 'plan' && github.event_name == 'pull_request')
+        run: |
+          echo "💰 Estimating infrastructure costs"
+          
+          # Install Infracost
+          curl -fsSL https://raw.githubusercontent.com/infracost/infracost/master/scripts/install.sh | sh
+          
+          cd infrastructure/terraform
+          
+          # Generate cost estimate
+          infracost breakdown \
+            --path . \
+            --terraform-var-file="../../environments/${{ needs.setup.outputs.environment }}/terraform.tfvars" \
+            --terraform-var="environment=${{ needs.setup.outputs.environment }}" \
+            --format json \
+            --out-file cost-estimate.json
+          
+          # Generate human-readable report
+          infracost output \
+            --path cost-estimate.json \
+            --format table \
+            --out-file cost-estimate.txt
+          
+          # Display cost estimate
+          echo "📊 Cost Estimate:"
+          cat cost-estimate.txt
+          
+          # Set output
+          COST_ESTIMATE=$(cat cost-estimate.txt)
+          echo "cost_estimate<<EOF" >> $GITHUB_OUTPUT
+          echo "$COST_ESTIMATE" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Cost estimation completed"
+
+      - name: Terraform apply
+        id: apply
+        if: |
+          needs.setup.outputs.action == 'apply' &&
+          (needs.setup.outputs.auto_approve == 'true' || github.ref == 'refs/heads/main')
+        run: |
+          echo "🚀 Applying Terraform changes for ${{ needs.setup.outputs.environment }}"
+          
+          cd infrastructure/terraform
+          
+          # Apply the plan
+          APPLY_OUTPUT=$(terraform apply "${{ needs.setup.outputs.environment }}.tfplan" 2>&1)
+          
+          echo "Apply output:"
+          echo "$APPLY_OUTPUT"
+          
+          # Set output
+          echo "apply_output<<EOF" >> $GITHUB_OUTPUT
+          echo "$APPLY_OUTPUT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          echo "✅ Terraform apply completed successfully"
+
+      - name: Terraform destroy
+        if: needs.setup.outputs.action == 'destroy'
+        run: |
+          echo "💥 Destroying Terraform infrastructure for ${{ needs.setup.outputs.environment }}"
+          
+          # Require manual confirmation for destroy
+          if [ "${{ needs.setup.outputs.auto_approve }}" != "true" ]; then
+            echo "❌ Destroy operation requires auto_approve=true for safety"
+            exit 1
+          fi
+          
+          cd infrastructure/terraform
+          
+          # Destroy infrastructure
+          terraform destroy \
+            -var-file="../../environments/${{ needs.setup.outputs.environment }}/terraform.tfvars" \
+            -var="environment=${{ needs.setup.outputs.environment }}" \
+            -auto-approve
+          
+          echo "✅ Infrastructure destroyed successfully"
+
+      - name: Extract Terraform outputs
+        id: terraform
+        if: |
+          needs.setup.outputs.action == 'apply' ||
+          needs.setup.outputs.action == 'plan'
+        run: |
+          echo "📤 Extracting Terraform outputs"
+          
+          cd infrastructure/terraform
+          
+          # Get outputs if state exists
+          if terraform show >/dev/null 2>&1; then
+            # Extract key outputs
+            APPLICATION_URL=$(terraform output -raw application_url 2>/dev/null || echo "")
+            DATABASE_ENDPOINT=$(terraform output -raw database_endpoint 2>/dev/null || echo "")
+            REDIS_ENDPOINT=$(terraform output -raw redis_endpoint 2>/dev/null || echo "")
+            
+            echo "🔗 Infrastructure Outputs:"
+            echo "- Application URL: $APPLICATION_URL"
+            echo "- Database Endpoint: $DATABASE_ENDPOINT"
+            echo "- Redis Endpoint: $REDIS_ENDPOINT"
+            
+            # Set outputs
+            echo "application_url=$APPLICATION_URL" >> $GITHUB_OUTPUT
+            echo "database_endpoint=$DATABASE_ENDPOINT" >> $GITHUB_OUTPUT
+            echo "redis_endpoint=$REDIS_ENDPOINT" >> $GITHUB_OUTPUT
+          else
+            echo "⏭️ No Terraform state found - skipping output extraction"
+          fi
+
+      - name: Upload Terraform artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-${{ needs.setup.outputs.environment }}
+          path: |
+            infrastructure/terraform/${{ needs.setup.outputs.environment }}.tfplan
+            infrastructure/terraform/cost-estimate.*
+            infrastructure/terraform/.terraform.lock.hcl
+          retention-days: 30
+
+  # =============================================================================
+  # Ansible Configuration Management
+  # =============================================================================
+  ansible:
+    name: Ansible Configuration
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: [setup, terraform]
+    if: |
+      always() &&
+      !cancelled() &&
+      (needs.setup.outputs.ansible_changed == 'true' ||
+       needs.terraform.result == 'success' ||
+       github.event_name == 'workflow_dispatch')
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Ansible
+        run: |
+          echo "📦 Installing Ansible and dependencies"
+          pip install ansible==${{ env.ANSIBLE_VERSION }}
+          pip install boto3 botocore
+          ansible --version
+          
+          # Install Ansible collections
+          ansible-galaxy collection install community.general
+          ansible-galaxy collection install ansible.posix
+          ansible-galaxy collection install community.docker
+
+      - name: Configure AWS credentials for Ansible
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Validate Ansible playbooks
+        run: |
+          echo "🔍 Validating Ansible playbooks"
+          
+          cd infrastructure/ansible
+          
+          # Syntax check for all playbooks
+          for playbook in playbooks/*.yml; do
+            if [ -f "$playbook" ]; then
+              echo "Checking syntax: $playbook"
+              ansible-playbook --syntax-check "$playbook"
+            fi
+          done
+          
+          echo "✅ Ansible syntax validation passed"
+
+      - name: Generate dynamic inventory
+        run: |
+          echo "📋 Generating dynamic inventory for ${{ needs.setup.outputs.environment }}"
+          
+          cd infrastructure/ansible
+          
+          # Generate inventory from Terraform outputs
+          python scripts/generate-inventory.py \
+            --environment "${{ needs.setup.outputs.environment }}" \
+            --terraform-dir "../terraform" \
+            --output "inventories/${{ needs.setup.outputs.environment }}/hosts.yml"
+          
+          echo "✅ Dynamic inventory generated"
+
+      - name: Run Ansible playbooks
+        if: |
+          needs.setup.outputs.action == 'apply' ||
+          needs.setup.outputs.action == 'configure' ||
+          needs.setup.outputs.ansible_changed == 'true'
+        run: |
+          echo "⚙️ Running Ansible configuration for ${{ needs.setup.outputs.environment }}"
+          
+          cd infrastructure/ansible
+          
+          # Run main configuration playbook
+          ansible-playbook \
+            -i "inventories/${{ needs.setup.outputs.environment }}/hosts.yml" \
+            -e "environment=${{ needs.setup.outputs.environment }}" \
+            -e "@../../environments/${{ needs.setup.outputs.environment }}/config.yml" \
+            --vault-password-file <(echo "${{ secrets.ANSIBLE_VAULT_PASSWORD }}") \
+            playbooks/site.yml
+          
+          echo "✅ Ansible configuration completed"
+
+      - name: Run Ansible tests
+        run: |
+          echo "🧪 Running Ansible tests for ${{ needs.setup.outputs.environment }}"
+          
+          cd infrastructure/ansible
+          
+          # Run test playbook
+          ansible-playbook \
+            -i "inventories/${{ needs.setup.outputs.environment }}/hosts.yml" \
+            -e "environment=${{ needs.setup.outputs.environment }}" \
+            playbooks/test.yml
+          
+          echo "✅ Ansible tests completed"
+
+      - name: Upload Ansible artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ansible-${{ needs.setup.outputs.environment }}
+          path: |
+            infrastructure/ansible/inventories/${{ needs.setup.outputs.environment }}/
+            infrastructure/ansible/logs/
+          retention-days: 30
+
+  # =============================================================================
+  # Infrastructure Report Generation
+  # =============================================================================
+  report:
+    name: Generate Infrastructure Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, terraform, ansible]
+    if: always() && !cancelled()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: infrastructure-results
+
+      - name: Generate infrastructure report
+        run: |
+          echo "📊 Generating infrastructure report"
+          
+          # Create report directory
+          mkdir -p reports
+          
+          # Generate report
+          cat > reports/infrastructure-report.md << EOF
+          # 🏗️ Infrastructure Report
+          
+          **Action:** ${{ needs.setup.outputs.action }}
+          **Environment:** ${{ needs.setup.outputs.environment }}
+          **Timestamp:** $(date -u)
+          **Triggered by:** ${{ github.actor }}
+          
+          ## 📊 Summary
+          
+          | Component | Status | Details |
+          |-----------|--------|----------|
+          EOF
+          
+          # Add Terraform status
+          if [ "${{ needs.terraform.result }}" == "success" ]; then
+            echo "| Terraform | ✅ Success | Infrastructure operations completed |
+" >> reports/infrastructure-report.md
+          elif [ "${{ needs.terraform.result }}" == "failure" ]; then
+            echo "| Terraform | ❌ Failed | Infrastructure operations failed |
+" >> reports/infrastructure-report.md
+          else
+            echo "| Terraform | ⏭️ Skipped | Not executed in this run |
+" >> reports/infrastructure-report.md
+          fi
+          
+          # Add Ansible status
+          if [ "${{ needs.ansible.result }}" == "success" ]; then
+            echo "| Ansible | ✅ Success | Configuration management completed |
+" >> reports/infrastructure-report.md
+          elif [ "${{ needs.ansible.result }}" == "failure" ]; then
+            echo "| Ansible | ❌ Failed | Configuration management failed |
+" >> reports/infrastructure-report.md
+          else
+            echo "| Ansible | ⏭️ Skipped | Not executed in this run |
+" >> reports/infrastructure-report.md
+          fi
+          
+          # Add detailed results
+          cat >> reports/infrastructure-report.md << EOF
+          
+          ## 📝 Detailed Results
+          
+          ### Terraform Results
+          
+          **Plan Exit Code:** ${{ needs.terraform.outputs.plan_exitcode }}
+          
+          EOF
+          
+          # Add plan output if available
+          if [ -n "${{ needs.terraform.outputs.plan_output }}" ]; then
+            cat >> reports/infrastructure-report.md << EOF
+          **Plan Output:**
+          \`\`\`
+          ${{ needs.terraform.outputs.plan_output }}
+          \`\`\`
+          
+          EOF
+          fi
+          
+          # Add cost estimate if available
+          if [ -n "${{ needs.terraform.outputs.cost_estimate }}" ]; then
+            cat >> reports/infrastructure-report.md << EOF
+          ### 💰 Cost Estimate
+          
+          \`\`\`
+          ${{ needs.terraform.outputs.cost_estimate }}
+          \`\`\`
+          
+          EOF
+          fi
+          
+          # Add drift detection results
+          if [ "${{ needs.terraform.outputs.drift_detected }}" == "true" ]; then
+            cat >> reports/infrastructure-report.md << EOF
+          ### ⚠️ Infrastructure Drift Detected
+          
+          Infrastructure drift has been detected. Please review the plan output above for details.
+          
+          EOF
+          fi
+          
+          # Add footer
+          cat >> reports/infrastructure-report.md << EOF
+          
+          ---
+          
+          **Generated:** $(date -u)
+          **Workflow:** Infrastructure as Code
+          **Run ID:** ${{ github.run_id }}
+          EOF
+          
+          echo "✅ Infrastructure report generated"
+
+      - name: Upload infrastructure report
+        uses: actions/upload-artifact@v4
+        with:
+          name: infrastructure-report
+          path: |
+            reports/infrastructure-report.md
+            infrastructure-results/
+          retention-days: 30
+
+      - name: Generate GitHub step summary
+        run: |
+          echo "# 🏗️ Infrastructure Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ needs.setup.outputs.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "## 📊 Results" >> $GITHUB_STEP_SUMMARY
+          
+          # Add Terraform results
+          if [ "${{ needs.terraform.result }}" == "success" ]; then
+            echo "✅ **Terraform**: Operations completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.terraform.result }}" == "failure" ]; then
+            echo "❌ **Terraform**: Operations failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ **Terraform**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add Ansible results
+          if [ "${{ needs.ansible.result }}" == "success" ]; then
+            echo "✅ **Ansible**: Configuration completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.ansible.result }}" == "failure" ]; then
+            echo "❌ **Ansible**: Configuration failed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⏭️ **Ansible**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Add drift detection results
+          if [ "${{ needs.terraform.outputs.drift_detected }}" == "true" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "⚠️ **Infrastructure Drift Detected**: Please review the detailed report." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed results are available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment on PR (if applicable)
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read the infrastructure report
+            let reportContent = '';
+            try {
+              reportContent = fs.readFileSync('reports/infrastructure-report.md', 'utf8');
+            } catch (error) {
+              reportContent = 'Infrastructure report not available.';
+            }
+            
+            // Create comment body
+            const commentBody = `## 🏗️ Infrastructure Plan Results
+            
+            **Environment:** ${{ needs.setup.outputs.environment }}
+            **Action:** ${{ needs.setup.outputs.action }}
+            
+            ### Summary
+            - **Terraform:** ${{ needs.terraform.result }}
+            - **Ansible:** ${{ needs.ansible.result }}
+            
+            <details>
+            <summary>📊 Detailed Report</summary>
+            
+            ${reportContent}
+            
+            </details>
+            
+            ---
+            *This comment was automatically generated by the Infrastructure workflow.*`;
+            
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: commentBody
+            });

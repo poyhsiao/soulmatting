@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/kimhsiao/soulmatting/wiki
+    about: Check our documentation for answers to common questions
+  - name: 💬 Discussions
+    url: https://github.com/kimhsiao/soulmatting/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔒 Private Security Report
+    url: https://github.com/kimhsiao/soulmatting/security/advisories/new
+    about: Report sensitive security vulnerabilities privately
+  - name: 📧 Contact Team
+    url: mailto:support@soulmatting.com
+    about: Contact our team directly for business inquiries
+  - name: 🐛 Bug Bounty Program
+    url: https://github.com/kimhsiao/soulmatting/security/policy
+    about: Learn about our responsible disclosure and bug bounty program

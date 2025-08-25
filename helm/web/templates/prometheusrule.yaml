@@ -1,0 +1,19 @@
+{{- if .Values.monitoring.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ include "soulmatting-web.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+    {{- include "soulmatting-web.labels" . | nindent 4 }}
+    {{- if .Values.monitoring.prometheusRule.additionalLabels }}
+    {{- toYaml .Values.monitoring.prometheusRule.additionalLabels | nindent 4 }}
+    {{- end }}
+spec:
+  groups:
+    - name: {{ include "soulmatting-web.fullname" . }}.rules
+      rules:
+        {{- range .Values.monitoring.prometheusRule.rules }}
+        - {{- toYaml . | nindent 10 }}
+        {{- end }}
+{{- end }}

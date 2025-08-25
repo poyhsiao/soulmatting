@@ -1,0 +1,189 @@
+# SoulMatting User Service - Default Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# Application configuration
+app:
+  name: soulmatting-user
+  version: '1.0.0'
+  environment: development
+
+# Image configuration
+image:
+  repository: ghcr.io/kimhsiao/soulmatting/user
+  pullPolicy: IfNotPresent
+  tag: 'latest'
+
+imagePullSecrets: []
+nameOverride: ''
+fullnameOverride: ''
+
+# Deployment configuration
+replicaCount: 1
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: ''
+  annotations: {}
+  hosts:
+    - host: user.soulmatting.local
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+# Resource management
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 250m
+    memory: 256Mi
+
+# Autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3
+
+# Environment variables
+env:
+  NODE_ENV: development
+  PORT: 3000
+  LOG_LEVEL: info
+
+# Secrets
+secrets:
+  enabled: true
+  name: ''
+  data:
+    DATABASE_URL: ''
+    REDIS_URL: ''
+    JWT_SECRET: ''
+    API_KEY: ''
+
+# Config maps
+configMap:
+  enabled: true
+  name: ''
+  data:
+    APP_NAME: 'SoulMatting User Service'
+    APP_VERSION: '1.0.0'
+    CACHE_TTL: '3600'
+    MAX_CONNECTIONS: '100'
+
+# Persistence
+persistence:
+  enabled: false
+  storageClass: ''
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  mountPath: /data
+
+# Service account
+serviceAccount:
+  create: true
+  automount: true
+  annotations: {}
+  name: ''
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1
+  maxUnavailable: ''
+
+# Network policy
+networkPolicy:
+  enabled: false
+
+# Pod annotations and labels
+podAnnotations: {}
+podLabels: {}
+
+# Pod security context
+podSecurityContext:
+  fsGroup: 2000
+
+# Security context
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Node selector
+nodeSelector: {}
+
+# Tolerations
+tolerations: []
+
+# Affinity
+affinity: {}
+
+# Monitoring
+monitoring:
+  enabled: false
+  serviceMonitor:
+    enabled: false
+    interval: 30s
+    path: /metrics
+    port: http
+
+# External dependencies
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: 'postgres'
+    database: 'soulmatting_user'
+  primary:
+    persistence:
+      enabled: false

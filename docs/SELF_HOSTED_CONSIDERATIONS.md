@@ -7,13 +7,16 @@
 
 ## Overview
 
-This document outlines additional considerations for self-hosted deployment of the SoulMatting platform beyond the core architecture design. These considerations are crucial for successful production deployment, maintenance, and long-term operation.
+This document outlines additional considerations for self-hosted deployment of the SoulMatting
+platform beyond the core architecture design. These considerations are crucial for successful
+production deployment, maintenance, and long-term operation.
 
 ## 1. Infrastructure Requirements
 
 ### 1.1 Hardware Specifications
 
 #### Minimum Production Requirements
+
 - **CPU:** 8 cores (16 threads) Intel Xeon or AMD EPYC
 - **RAM:** 32GB DDR4 (64GB recommended for high traffic)
 - **Storage:** 1TB NVMe SSD (primary) + 4TB HDD (backup/logs)
@@ -21,6 +24,7 @@ This document outlines additional considerations for self-hosted deployment of t
 - **Redundancy:** RAID 1 for OS, RAID 10 for data
 
 #### Recommended Production Setup
+
 - **Load Balancer Node:** 4 cores, 8GB RAM, 100GB SSD
 - **Application Nodes (2x):** 8 cores, 16GB RAM, 500GB SSD each
 - **Database Node:** 16 cores, 64GB RAM, 2TB NVMe SSD
@@ -35,24 +39,24 @@ graph TB
         LB[Load Balancer]
         WAF[Web Application Firewall]
     end
-    
+
     subgraph "Application Tier"
         APP1[App Server 1]
         APP2[App Server 2]
     end
-    
+
     subgraph "Data Tier"
         DB[PostgreSQL Primary]
         DB_REPLICA[PostgreSQL Replica]
         REDIS[Redis Cluster]
         MINIO[MinIO Cluster]
     end
-    
+
     subgraph "Management"
         MONITOR[Monitoring]
         BACKUP[Backup Server]
     end
-    
+
     INTERNET --> WAF
     WAF --> LB
     LB --> APP1
@@ -67,6 +71,7 @@ graph TB
 ### 2.1 Network Security
 
 #### Firewall Configuration
+
 ```bash
 # UFW firewall rules example
 sudo ufw default deny incoming
@@ -87,6 +92,7 @@ sudo ufw enable
 ```
 
 #### SSL/TLS Configuration
+
 - **Certificate Management:** Let's Encrypt with automatic renewal
 - **TLS Version:** Minimum TLS 1.2, prefer TLS 1.3
 - **Cipher Suites:** Modern cipher suites only
@@ -95,6 +101,7 @@ sudo ufw enable
 ### 2.2 Application Security
 
 #### Environment Variables Security
+
 ```bash
 # Secure .env file permissions
 chmod 600 .env
@@ -106,6 +113,7 @@ docker secret create jwt_secret /path/to/jwt/secret
 ```
 
 #### Database Security
+
 - **Authentication:** Strong passwords, certificate-based auth
 - **Encryption:** Encrypt data at rest and in transit
 - **Access Control:** Role-based access with principle of least privilege
@@ -116,6 +124,7 @@ docker secret create jwt_secret /path/to/jwt/secret
 ### 3.1 Backup Strategy
 
 #### PostgreSQL Backup
+
 ```bash
 #!/bin/bash
 # Daily PostgreSQL backup script
@@ -135,6 +144,7 @@ aws s3 cp "$BACKUP_DIR/soulmatting_$DATE.sql.gz" s3://backup-bucket/postgresql/
 ```
 
 #### MinIO Backup
+
 ```bash
 #!/bin/bash
 # MinIO data backup using mc (MinIO Client)
@@ -153,11 +163,13 @@ mc cp --recursive $SOURCE_ALIAS/$BUCKET $TARGET_ALIAS/snapshots/$(date +%Y%m%d)/
 ### 3.2 Disaster Recovery Plan
 
 #### Recovery Time Objectives (RTO)
+
 - **Critical Services:** 15 minutes
 - **Database Recovery:** 30 minutes
 - **Full System Recovery:** 2 hours
 
 #### Recovery Point Objectives (RPO)
+
 - **Database:** 5 minutes (continuous replication)
 - **File Storage:** 1 hour (hourly sync)
 - **Configuration:** 24 hours (daily backup)
@@ -167,6 +179,7 @@ mc cp --recursive $SOURCE_ALIAS/$BUCKET $TARGET_ALIAS/snapshots/$(date +%Y%m%d)/
 ### 4.1 System Monitoring
 
 #### Prometheus Configuration
+
 ```yaml
 # prometheus.yml
 global:
@@ -174,21 +187,21 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-  - "alert_rules.yml"
+  - 'alert_rules.yml'
 
 scrape_configs:
   - job_name: 'node-exporter'
     static_configs:
       - targets: ['localhost:9100']
-  
+
   - job_name: 'postgres-exporter'
     static_configs:
       - targets: ['localhost:9187']
-  
+
   - job_name: 'redis-exporter'
     static_configs:
       - targets: ['localhost:9121']
-  
+
   - job_name: 'minio-exporter'
     static_configs:
       - targets: ['localhost:9000']
@@ -200,6 +213,7 @@ alerting:
 ```
 
 #### Key Metrics to Monitor
+
 - **System Metrics:** CPU, Memory, Disk I/O, Network
 - **Application Metrics:** Response time, Error rate, Throughput
 - **Database Metrics:** Connection count, Query performance, Replication lag
@@ -208,6 +222,7 @@ alerting:
 ### 4.2 Log Management
 
 #### Centralized Logging with ELK Stack
+
 ```yaml
 # docker-compose.logging.yml
 version: '3.8'
@@ -216,25 +231,25 @@ services:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
     environment:
       - discovery.type=single-node
-      - "ES_JAVA_OPTS=-Xms2g -Xmx2g"
+      - 'ES_JAVA_OPTS=-Xms2g -Xmx2g'
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
     ports:
-      - "9200:9200"
+      - '9200:9200'
 
   logstash:
     image: docker.elastic.co/logstash/logstash:8.11.0
     volumes:
       - ./logstash/config:/usr/share/logstash/pipeline
     ports:
-      - "5044:5044"
+      - '5044:5044'
     depends_on:
       - elasticsearch
 
   kibana:
     image: docker.elastic.co/kibana/kibana:8.11.0
     ports:
-      - "5601:5601"
+      - '5601:5601'
     environment:
       - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
     depends_on:
@@ -249,6 +264,7 @@ volumes:
 ### 5.1 Database Optimization
 
 #### PostgreSQL Configuration
+
 ```sql
 -- postgresql.conf optimizations
 shared_buffers = '8GB'                    -- 25% of total RAM
@@ -268,6 +284,7 @@ log_disconnections = on
 ```
 
 #### Database Indexing Strategy
+
 ```sql
 -- Essential indexes for SoulMatting
 CREATE INDEX CONCURRENTLY idx_users_location ON users USING GIST (location);
@@ -283,6 +300,7 @@ CREATE INDEX CONCURRENTLY idx_active_users ON users (last_active) WHERE status =
 ### 5.2 Caching Strategy
 
 #### Redis Configuration
+
 ```redis
 # redis.conf optimizations
 maxmemory 8gb
@@ -305,6 +323,7 @@ timeout 0
 ### 6.1 Horizontal Scaling Strategy
 
 #### Load Balancer Configuration (Nginx)
+
 ```nginx
 upstream app_servers {
     least_conn;
@@ -316,10 +335,10 @@ upstream app_servers {
 server {
     listen 80;
     server_name soulmatting.com;
-    
+
     # Rate limiting
     limit_req_zone $binary_remote_addr zone=api:10m rate=10r/s;
-    
+
     location / {
         limit_req zone=api burst=20 nodelay;
         proxy_pass http://app_servers;
@@ -327,7 +346,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # Health check
         proxy_next_upstream error timeout invalid_header http_500 http_502 http_503 http_504;
     }
@@ -337,6 +356,7 @@ server {
 ### 6.2 Database Scaling
 
 #### Read Replica Setup
+
 ```yaml
 # docker-compose.scale.yml
 version: '3.8'
@@ -381,6 +401,7 @@ services:
 ### 7.1 Data Protection (GDPR/CCPA)
 
 #### Data Retention Policy
+
 ```sql
 -- Automated data cleanup procedures
 CREATE OR REPLACE FUNCTION cleanup_old_data()
@@ -388,15 +409,15 @@ RETURNS void AS $$
 BEGIN
     -- Delete old messages (older than 2 years)
     DELETE FROM messages WHERE created_at < NOW() - INTERVAL '2 years';
-    
+
     -- Anonymize deleted user data
-    UPDATE users SET 
+    UPDATE users SET
         email = 'deleted_' || id || '@example.com',
         phone = NULL,
         first_name = 'Deleted',
         last_name = 'User'
     WHERE deleted_at < NOW() - INTERVAL '30 days';
-    
+
     -- Delete old audit logs (older than 7 years)
     DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL '7 years';
 END;
@@ -409,6 +430,7 @@ SELECT cron.schedule('cleanup-old-data', '0 2 * * 0', 'SELECT cleanup_old_data()
 ### 7.2 Audit and Compliance
 
 #### Audit Logging
+
 ```sql
 -- Audit table for compliance
 CREATE TABLE audit_logs (
@@ -429,7 +451,7 @@ CREATE OR REPLACE FUNCTION audit_trigger_function()
 RETURNS TRIGGER AS $$
 BEGIN
     INSERT INTO audit_logs (
-        user_id, action, table_name, record_id, 
+        user_id, action, table_name, record_id,
         old_values, new_values, ip_address
     ) VALUES (
         COALESCE(current_setting('app.current_user_id', true)::INTEGER, 0),
@@ -450,6 +472,7 @@ $$ LANGUAGE plpgsql;
 ### 8.1 Update Strategy
 
 #### Blue-Green Deployment
+
 ```bash
 #!/bin/bash
 # Blue-Green deployment script
@@ -489,59 +512,57 @@ echo "Deployment completed successfully"
 ### 8.2 Database Migrations
 
 #### Migration Strategy
+
 ```javascript
 // Migration script with rollback capability
 const { Pool } = require('pg');
 const fs = require('fs');
 
 class MigrationManager {
-    constructor(dbConfig) {
-        this.pool = new Pool(dbConfig);
-    }
+  constructor(dbConfig) {
+    this.pool = new Pool(dbConfig);
+  }
 
-    async runMigration(migrationFile) {
-        const client = await this.pool.connect();
-        
-        try {
-            await client.query('BEGIN');
-            
-            // Create migration tracking table if not exists
-            await client.query(`
+  async runMigration(migrationFile) {
+    const client = await this.pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Create migration tracking table if not exists
+      await client.query(`
                 CREATE TABLE IF NOT EXISTS schema_migrations (
                     version VARCHAR(255) PRIMARY KEY,
                     applied_at TIMESTAMP DEFAULT NOW()
                 )
             `);
-            
-            const migration = fs.readFileSync(migrationFile, 'utf8');
-            const version = path.basename(migrationFile, '.sql');
-            
-            // Check if migration already applied
-            const result = await client.query(
-                'SELECT version FROM schema_migrations WHERE version = $1',
-                [version]
-            );
-            
-            if (result.rows.length === 0) {
-                await client.query(migration);
-                await client.query(
-                    'INSERT INTO schema_migrations (version) VALUES ($1)',
-                    [version]
-                );
-                console.log(`Migration ${version} applied successfully`);
-            } else {
-                console.log(`Migration ${version} already applied`);
-            }
-            
-            await client.query('COMMIT');
-        } catch (error) {
-            await client.query('ROLLBACK');
-            console.error(`Migration failed: ${error.message}`);
-            throw error;
-        } finally {
-            client.release();
-        }
+
+      const migration = fs.readFileSync(migrationFile, 'utf8');
+      const version = path.basename(migrationFile, '.sql');
+
+      // Check if migration already applied
+      const result = await client.query(
+        'SELECT version FROM schema_migrations WHERE version = $1',
+        [version]
+      );
+
+      if (result.rows.length === 0) {
+        await client.query(migration);
+        await client.query('INSERT INTO schema_migrations (version) VALUES ($1)', [version]);
+        console.log(`Migration ${version} applied successfully`);
+      } else {
+        console.log(`Migration ${version} already applied`);
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      console.error(`Migration failed: ${error.message}`);
+      throw error;
+    } finally {
+      client.release();
     }
+  }
 }
 ```
 
@@ -550,6 +571,7 @@ class MigrationManager {
 ### 9.1 Resource Optimization
 
 #### Container Resource Limits
+
 ```yaml
 # docker-compose.prod.yml with resource limits
 version: '3.8'
@@ -592,6 +614,7 @@ services:
 ### 9.2 Storage Optimization
 
 #### Automated Cleanup Scripts
+
 ```bash
 #!/bin/bash
 # Storage cleanup automation
@@ -619,12 +642,14 @@ echo "Cleanup completed at $(date)"
 ### 10.1 Incident Response Plan
 
 #### Emergency Contacts
+
 - **System Administrator:** [Contact Info]
 - **Database Administrator:** [Contact Info]
 - **Security Team:** [Contact Info]
 - **Management:** [Contact Info]
 
 #### Emergency Procedures
+
 ```bash
 #!/bin/bash
 # Emergency shutdown script
@@ -652,6 +677,7 @@ echo "Emergency shutdown completed"
 ### 10.2 Recovery Procedures
 
 #### Service Recovery Checklist
+
 1. **Assess the situation**
    - [ ] Identify root cause
    - [ ] Estimate impact
@@ -678,9 +704,12 @@ echo "Emergency shutdown completed"
 
 ## Conclusion
 
-This document provides comprehensive guidance for self-hosted deployment considerations. Regular review and updates of these procedures are essential for maintaining a robust, secure, and scalable SoulMatting platform.
+This document provides comprehensive guidance for self-hosted deployment considerations. Regular
+review and updates of these procedures are essential for maintaining a robust, secure, and scalable
+SoulMatting platform.
 
 ### Next Steps
+
 1. Review and customize configurations for your specific environment
 2. Implement monitoring and alerting systems
 3. Establish backup and disaster recovery procedures
@@ -688,6 +717,7 @@ This document provides comprehensive guidance for self-hosted deployment conside
 5. Train team members on emergency procedures
 
 ### Regular Maintenance Schedule
+
 - **Daily:** Monitor system health, check backups
 - **Weekly:** Review security logs, update dependencies
 - **Monthly:** Performance optimization, capacity planning

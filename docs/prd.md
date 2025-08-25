@@ -1,9 +1,6 @@
 # Product Requirements Document (PRD) - SoulMatting Platform
 
-**Version:** 1.0.0
-**Created:** 2025-01-21
-**Updated:** 2025-01-21
-**Author:** Kim Hsiao
+**Version:** 1.0.0 **Created:** 2025-01-21 **Updated:** 2025-01-21 **Author:** Kim Hsiao
 
 ## Changelog
 
@@ -15,11 +12,16 @@
 
 ### 1.1 Product Vision
 
-SoulMatting is a next-generation online dating platform designed specifically for creating meaningful connections through intelligent matching algorithms, real-time communication, and comprehensive safety features. The platform prioritizes user experience, privacy, and authentic relationship building.
+SoulMatting is a next-generation online dating platform designed specifically for creating
+meaningful connections through intelligent matching algorithms, real-time communication, and
+comprehensive safety features. The platform prioritizes user experience, privacy, and authentic
+relationship building.
 
 ### 1.2 Product Mission
 
-To revolutionize online dating by providing a secure, intuitive, and engaging platform that helps users find genuine connections based on compatibility, shared interests, and meaningful interactions.
+To revolutionize online dating by providing a secure, intuitive, and engaging platform that helps
+users find genuine connections based on compatibility, shared interests, and meaningful
+interactions.
 
 ### 1.3 Target Market
 
@@ -163,7 +165,7 @@ To revolutionize online dating by providing a secure, intuitive, and engaging pl
 
 #### 4.1.3 Data Layer
 
-- **Primary Database:** PostgreSQL 15+ with connection pooling
+- **Primary Database:** PostgreSQL 16+ with connection pooling
 - **Document Store:** MongoDB for flexible matching data and user preferences
 - **Cache Layer:** Redis Cluster for session management and real-time data
 - **Search Engine:** Meilisearch for user discovery and content search
@@ -201,7 +203,7 @@ To revolutionize online dating by providing a secure, intuitive, and engaging pl
 #### 4.2.1 Self-Hosted Infrastructure
 
 - **Deployment Strategy:** Docker Compose for self-hosted environments
-- **Database:** PostgreSQL 15+ with Supabase stack integration
+- **Database:** PostgreSQL 16+ with Supabase stack integration
 - **Object Storage:** MinIO S3-compatible storage for media files
 - **Caching:** Redis 7+ for session management and performance
 - **API Gateway:** Kong Gateway with Supabase integration
@@ -408,6 +410,5 @@ To revolutionize online dating by providing a secure, intuitive, and engaging pl
 
 ---
 
-**Document Status:** Approved for Development
-**Next Review Date:** 2025-02-21
-**Stakeholder Approval:** [Approved]
+**Document Status:** Approved for Development **Next Review Date:** 2025-02-21 **Stakeholder
+Approval:** [Approved]

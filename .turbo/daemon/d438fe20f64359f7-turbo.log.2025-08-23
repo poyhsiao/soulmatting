@@ -1,0 +1,584 @@
+2025-08-23T15:23:52.568251Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/.turbo-cookie"), AnchoredSystemPathBuf(".turbo/cookies/1.cookie")}
+2025-08-23T15:23:52.568264Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:23:52.769067Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/3.cookie"), AnchoredSystemPathBuf(".turbo/cookies/2.cookie"), AnchoredSystemPathBuf("apps/web/.turbo"), AnchoredSystemPathBuf("services/auth/.turbo")}
+2025-08-23T15:23:52.769090Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/auth-service"), path: AnchoredSystemPathBuf("services/auth") }, WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }, WorkspacePackage { name: Other("@soulmatting/web"), path: AnchoredSystemPathBuf("apps/web") }}))
+2025-08-23T15:24:10.369155Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/auth/tests/app.test.ts")}
+2025-08-23T15:24:10.369184Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/auth-service"), path: AnchoredSystemPathBuf("services/auth") }}))
+2025-08-23T15:24:10.517994Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/auth/tests/app.test.ts")}
+2025-08-23T15:24:10.518008Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/auth-service"), path: AnchoredSystemPathBuf("services/auth") }}))
+2025-08-23T15:24:10.518049Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-08-23T15:24:18.868342Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/4.cookie")}
+2025-08-23T15:24:18.868369Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:24:19.068935Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/6.cookie"), AnchoredSystemPathBuf(".turbo/cookies/5.cookie")}
+2025-08-23T15:24:19.068950Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:24:41.580003Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/web/tests/app.test.ts")}
+2025-08-23T15:24:41.580349Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/web"), path: AnchoredSystemPathBuf("apps/web") }}))
+2025-08-23T15:24:42.683382Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/web/tests/app.test.ts")}
+2025-08-23T15:24:42.683419Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/web"), path: AnchoredSystemPathBuf("apps/web") }}))
+2025-08-23T15:24:42.838276Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/web/tests/app.test.ts")}
+2025-08-23T15:24:42.838292Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/web"), path: AnchoredSystemPathBuf("apps/web") }}))
+2025-08-23T15:24:42.838312Z  WARN turborepo_lib::package_changes_watcher: hashes are the same, no need to rerun
+2025-08-23T15:24:42.970984Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("apps/web/tests/app.test.ts")}
+2025-08-23T15:24:42.971004Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Other("@soulmatting/web"), path: AnchoredSystemPathBuf("apps/web") }}))
+2025-08-23T15:24:56.870708Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/7.cookie")}
+2025-08-23T15:24:56.870726Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:24:56.970075Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/8.cookie"), AnchoredSystemPathBuf(".turbo/cookies/9.cookie")}
+2025-08-23T15:24:56.970093Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:24:58.370039Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".turbo/cookies/10.cookie")}
+2025-08-23T15:24:58.370052Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:29:34.479551Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docker-compose.yml")}
+2025-08-23T15:29:34.479580Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:29:34.579230Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docker-compose.yml")}
+2025-08-23T15:29:34.579245Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:29:56.378703Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docker-compose.yml")}
+2025-08-23T15:29:56.378741Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:29:56.480292Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docker-compose.yml")}
+2025-08-23T15:29:56.480312Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:30:43.783149Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-08-23T15:30:43.783183Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:00.481615Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/dependency-update.yml")}
+2025-08-23T15:31:00.481626Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:00.580944Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/dependency-update.yml")}
+2025-08-23T15:31:00.580954Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:06.882142Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/security.yml")}
+2025-08-23T15:31:06.882160Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:12.381828Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/monitoring.yml")}
+2025-08-23T15:31:12.381847Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:12.481971Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/monitoring.yml")}
+2025-08-23T15:31:12.481983Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:18.081619Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/performance.yml")}
+2025-08-23T15:31:18.081630Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:18.181625Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/performance.yml")}
+2025-08-23T15:31:18.181636Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:23.781597Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/deploy.yml")}
+2025-08-23T15:31:23.781621Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:33.705378Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/coverage.yml")}
+2025-08-23T15:31:33.705391Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:33.782758Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/coverage.yml")}
+2025-08-23T15:31:33.782769Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:42.982216Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/code-quality.yml")}
+2025-08-23T15:31:42.982226Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:48.482946Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/release.yml")}
+2025-08-23T15:31:48.482964Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:48.583030Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/release.yml")}
+2025-08-23T15:31:48.583041Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:54.282180Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/backup.yml")}
+2025-08-23T15:31:54.282196Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:31:54.483017Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/backup.yml")}
+2025-08-23T15:31:54.483035Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:00.383034Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/security-scan.yml")}
+2025-08-23T15:32:00.383126Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:00.483569Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/security-scan.yml")}
+2025-08-23T15:32:00.483582Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:05.682260Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/performance-test.yml")}
+2025-08-23T15:32:05.682278Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:10.783249Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/environment-management.yml")}
+2025-08-23T15:32:10.783269Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:10.883275Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/environment-management.yml")}
+2025-08-23T15:32:10.883287Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:17.184415Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/disaster-recovery.yml")}
+2025-08-23T15:32:17.184429Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:32:17.324261Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/disaster-recovery.yml")}
+2025-08-23T15:32:17.324276Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:34:28.087615Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T15:34:28.087729Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:34:28.386854Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T15:34:28.386874Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:34:38.987942Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("CONTRIBUTING.md")}
+2025-08-23T15:34:38.987957Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:34:49.688547Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/requirements.md")}
+2025-08-23T15:34:49.688573Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:34:56.688987Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/DESIGN_SoulMatting.md")}
+2025-08-23T15:34:56.689342Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:34:56.788608Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/DESIGN_SoulMatting.md")}
+2025-08-23T15:34:56.788624Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:02.588661Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/TASK_SoulMatting.md")}
+2025-08-23T15:35:02.588672Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:02.688046Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/TASK_SoulMatting.md")}
+2025-08-23T15:35:02.688162Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:08.588232Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/CONSENSUS_SoulMatting.md")}
+2025-08-23T15:35:08.588258Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:08.689019Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/CONSENSUS_SoulMatting.md")}
+2025-08-23T15:35:08.689113Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:22.189059Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/prd.md")}
+2025-08-23T15:35:22.189076Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:27.789434Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/CONSENSUS_SoulMatting.md")}
+2025-08-23T15:35:27.789455Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:27.889401Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/SoulMatting/CONSENSUS_SoulMatting.md")}
+2025-08-23T15:35:27.889419Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:34.093297Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/design.md")}
+2025-08-23T15:35:34.093318Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:34.189923Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/design.md")}
+2025-08-23T15:35:34.189935Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:40.090320Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/TECH_STACK_ANALYSIS.md")}
+2025-08-23T15:35:40.090331Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:40.189646Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/TECH_STACK_ANALYSIS.md")}
+2025-08-23T15:35:40.189661Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:46.109082Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/requirements.md")}
+2025-08-23T15:35:46.109871Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:35:46.190480Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/requirements.md")}
+2025-08-23T15:35:46.190499Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:38:55.597073Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/features/infrastructure-setup.feature")}
+2025-08-23T15:38:55.597138Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:38:55.696242Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/features/infrastructure-setup.feature")}
+2025-08-23T15:38:55.696273Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:38:55.797996Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/features/infrastructure-setup.feature")}
+2025-08-23T15:38:55.798459Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:39:54.298197Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/infrastructure-setup.steps.ts")}
+2025-08-23T15:39:54.298263Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:39:54.397565Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/infrastructure-setup.steps.ts")}
+2025-08-23T15:39:54.397573Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:40:32.198805Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/communication/Dockerfile")}
+2025-08-23T15:40:32.198893Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:40:32.298291Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/communication/Dockerfile")}
+2025-08-23T15:40:32.298310Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:40:41.897644Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/match/Dockerfile")}
+2025-08-23T15:40:41.897653Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:40:41.998559Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/match/Dockerfile")}
+2025-08-23T15:40:41.998567Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:40:51.398878Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/media/Dockerfile")}
+2025-08-23T15:40:51.398909Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:41:00.799210Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/notification/Dockerfile")}
+2025-08-23T15:41:00.799226Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:41:10.099565Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/search/Dockerfile")}
+2025-08-23T15:41:10.099577Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:41:19.399414Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/user/Dockerfile")}
+2025-08-23T15:41:19.399426Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:41:19.499440Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/user/Dockerfile")}
+2025-08-23T15:41:19.499450Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:42:21.100903Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".env.development")}
+2025-08-23T15:42:21.100928Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:42:21.201975Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".env.development")}
+2025-08-23T15:42:21.201986Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:43:43.004415Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".env.production")}
+2025-08-23T15:43:43.004438Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:43:43.104244Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".env.production")}
+2025-08-23T15:43:43.104255Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:44:29.623622Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/communication/Dockerfile")}
+2025-08-23T15:44:29.623678Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:44:33.505263Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/match/Dockerfile")}
+2025-08-23T15:44:33.505279Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:44:37.905580Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/media/Dockerfile")}
+2025-08-23T15:44:37.905599Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:44:42.106981Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/notification/Dockerfile")}
+2025-08-23T15:44:42.106992Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:44:46.205834Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/search/Dockerfile")}
+2025-08-23T15:44:46.205845Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:44:53.924020Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("services/user/Dockerfile")}
+2025-08-23T15:44:53.924038Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:45:49.926563Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-08-23T15:45:49.926705Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:45:50.025650Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-08-23T15:45:50.025662Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:45:57.526222Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-08-23T15:45:57.526242Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:45:57.728535Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci.yml")}
+2025-08-23T15:45:57.728554Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:46:09.526812Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/cd.yml")}
+2025-08-23T15:46:09.526998Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:46:09.628170Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/cd.yml")}
+2025-08-23T15:46:09.628188Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:46:30.727103Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service"), AnchoredSystemPathBuf("helm/auth-service/Chart.yaml")}
+2025-08-23T15:46:30.727128Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:46:30.827043Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/Chart.yaml")}
+2025-08-23T15:46:30.827082Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:46:50.226315Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values.yaml")}
+2025-08-23T15:46:50.226336Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:46:50.327227Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values.yaml")}
+2025-08-23T15:46:50.327237Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:02.527420Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values-staging.yaml")}
+2025-08-23T15:47:02.527435Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:02.727919Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values-staging.yaml")}
+2025-08-23T15:47:02.727929Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:02.826823Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values-staging.yaml")}
+2025-08-23T15:47:02.826835Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:13.627083Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values-production.yaml")}
+2025-08-23T15:47:13.627104Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:13.728406Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/values-production.yaml")}
+2025-08-23T15:47:13.728414Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:20.628622Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates")}
+2025-08-23T15:47:20.628632Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:47:36.627623Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/deployment.yaml")}
+2025-08-23T15:47:36.627638Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:48:07.129939Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/deployment.yaml")}
+2025-08-23T15:48:07.129966Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:48:16.130397Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/service.yaml")}
+2025-08-23T15:48:16.130405Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:48:23.329026Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/service.yaml")}
+2025-08-23T15:48:23.329037Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:48:23.430331Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/service.yaml")}
+2025-08-23T15:48:23.430344Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:48:35.230044Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/service.yaml")}
+2025-08-23T15:48:35.230074Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:48:44.831107Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/ingress.yaml")}
+2025-08-23T15:48:44.831116Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:01.631853Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/_helpers.tpl")}
+2025-08-23T15:49:01.631893Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:09.131505Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/configmap.yaml")}
+2025-08-23T15:49:09.131515Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:09.231237Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/configmap.yaml")}
+2025-08-23T15:49:09.231246Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:19.631286Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/configmap.yaml")}
+2025-08-23T15:49:19.631334Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:19.731945Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/configmap.yaml")}
+2025-08-23T15:49:19.731956Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:25.831795Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/secret.yaml")}
+2025-08-23T15:49:25.831803Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:32.632126Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/serviceaccount.yaml")}
+2025-08-23T15:49:32.632135Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:49:32.731957Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/serviceaccount.yaml")}
+2025-08-23T15:49:32.731969Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:28.635732Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/hpa.yaml")}
+2025-08-23T15:51:28.635763Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:28.835583Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/hpa.yaml")}
+2025-08-23T15:51:28.835594Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:29.035040Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/hpa.yaml")}
+2025-08-23T15:51:29.035050Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:37.535896Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/pdb.yaml")}
+2025-08-23T15:51:37.535922Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:37.736555Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/pdb.yaml")}
+2025-08-23T15:51:37.736567Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:37.836279Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/pdb.yaml")}
+2025-08-23T15:51:37.836298Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:48.437954Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/networkpolicy.yaml")}
+2025-08-23T15:51:48.437999Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:48.636672Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/auth-service/templates/networkpolicy.yaml")}
+2025-08-23T15:51:48.636681Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:59.736150Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/user"), AnchoredSystemPathBuf("helm/user/Chart.yaml")}
+2025-08-23T15:51:59.736169Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:51:59.936360Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/user/Chart.yaml")}
+2025-08-23T15:51:59.936375Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:00.037200Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/user/Chart.yaml")}
+2025-08-23T15:52:00.037210Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:18.439761Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/user/values.yaml")}
+2025-08-23T15:52:18.439872Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:18.545929Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/user/values.yaml")}
+2025-08-23T15:52:18.545945Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:29.337960Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/match"), AnchoredSystemPathBuf("helm/match/Chart.yaml")}
+2025-08-23T15:52:29.337969Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:36.437780Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/communication/Chart.yaml"), AnchoredSystemPathBuf("helm/communication")}
+2025-08-23T15:52:36.437794Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:36.537158Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/communication/Chart.yaml")}
+2025-08-23T15:52:36.537169Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:43.637254Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/media"), AnchoredSystemPathBuf("helm/media/Chart.yaml")}
+2025-08-23T15:52:43.637275Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:50.638476Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/notification"), AnchoredSystemPathBuf("helm/notification/Chart.yaml")}
+2025-08-23T15:52:50.638492Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:50.839680Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/notification/Chart.yaml")}
+2025-08-23T15:52:50.839725Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:50.938498Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/notification/Chart.yaml")}
+2025-08-23T15:52:50.938508Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:59.538319Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/search"), AnchoredSystemPathBuf("helm/search/Chart.yaml")}
+2025-08-23T15:52:59.538348Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:59.738810Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/search/Chart.yaml")}
+2025-08-23T15:52:59.738828Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:52:59.838537Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/search/Chart.yaml")}
+2025-08-23T15:52:59.838546Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:07.139253Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/payment"), AnchoredSystemPathBuf("helm/payment/Chart.yaml")}
+2025-08-23T15:53:07.139267Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:07.339566Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/payment/Chart.yaml")}
+2025-08-23T15:53:07.340126Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:07.439004Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/payment/Chart.yaml")}
+2025-08-23T15:53:07.439015Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:15.038927Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/Chart.yaml"), AnchoredSystemPathBuf("helm/analytics")}
+2025-08-23T15:53:15.038938Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:15.338954Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/Chart.yaml")}
+2025-08-23T15:53:15.338970Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:15.438980Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/Chart.yaml")}
+2025-08-23T15:53:15.438990Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:36.539334Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/match/values.yaml")}
+2025-08-23T15:53:36.539350Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:36.938998Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/match/values.yaml")}
+2025-08-23T15:53:36.939009Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:37.038736Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/match/values.yaml")}
+2025-08-23T15:53:37.038754Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:56.540535Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/communication/values.yaml")}
+2025-08-23T15:53:56.540548Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:56.839733Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/communication/values.yaml")}
+2025-08-23T15:53:56.839763Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:53:56.939982Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/communication/values.yaml")}
+2025-08-23T15:53:56.939996Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:17.340347Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/media/values.yaml")}
+2025-08-23T15:54:17.340366Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:17.540400Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/media/values.yaml")}
+2025-08-23T15:54:17.540416Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:17.741720Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/media/values.yaml")}
+2025-08-23T15:54:17.741731Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:38.546414Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/notification/values.yaml")}
+2025-08-23T15:54:38.546994Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:38.740659Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/notification/values.yaml")}
+2025-08-23T15:54:38.740670Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:38.940978Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/notification/values.yaml")}
+2025-08-23T15:54:38.940988Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:59.047233Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/search/values.yaml")}
+2025-08-23T15:54:59.047280Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:59.243024Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/search/values.yaml")}
+2025-08-23T15:54:59.243036Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:54:59.342486Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/search/values.yaml")}
+2025-08-23T15:54:59.342495Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:55:19.343158Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/payment/values.yaml")}
+2025-08-23T15:55:19.343172Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:55:19.442641Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/payment/values.yaml")}
+2025-08-23T15:55:19.442771Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:55:40.542505Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/values.yaml")}
+2025-08-23T15:55:40.542529Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:55:40.642846Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/values.yaml")}
+2025-08-23T15:55:40.642856Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:55:56.843731Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/Chart.yaml"), AnchoredSystemPathBuf("helm/soulmatting")}
+2025-08-23T15:55:56.843740Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:55:56.943311Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/Chart.yaml")}
+2025-08-23T15:55:56.943320Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:56:23.545020Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/values.yaml")}
+2025-08-23T15:56:23.545227Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:56:23.743732Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/values.yaml")}
+2025-08-23T15:56:23.743750Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:56:23.943258Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/values.yaml")}
+2025-08-23T15:56:23.943272Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:57:01.045915Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/README.md")}
+2025-08-23T15:57:01.045964Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:57:01.145617Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/README.md")}
+2025-08-23T15:57:01.145626Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:57:44.447196Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/deploy.sh")}
+2025-08-23T15:57:44.447246Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:57:54.448190Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/deploy.sh")}
+2025-08-23T15:57:54.448289Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:58:42.047840Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/Makefile")}
+2025-08-23T15:58:42.047865Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:58:42.148518Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/Makefile")}
+2025-08-23T15:58:42.148529Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:58:42.248380Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/Makefile")}
+2025-08-23T15:58:42.248389Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T15:59:19.751124Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/values-local.yaml")}
+2025-08-23T15:59:19.751211Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:00:09.551824Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/values-staging.yaml")}
+2025-08-23T16:00:09.551842Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:00:09.651254Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/values-staging.yaml")}
+2025-08-23T16:00:09.651263Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:01:09.654007Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/values-production.yaml")}
+2025-08-23T16:01:09.654041Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:01:09.752121Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/values-production.yaml")}
+2025-08-23T16:01:09.752132Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:01:32.254209Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/secrets.yaml")}
+2025-08-23T16:01:32.254323Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:01:32.353280Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/secrets.yaml")}
+2025-08-23T16:01:32.353290Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:02:33.455221Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/manage-secrets.sh")}
+2025-08-23T16:02:33.455443Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:02:33.555907Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/manage-secrets.sh")}
+2025-08-23T16:02:33.555918Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:08:51.366468Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/manage-secrets.sh")}
+2025-08-23T16:08:51.366486Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:09:34.867374Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(".github/workflows/ci-cd.yml")}
+2025-08-23T16:09:34.867382Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:08.073382Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:08.073471Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:18.073106Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:18.073124Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:18.173236Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:18.173257Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:30.574141Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:30.574234Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:30.673570Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:30.673579Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:47.273071Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:47.273087Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:12:47.373675Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("README.md")}
+2025-08-23T16:12:47.373684Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:14:37.477239Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates")}
+2025-08-23T16:14:37.477273Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:14:47.177193Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates/deployment.yaml")}
+2025-08-23T16:14:47.177205Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:14:47.277072Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates/deployment.yaml")}
+2025-08-23T16:14:47.277092Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:14:57.376753Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates/deployment.yaml")}
+2025-08-23T16:14:57.376763Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:15:08.577985Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates/_helpers.tpl")}
+2025-08-23T16:15:08.578035Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:15:14.878648Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates/service.yaml")}
+2025-08-23T16:15:14.878662Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:15:33.979086Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/analytics/templates/deployment.yaml")}
+2025-08-23T16:15:33.979096Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:17:23.583093Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/Chart.yaml")}
+2025-08-23T16:17:23.583117Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:17:39.182792Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/Chart.yaml")}
+2025-08-23T16:17:39.182832Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:17:39.283221Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/Chart.yaml")}
+2025-08-23T16:17:39.283305Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:02.983050Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/user/Chart.yaml")}
+2025-08-23T16:18:02.983073Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:11.183322Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/match/Chart.yaml")}
+2025-08-23T16:18:11.183332Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:21.283218Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/payment/.!65145!Chart.yaml"), AnchoredSystemPathBuf("helm/search/Chart.yaml"), AnchoredSystemPathBuf("helm/notification/Chart.yaml"), AnchoredSystemPathBuf("helm/payment/Chart.yaml"), AnchoredSystemPathBuf("helm/analytics/.!65146!Chart.yaml"), AnchoredSystemPathBuf("helm/analytics/Chart.yaml"), AnchoredSystemPathBuf("helm/communication/Chart.yaml"), AnchoredSystemPathBuf("helm/media/.!65142!Chart.yaml"), AnchoredSystemPathBuf("helm/media/Chart.yaml"), AnchoredSystemPathBuf("helm/search/.!65144!Chart.yaml"), AnchoredSystemPathBuf("helm/notification/.!65143!Chart.yaml"), AnchoredSystemPathBuf("helm/communication/.!65141!Chart.yaml")}
+2025-08-23T16:18:21.283230Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:33.484498Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/charts"), AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-65305")}
+2025-08-23T16:18:33.484518Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:37.884748Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-65305/redis-17.15.6.tgz372229009")}
+2025-08-23T16:18:37.884769Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:42.184642Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-65305/postgresql-12.12.10.tgz2322160548")}
+2025-08-23T16:18:42.184657Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:18:46.585327Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-65305/elasticsearch-19.13.13.tgz3900210035"), AnchoredSystemPathBuf("helm/soulmatting/Chart.lock"), AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-65305")}
+2025-08-23T16:18:46.585344Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:19:18.285721Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:19:18.285735Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:19:18.385345Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:19:18.385357Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:19:24.586089Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:19:24.586104Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:19:46.987980Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:19:46.987993Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:19:54.186890Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:19:54.186907Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:20:17.288125Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:20:17.288135Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:20:17.387293Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:20:17.387303Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:20:23.588158Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:20:23.588192Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:20:37.988069Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:20:37.988078Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:20:38.087582Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:20:38.087591Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:21:15.889722Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/values.yaml")}
+2025-08-23T16:21:15.889755Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:21:15.989254Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/values.yaml")}
+2025-08-23T16:21:15.989274Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:21:22.189696Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:21:22.189707Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:21:51.290678Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:21:51.290700Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:22:07.990086Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:22:07.990094Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:22:08.090222Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:22:08.090230Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:22:19.991823Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:22:19.991840Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:22:20.091040Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:22:20.091052Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:22:56.791743Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/tmpcharts-70495"), AnchoredSystemPathBuf("helm/web/charts")}
+2025-08-23T16:22:56.791765Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:23:02.492231Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/tmpcharts-70495/redis-17.15.6.tgz1317216118")}
+2025-08-23T16:23:02.492243Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:23:07.891623Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/tmpcharts-70495"), AnchoredSystemPathBuf("helm/web/tmpcharts-70495/postgresql-12.12.10.tgz4194343357"), AnchoredSystemPathBuf("helm/web/Chart.lock")}
+2025-08-23T16:23:07.891669Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:02.394588Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-71771")}
+2025-08-23T16:24:02.394596Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:05.194985Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-71771/redis-17.15.6.tgz1210274482")}
+2025-08-23T16:24:05.195004Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:07.893670Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-71771/postgresql-12.12.10.tgz2080972729")}
+2025-08-23T16:24:07.893678Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:09.894323Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-71771/elasticsearch-19.13.13.tgz4020748424")}
+2025-08-23T16:24:09.894340Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:09.994768Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-71771")}
+2025-08-23T16:24:09.994777Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:22.495030Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:24:22.495042Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:22.595300Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:24:22.595309Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:32.996988Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/deployment.yaml")}
+2025-08-23T16:24:32.997008Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:24:47.595275Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/values.yaml")}
+2025-08-23T16:24:47.595289Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:25:15.496784Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/templates/secret.yaml")}
+2025-08-23T16:25:15.496793Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:25:35.697083Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/values.yaml")}
+2025-08-23T16:25:35.697096Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:25:35.797241Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/web/values.yaml")}
+2025-08-23T16:25:35.797250Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:26:41.298876Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/values.yaml")}
+2025-08-23T16:26:41.298885Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:27:05.199204Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-75429")}
+2025-08-23T16:27:05.199222Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:27:07.500153Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-75429/redis-17.15.6.tgz3207857592")}
+2025-08-23T16:27:07.500164Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:27:09.500106Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-75429/postgresql-12.12.10.tgz352537885")}
+2025-08-23T16:27:09.500117Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:27:11.600260Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-75429/elasticsearch-19.13.13.tgz1293154809"), AnchoredSystemPathBuf("helm/soulmatting/tmpcharts-75429")}
+2025-08-23T16:27:11.600270Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:28:38.802438Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/tasks.md")}
+2025-08-23T16:28:38.802583Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:28:39.002937Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("docs/tasks.md")}
+2025-08-23T16:28:39.002949Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:30:28.606267Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("jest.config.js")}
+2025-08-23T16:30:28.606317Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:30:40.407404Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(""), AnchoredSystemPathBuf("_tmp_79219_43456d07846e5a97d5cced2251addaf0")}
+2025-08-23T16:30:40.407419Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:30:45.607829Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml"), AnchoredSystemPathBuf("pnpm-lock.yaml.2067853069")}
+2025-08-23T16:30:45.607947Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:30:46.707314Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json"), AnchoredSystemPathBuf("package.json.691075703")}
+2025-08-23T16:30:46.707325Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-08-23T16:30:54.154097Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("jest.config.js")}
+2025-08-23T16:30:54.154116Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:30:54.254306Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("jest.config.js")}
+2025-08-23T16:30:54.254350Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:31:02.155113Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("coverage")}
+2025-08-23T16:31:02.155132Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:31:23.155903Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:31:23.155923Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:31:52.660768Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:31:52.660824Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:31:52.801492Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:31:52.801592Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:32:18.760101Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:32:18.760178Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:32:45.039797Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:32:45.041001Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:32:45.069727Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:32:45.069747Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:32:45.158054Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:32:45.158071Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:32:55.358943Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:32:55.358970Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:32:55.558938Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:32:55.558947Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:05.959060Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:33:05.959069Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:06.059266Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:33:06.059284Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:32.560145Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/support"), AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions"), AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions/infrastructure-setup.steps.js"), AnchoredSystemPathBuf("tests/bdd/step-definitions/support/world.js")}
+2025-08-23T16:33:32.560163Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:42.760172Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf(""), AnchoredSystemPathBuf("_tmp_84294_e7873aadd23d273dbf404b71803e51b4")}
+2025-08-23T16:33:42.760180Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:46.660221Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("pnpm-lock.yaml"), AnchoredSystemPathBuf("pnpm-lock.yaml.3746235297")}
+2025-08-23T16:33:46.660231Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:47.060358Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("package.json.3847587926"), AnchoredSystemPathBuf("package.json")}
+2025-08-23T16:33:47.060366Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(All)
+2025-08-23T16:33:57.161066Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/infrastructure-setup.steps.ts")}
+2025-08-23T16:33:57.161076Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:33:57.260093Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/infrastructure-setup.steps.ts")}
+2025-08-23T16:33:57.260102Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:34:25.862324Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/infrastructure-setup.steps.ts")}
+2025-08-23T16:34:25.862368Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:34:25.960260Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/infrastructure-setup.steps.ts")}
+2025-08-23T16:34:25.960277Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:34:37.761838Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/support/world.js"), AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions/infrastructure-setup.steps.js")}
+2025-08-23T16:34:37.761861Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:34:44.162085Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/support/world.ts")}
+2025-08-23T16:34:44.162095Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:34:44.262174Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/support/world.ts")}
+2025-08-23T16:34:44.262181Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:34:55.062469Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/support/world.js"), AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions/infrastructure-setup.steps.js")}
+2025-08-23T16:34:55.062497Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:35:00.161975Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/support/world.ts")}
+2025-08-23T16:35:00.161987Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:35:08.763120Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions/infrastructure-setup.steps.js"), AnchoredSystemPathBuf("tests/bdd/step-definitions/support/world.js")}
+2025-08-23T16:35:08.763135Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:35:23.161981Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:35:23.161989Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:35:23.263026Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:35:23.263037Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:35:44.563244Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:35:44.563459Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:35:44.663173Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:35:44.663183Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:36:47.765627Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/additional-steps.ts")}
+2025-08-23T16:36:47.765652Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:36:47.865848Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/additional-steps.ts")}
+2025-08-23T16:36:47.865878Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:37:03.665980Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/support/world.js"), AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions/additional-steps.js")}
+2025-08-23T16:37:03.666043Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:37:28.467200Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("cucumber.config.js")}
+2025-08-23T16:37:28.467227Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:38:09.468068Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/additional-steps.ts")}
+2025-08-23T16:38:09.468093Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))
+2025-08-23T16:38:20.468348Z  WARN turborepo_lib::package_changes_watcher: changed_files: {AnchoredSystemPathBuf("tests/bdd/step-definitions/step-definitions/additional-steps.js"), AnchoredSystemPathBuf("tests/bdd/step-definitions/support/world.js")}
+2025-08-23T16:38:20.468366Z  WARN turborepo_lib::package_changes_watcher: changed_packages: Ok(Some({WorkspacePackage { name: Root, path: AnchoredSystemPathBuf("") }}))

@@ -1,0 +1,85 @@
+config:
+  target: "{{ $processEnvironment.TARGET_URL || 'http://localhost:3001' }}"
+  phases:
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm up"
+    - duration: 120
+      arrivalRate: 10
+      name: "Ramp up load"
+    - duration: 300
+      arrivalRate: 15
+      name: "Sustained load"
+  defaults:
+    headers:
+      Content-Type: "application/json"
+      Accept: "application/json"
+  processor: "./processor.js"
+  environments:
+    development:
+      target: "http://localhost:3001"
+      phases:
+        - duration: 30
+          arrivalRate: 2
+    staging:
+      target: "https://staging-api.soulmatting.com"
+      phases:
+        - duration: 60
+          arrivalRate: 5
+
+scenarios:
+  - name: "API Health Check"
+    weight: 20
+    flow:
+      - get:
+          url: "/"
+          expect:
+            - statusCode: 200
+
+  - name: "API Status"
+    weight: 20
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+
+  - name: "Authentication Flow"
+    weight: 30
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "test-{{ $randomString() }}@example.com"
+            password: "TestPassword123!"
+            name: "Test User"
+          capture:
+            - json: "$.token"
+              as: "authToken"
+          expect:
+            - statusCode: [200, 201]
+      - post:
+          url: "/auth/login"
+          json:
+            email: "test@example.com"
+            password: "TestPassword123!"
+          expect:
+            - statusCode: 200
+
+  - name: "User Management"
+    weight: 30
+    flow:
+      - get:
+          url: "/users/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          expect:
+            - statusCode: [200, 401]
+      - put:
+          url: "/users/profile"
+          headers:
+            Authorization: "Bearer {{ authToken }}"
+          json:
+            name: "Updated User {{ $randomString() }}"
+          expect:
+            - statusCode: [200, 401]

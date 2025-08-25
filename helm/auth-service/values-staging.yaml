@@ -1,0 +1,83 @@
+# SoulMatting Auth Service - Staging Environment
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# =============================================================================
+# Application Configuration
+# =============================================================================
+app:
+  environment: staging
+
+# =============================================================================
+# Image Configuration
+# =============================================================================
+image:
+  repository: ghcr.io/kimhsiao/soulmatting/auth-service
+  tag: develop
+  pullPolicy: Always
+
+# =============================================================================
+# Deployment Configuration
+# =============================================================================
+deployment:
+  replicaCount: 1
+
+# =============================================================================
+# Ingress Configuration
+# =============================================================================
+ingress:
+  hosts:
+    - host: auth-staging.soulmatting.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: soulmatting-auth-service-staging-tls
+      hosts:
+        - auth-staging.soulmatting.com
+
+# =============================================================================
+# Resource Management
+# =============================================================================
+resources:
+  limits:
+    cpu: 300m
+    memory: 256Mi
+  requests:
+    cpu: 150m
+    memory: 128Mi
+
+# =============================================================================
+# Auto Scaling
+# =============================================================================
+autoscaling:
+  enabled: false
+
+# =============================================================================
+# Environment Variables
+# =============================================================================
+env:
+  NODE_ENV: staging
+  LOG_LEVEL: debug
+
+# =============================================================================
+# External Dependencies
+# =============================================================================
+redis:
+  enabled: true
+  auth:
+    password: 'staging-redis-password'
+  master:
+    persistence:
+      size: 4Gi
+
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: 'staging-postgres-password'
+    password: 'staging-auth-password'
+  primary:
+    persistence:
+      size: 10Gi

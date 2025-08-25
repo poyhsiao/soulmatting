@@ -1,0 +1,467 @@
+# SoulMatting Platform - Local Development Values
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+# Global configuration for local development
+global:
+  imageRegistry: ghcr.io
+  imagePullSecrets: []
+  environment: development
+  domain: soulmatting.local
+  debug: true
+
+  # TLS disabled for local development
+  tls:
+    enabled: false
+
+  # Local database settings
+  database:
+    host: postgresql
+    port: 5432
+    username: postgres
+    password: postgres
+
+  # Local Redis settings
+  redis:
+    host: redis-master
+    port: 6379
+    password: ''
+
+  # Local Elasticsearch settings
+  elasticsearch:
+    host: elasticsearch
+    port: 9200
+    username: ''
+    password: ''
+
+  # Development security settings
+  security:
+    jwtSecret: 'dev-jwt-secret-not-for-production'
+    encryptionKey: 'dev-encryption-key-not-for-production'
+
+# Frontend Web Application
+web:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/web
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3000
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/rewrite-target: /
+    hosts:
+      - host: soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  env:
+    NODE_ENV: development
+    REACT_APP_API_URL: http://auth.soulmatting.local
+    REACT_APP_WS_URL: ws://communication.soulmatting.local
+
+# Authentication Service
+auth:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/auth
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3001
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: auth.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  env:
+    NODE_ENV: development
+    LOG_LEVEL: debug
+    DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgresql:5432/${POSTGRES_DB:-soulmatting}
+    REDIS_URL: redis://redis-master:6379
+
+# User Service
+user:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/user-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3002
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: user.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Match Service
+match:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/match-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3003
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: match.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Communication Service
+communication:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/communication-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3004
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-read-timeout: '3600'
+      nginx.ingress.kubernetes.io/proxy-send-timeout: '3600'
+      nginx.ingress.kubernetes.io/websocket-services: soulmatting-communication
+    hosts:
+      - host: communication.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Media Service
+media:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/media-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3005
+
+  ingress:
+    enabled: true
+    className: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-body-size: '50m'
+    hosts:
+      - host: media.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 256Mi
+
+  persistence:
+    enabled: false # Use emptyDir for local development
+
+# Notification Service
+notification:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/notification-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3006
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: notification.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Search Service
+search:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/search-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3007
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: search.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 256Mi
+
+# Payment Service
+payment:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/payment-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3008
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: payment.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 200m
+      memory: 256Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+# Analytics Service
+analytics:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: ghcr.io/kimhsiao/soulmatting/analytics-service
+    tag: 'latest'
+    pullPolicy: Always
+
+  service:
+    type: ClusterIP
+    port: 3009
+
+  ingress:
+    enabled: true
+    className: nginx
+    hosts:
+      - host: analytics.soulmatting.local
+        paths:
+          - path: /
+            pathType: Prefix
+    tls: []
+
+  resources:
+    limits:
+      cpu: 300m
+      memory: 512Mi
+    requests:
+      cpu: 150m
+      memory: 256Mi
+
+# Shared Infrastructure - Optimized for local development
+
+# Redis Configuration
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 200m
+        memory: 256Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  replica:
+    replicaCount: 0 # No replicas for local development
+
+# PostgreSQL Configuration
+postgresql:
+  enabled: true
+  auth:
+    postgresPassword: 'postgres'
+    database: 'soulmatting'
+  primary:
+    persistence:
+      enabled: false # Use emptyDir for local development
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 150m
+        memory: 256Mi
+    initdb:
+      scripts:
+        init.sql: |
+          -- Create databases for each service
+          CREATE DATABASE auth_service;
+          CREATE DATABASE user_service;
+          CREATE DATABASE match_service;
+          CREATE DATABASE communication_service;
+          CREATE DATABASE media_service;
+          CREATE DATABASE notification_service;
+          CREATE DATABASE search_service;
+          CREATE DATABASE payment_service;
+          CREATE DATABASE analytics_service;
+
+          -- Grant permissions
+          GRANT ALL PRIVILEGES ON DATABASE auth_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE user_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE match_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE communication_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE media_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE notification_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE search_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE payment_service TO postgres;
+          GRANT ALL PRIVILEGES ON DATABASE analytics_service TO postgres;
+
+# Elasticsearch Configuration
+elasticsearch:
+  enabled: true
+  auth:
+    enabled: false
+  master:
+    replicaCount: 1
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  data:
+    replicaCount: 1
+    persistence:
+      enabled: false
+    resources:
+      limits:
+        cpu: 300m
+        memory: 512Mi
+      requests:
+        cpu: 150m
+        memory: 256Mi
+  coordinating:
+    replicaCount: 0 # No coordinating nodes for local development
+  ingest:
+    replicaCount: 0 # No ingest nodes for local development

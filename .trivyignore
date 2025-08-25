@@ -1,0 +1,122 @@
+# Trivy Security Scanner Ignore File for SoulMatting Platform
+# 
+# This file contains vulnerability IDs that should be ignored during
+# container security scanning. Only add entries here after careful
+# security review and risk assessment.
+# 
+# Version: 1.0.0
+# Created: 2024-01-20
+# Updated: 2024-01-20
+# Author: Kim Hsiao
+
+# Format: CVE-YYYY-NNNN or GHSA-XXXX-XXXX-XXXX
+# Add comments explaining why each vulnerability is ignored
+
+# =============================================================================
+# DEVELOPMENT AND TESTING DEPENDENCIES
+# =============================================================================
+
+# Development tools vulnerabilities that don't affect production
+# These are typically in devDependencies and not included in production builds
+
+# Webpack dev server vulnerabilities (dev only)
+# CVE-2023-XXXXX  # webpack-dev-server: Only affects development environment
+
+# Jest testing framework vulnerabilities (dev only)
+# CVE-2023-XXXXX  # jest: Only used in testing, not in production
+
+# ESLint and related tools (dev only)
+# CVE-2023-XXXXX  # eslint: Only used during development and CI
+
+# =============================================================================
+# BASE IMAGE VULNERABILITIES
+# =============================================================================
+
+# Node.js base image vulnerabilities that are acceptable
+# Only add after security team approval
+
+# Example: Low severity vulnerabilities in base OS packages
+# CVE-2023-XXXXX  # glibc: Low severity, no known exploit, fix pending
+
+# =============================================================================
+# TRANSITIVE DEPENDENCIES
+# =============================================================================
+
+# Vulnerabilities in transitive dependencies where:
+# 1. No direct usage of vulnerable functionality
+# 2. Mitigation controls are in place
+# 3. Update not available or causes breaking changes
+
+# Example: Vulnerabilities in deep dependencies
+# CVE-2023-XXXXX  # lodash: Used indirectly, vulnerable function not used
+
+# =============================================================================
+# FALSE POSITIVES
+# =============================================================================
+
+# Known false positives from Trivy scanner
+# These should be verified and documented
+
+# Example: Misidentified vulnerabilities
+# CVE-2023-XXXXX  # False positive: Different package with same name
+
+# =============================================================================
+# ACCEPTED RISKS
+# =============================================================================
+
+# Vulnerabilities accepted by security team with documented risk assessment
+# Include ticket/issue reference for tracking
+
+# Example: Business-critical dependency with no alternative
+# CVE-2023-XXXXX  # Critical dependency, no alternative available (Ticket: SEC-123)
+
+# =============================================================================
+# TEMPORARY IGNORES
+# =============================================================================
+
+# Temporary ignores with expiration dates
+# These should be reviewed and removed regularly
+
+# Example: Waiting for upstream fix
+# CVE-2023-XXXXX  # Temporary ignore until v2.1.0 release (Expires: 2024-02-01)
+
+# =============================================================================
+# PLATFORM-SPECIFIC IGNORES
+# =============================================================================
+
+# Vulnerabilities that don't apply to our deployment environment
+
+# Example: Windows-specific vulnerabilities in Linux containers
+# CVE-2023-XXXXX  # Windows-specific, not applicable to Linux containers
+
+# =============================================================================
+# NOTES FOR SECURITY TEAM
+# =============================================================================
+
+# Guidelines for adding entries to this file:
+# 
+# 1. NEVER ignore HIGH or CRITICAL vulnerabilities without security team approval
+# 2. Always include a comment explaining why the vulnerability is ignored
+# 3. Include ticket/issue references for tracking
+# 4. Set expiration dates for temporary ignores
+# 5. Review this file monthly and remove outdated entries
+# 6. Document risk assessment for accepted vulnerabilities
+# 7. Prefer fixing vulnerabilities over ignoring them
+# 
+# Security team contacts:
+# - Primary: security@soulmatting.com
+# - Secondary: devops@soulmatting.com
+# 
+# Review schedule:
+# - Weekly: Check for new vulnerabilities
+# - Monthly: Review ignored vulnerabilities
+# - Quarterly: Full security assessment
+
+# =============================================================================
+# CURRENT IGNORES
+# =============================================================================
+
+# Add actual ignores below this line with proper documentation
+# Format: CVE-ID  # Reason (Ticket: XXX, Expires: YYYY-MM-DD)
+
+# No current ignores - all vulnerabilities should be addressed

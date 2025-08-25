@@ -1,0 +1,75 @@
+# GitLeaks configuration file
+# This file defines rules for detecting secrets in the codebase
+
+# Title and description
+title = "SoulMatting GitLeaks Configuration"
+description = "Custom GitLeaks configuration for SoulMatting project"
+
+# Rules configuration
+[rules]
+  # Enable all default rules
+  [rules.generic-api-key]
+    description = "Generic API Key"
+    regex = '''(?i)(?:key|api|token|secret|password)\s*[:=]\s*['""']?[a-z0-9]{20,}['""']?'''
+    tags = ["key", "API", "generic"]
+
+  [rules.aws-access-token]
+    description = "AWS Access Token"
+    regex = '''(A3T[A-Z0-9]|AKIA|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[A-Z0-9]{16}'''
+    tags = ["key", "AWS"]
+
+  [rules.jwt-token]
+    description = "JWT Token"
+    regex = '''eyJ[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*\.[A-Za-z0-9_-]*'''
+    tags = ["key", "JWT"]
+
+  [rules.database-connection-string]
+    description = "Database Connection String"
+    regex = '''(?i)(postgres|mysql|mongodb)://[^\s]+'''
+    tags = ["key", "database"]
+
+# Allowlist configuration
+[allowlist]
+  description = "Allowlist for files and patterns that should be ignored"
+  
+  # Files and directories to ignore
+  paths = [
+    ".env.example",
+    "README.md",
+    "CHANGELOG.md",
+    "docs/",
+    "tests/",
+    "*.test.js",
+    "*.test.ts",
+    "*.spec.js",
+    "*.spec.ts",
+    "node_modules/",
+    ".git/",
+    "helm/values-staging.yaml",
+    "helm/values-production.yaml",
+    "helm/values-dev.yaml",
+    "docker-compose.yml",
+    "docker-compose.yaml",
+    ".github/workflows/"
+  ]
+  
+  # Regular expressions for patterns to ignore
+  regexes = [
+    # Ignore Helm template variables
+    "\\{\\{\\s*\\.Values\\.[^}]+\\}\\}",
+    # Ignore environment variable references
+    "\\$\\{[^}]+\\}",
+    "\\$[A-Z_][A-Z0-9_]*",
+    # Ignore placeholder values
+    "(?i)(your|example|placeholder|dummy|test|sample)[-_]?(key|token|secret|password)",
+    # Ignore common development/example values
+    "(?i)(localhost|127\\.0\\.0\\.1|example\\.com|test\\.com)",
+    # Ignore default JWT secrets in development
+    "(?i)jwt[-_]?secret[-_]?(key)?\\s*[:=]\\s*['\"']?(your|default|secret|test)[-_]?(jwt|secret|key)?['\"']?",
+    # Ignore Supabase development keys
+    "(?i)supabase[-_]?(service|anon)[-_]?key\\s*[:=]\\s*['\"']?eyJ[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*\\.[A-Za-z0-9_-]*['\"']?",
+    # Ignore development database URLs with template variables
+    "(?i)database[-_]?url\\s*[:=]\\s*['\"']?postgres://\\$\\{[^}]+\\}",
+    # Ignore timezone settings in configuration files
+    "(?i)timezone\\s*[:=]\\s*['\"']?[A-Za-z_/]+['\"']?"
+  ]

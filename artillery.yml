@@ -1,0 +1,324 @@
+config:
+  target: 'http://localhost:3001'
+  phases:
+    # Warm-up phase
+    - duration: 60
+      arrivalRate: 5
+      name: "Warm-up"
+    # Ramp-up phase
+    - duration: 120
+      arrivalRate: 10
+      rampTo: 50
+      name: "Ramp-up load"
+    # Sustained load phase
+    - duration: 300
+      arrivalRate: 50
+      name: "Sustained load"
+    # Peak load phase
+    - duration: 120
+      arrivalRate: 50
+      rampTo: 100
+      name: "Peak load"
+    # Cool-down phase
+    - duration: 60
+      arrivalRate: 100
+      rampTo: 10
+      name: "Cool-down"
+  
+  # Global configuration
+  defaults:
+    headers:
+      Content-Type: 'application/json'
+      User-Agent: 'Artillery Load Test'
+  
+  # Environment variables
+  environments:
+    development:
+      target: 'http://localhost:3001'
+      phases:
+        - duration: 30
+          arrivalRate: 5
+    staging:
+      target: 'https://staging-api.soulmatting.com'
+      phases:
+        - duration: 60
+          arrivalRate: 10
+    production:
+      target: 'https://api.soulmatting.com'
+      phases:
+        - duration: 300
+          arrivalRate: 20
+  
+  # Plugins
+  plugins:
+    metrics-by-endpoint:
+      useOnlyRequestNames: true
+    publish-metrics:
+      - type: prometheus
+        pushgateway: 'http://localhost:9091'
+        prefix: 'artillery_'
+        tags:
+          - 'environment:{{ $environment }}'
+          - 'service:soulmatting-api'
+    expect:
+      outputFormat: 'json'
+      reportFailuresAsErrors: true
+  
+  # Performance thresholds
+  ensure:
+    thresholds:
+      - http.response_time.p95: 500
+      - http.response_time.p99: 1000
+      - http.request_rate: 50
+      - http.codes.200: 95
+      - http.codes.4xx: 5
+      - http.codes.5xx: 1
+      - vusers.failed: 1
+  
+  # Processor functions
+  processor: './tests/load/processors.js'
+  
+  # Variables
+  variables:
+    testUserId:
+      - '550e8400-e29b-41d4-a716-446655440000'
+      - '550e8400-e29b-41d4-a716-446655440001'
+      - '550e8400-e29b-41d4-a716-446655440002'
+    testEmail:
+      - 'test1@example.com'
+      - 'test2@example.com'
+      - 'test3@example.com'
+
+scenarios:
+  # Authentication scenarios
+  - name: "User Authentication Flow"
+    weight: 20
+    flow:
+      - post:
+          url: "/auth/register"
+          json:
+            email: "{{ $randomString() }}@test.com"
+            password: "TestPassword123!"
+            firstName: "{{ $randomString() }}"
+            lastName: "{{ $randomString() }}"
+          capture:
+            - json: "$.user.id"
+              as: "userId"
+            - json: "$.accessToken"
+              as: "accessToken"
+          expect:
+            - statusCode: 201
+            - hasProperty: "user.id"
+            - hasProperty: "accessToken"
+      
+      - post:
+          url: "/auth/login"
+          json:
+            email: "{{ email }}"
+            password: "TestPassword123!"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "accessToken"
+      
+      - get:
+          url: "/auth/profile"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "user.id"
+  
+  # User profile scenarios
+  - name: "User Profile Management"
+    weight: 25
+    flow:
+      - function: "generateAuthToken"
+      
+      - get:
+          url: "/users/{{ userId }}"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "id"
+      
+      - put:
+          url: "/users/{{ userId }}"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          json:
+            bio: "Updated bio {{ $randomString() }}"
+            interests: ["music", "travel", "photography"]
+            location:
+              city: "Taipei"
+              country: "Taiwan"
+          expect:
+            - statusCode: 200
+      
+      - post:
+          url: "/users/{{ userId }}/photos"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          json:
+            url: "https://example.com/photo.jpg"
+            isPrimary: true
+          expect:
+            - statusCode: 201
+  
+  # Matching scenarios
+  - name: "Matching System"
+    weight: 30
+    flow:
+      - function: "generateAuthToken"
+      
+      - get:
+          url: "/matches/discover"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          qs:
+            limit: 10
+            ageMin: 25
+            ageMax: 35
+            distance: 50
+          expect:
+            - statusCode: 200
+            - hasProperty: "matches"
+      
+      - post:
+          url: "/matches/like"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          json:
+            targetUserId: "{{ testUserId }}"
+          expect:
+            - statusCode: 200
+      
+      - post:
+          url: "/matches/pass"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          json:
+            targetUserId: "{{ testUserId }}"
+          expect:
+            - statusCode: 200
+      
+      - get:
+          url: "/matches"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "matches"
+  
+  # Messaging scenarios
+  - name: "Messaging System"
+    weight: 20
+    flow:
+      - function: "generateAuthToken"
+      
+      - get:
+          url: "/conversations"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "conversations"
+      
+      - post:
+          url: "/conversations"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          json:
+            participantId: "{{ testUserId }}"
+          capture:
+            - json: "$.id"
+              as: "conversationId"
+          expect:
+            - statusCode: 201
+      
+      - post:
+          url: "/conversations/{{ conversationId }}/messages"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          json:
+            content: "Hello! {{ $randomString() }}"
+            type: "text"
+          expect:
+            - statusCode: 201
+      
+      - get:
+          url: "/conversations/{{ conversationId }}/messages"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          qs:
+            limit: 20
+            offset: 0
+          expect:
+            - statusCode: 200
+            - hasProperty: "messages"
+  
+  # Search and discovery scenarios
+  - name: "Search and Discovery"
+    weight: 5
+    flow:
+      - function: "generateAuthToken"
+      
+      - get:
+          url: "/search/users"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          qs:
+            q: "music lover"
+            limit: 20
+            ageMin: 25
+            ageMax: 35
+          expect:
+            - statusCode: 200
+            - hasProperty: "users"
+      
+      - get:
+          url: "/search/suggestions"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "suggestions"
+      
+      - get:
+          url: "/analytics/activity"
+          headers:
+            Authorization: "Bearer {{ accessToken }}"
+          expect:
+            - statusCode: 200
+            - hasProperty: "activity"
+
+# Error scenarios for resilience testing
+error_scenarios:
+  - name: "Invalid Authentication"
+    weight: 5
+    flow:
+      - get:
+          url: "/users/profile"
+          headers:
+            Authorization: "Bearer invalid_token"
+          expect:
+            - statusCode: 401
+      
+      - post:
+          url: "/auth/login"
+          json:
+            email: "invalid@email.com"
+            password: "wrongpassword"
+          expect:
+            - statusCode: 401
+  
+  - name: "Rate Limiting"
+    weight: 5
+    flow:
+      - loop:
+          - get:
+              url: "/matches/discover"
+          count: 100
+          whileTrue: "{{ $loopCount < 100 }}"

@@ -1,0 +1,42 @@
+dependencies:
+- name: soulmatting-web
+  repository: file://../web
+  version: 1.0.0
+- name: soulmatting-auth-service
+  repository: file://../auth-service
+  version: 1.0.0
+- name: soulmatting-user
+  repository: file://../user
+  version: 1.0.0
+- name: soulmatting-match
+  repository: file://../match
+  version: 1.0.0
+- name: soulmatting-communication
+  repository: file://../communication
+  version: 1.0.0
+- name: soulmatting-media
+  repository: file://../media
+  version: 1.0.0
+- name: soulmatting-notification
+  repository: file://../notification
+  version: 1.0.0
+- name: soulmatting-search
+  repository: file://../search
+  version: 1.0.0
+- name: soulmatting-payment
+  repository: file://../payment
+  version: 1.0.0
+- name: soulmatting-analytics
+  repository: file://../analytics
+  version: 1.0.0
+- name: redis
+  repository: https://charts.bitnami.com/bitnami
+  version: 17.15.6
+- name: postgresql
+  repository: https://charts.bitnami.com/bitnami
+  version: 12.12.10
+- name: elasticsearch
+  repository: https://charts.bitnami.com/bitnami
+  version: 19.13.13
+digest: sha256:1754aba3f05131687f4b2cecedb015742bcd7c65af439d1b1636e610b4cba1c9
+generated: "2025-08-24T00:18:33.465528+08:00"

@@ -1,0 +1,407 @@
+# SoulMatting Platform - Continuous Deployment Workflow
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+
+name: Continuous Deployment
+
+on:
+  workflow_run:
+    workflows: ['CI/CD Pipeline']
+    types:
+      - completed
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+      service:
+        description: 'Service to deploy (leave empty for all)'
+        required: false
+        type: string
+
+env:
+  REGISTRY_URL: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  KUBECTL_VERSION: '1.28.0'
+  HELM_VERSION: '3.13.0'
+
+jobs:
+  # =============================================================================
+  # Deployment Preparation
+  # =============================================================================
+  prepare:
+    name: Prepare Deployment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    outputs:
+      environment: ${{ steps.determine-env.outputs.environment }}
+      services: ${{ steps.determine-services.outputs.services }}
+      deploy_tag: ${{ steps.determine-tag.outputs.deploy_tag }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Determine environment
+        id: determine-env
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "environment=${{ github.event.inputs.environment }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "environment=production" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            echo "environment=staging" >> $GITHUB_OUTPUT
+          else
+            echo "environment=none" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Determine services to deploy
+        id: determine-services
+        run: |
+          if [[ "${{ github.event.inputs.service }}" != "" ]]; then
+            echo "services=[\"${{ github.event.inputs.service }}\"]"
+          else
+            echo "services=[\"web\", \"auth-service\", \"user\", \"match\", \"communication\", \"media\", \"notification\", \"search\"]"
+          fi >> $GITHUB_OUTPUT
+
+      - name: Determine deployment tag
+        id: determine-tag
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "deploy_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "deploy_tag=${{ github.event.workflow_run.head_sha }}" >> $GITHUB_OUTPUT
+          fi
+
+  # =============================================================================
+  # Database Migration
+  # =============================================================================
+  migrate:
+    name: Database Migration
+    runs-on: ubuntu-latest
+    needs: [prepare]
+    if: needs.prepare.outputs.environment != 'none'
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run database migrations
+        run: |
+          if [[ "${{ needs.prepare.outputs.environment }}" == "production" ]]; then
+            pnpm db:migrate:prod
+          else
+            pnpm db:migrate:staging
+          fi
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Verify migration
+        run: |
+          pnpm db:status
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+  # =============================================================================
+  # Kubernetes Deployment
+  # =============================================================================
+  deploy-k8s:
+    name: Deploy to Kubernetes
+    runs-on: ubuntu-latest
+    needs: [prepare, migrate]
+    if: needs.prepare.outputs.environment != 'none'
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+      url: ${{ needs.prepare.outputs.environment == 'production' && 'https://soulmatting.com' || 'https://staging.soulmatting.com' }}
+
+    strategy:
+      matrix:
+        service: ${{ fromJSON(needs.prepare.outputs.services) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure AWS credentials
+        if: needs.prepare.outputs.environment == 'production'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Configure GCP credentials
+        if: needs.prepare.outputs.environment == 'staging'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Update kubeconfig (AWS EKS)
+        if: needs.prepare.outputs.environment == 'production'
+        run: |
+          aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name soulmatting-prod
+
+      - name: Update kubeconfig (GKE)
+        if: needs.prepare.outputs.environment == 'staging'
+        run: |
+          gcloud container clusters get-credentials soulmatting-staging --zone ${{ secrets.GCP_ZONE }} --project ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Create namespace if not exists
+        run: |
+          kubectl create namespace soulmatting-${{ needs.prepare.outputs.environment }} --dry-run=client -o yaml | kubectl apply -f -
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install ${{ matrix.service }} ./helm/${{ matrix.service }} \
+            --namespace soulmatting-${{ needs.prepare.outputs.environment }} \
+            --set image.repository=${{ env.REGISTRY_URL }}/${{ env.IMAGE_NAME }}/${{ matrix.service }} \
+            --set image.tag=${{ needs.prepare.outputs.deploy_tag }} \
+            --set environment=${{ needs.prepare.outputs.environment }} \
+            --values ./helm/${{ matrix.service }}/values-${{ needs.prepare.outputs.environment }}.yaml \
+            --wait --timeout=10m
+
+      - name: Verify deployment
+        run: |
+          kubectl rollout status deployment/${{ matrix.service }} -n soulmatting-${{ needs.prepare.outputs.environment }} --timeout=300s
+
+      - name: Run health check
+        run: |
+          kubectl wait --for=condition=ready pod -l app=${{ matrix.service }} -n soulmatting-${{ needs.prepare.outputs.environment }} --timeout=300s
+
+  # =============================================================================
+  # Post-Deployment Tests
+  # =============================================================================
+  post-deploy-tests:
+    name: Post-Deployment Tests
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-k8s]
+    if: needs.prepare.outputs.environment != 'none'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: '8'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Wait for services to be ready
+        run: |
+          BASE_URL=${{ needs.prepare.outputs.environment == 'production' && 'https://soulmatting.com' || 'https://staging.soulmatting.com' }}
+          timeout 300 bash -c "until curl -f $BASE_URL/health; do sleep 10; done"
+
+      - name: Run smoke tests
+        run: |
+          pnpm test:smoke
+        env:
+          BASE_URL: ${{ needs.prepare.outputs.environment == 'production' && 'https://soulmatting.com' || 'https://staging.soulmatting.com' }}
+          API_URL: ${{ needs.prepare.outputs.environment == 'production' && 'https://api.soulmatting.com' || 'https://api-staging.soulmatting.com' }}
+
+      - name: Run API tests
+        run: |
+          pnpm test:api
+        env:
+          API_URL: ${{ needs.prepare.outputs.environment == 'production' && 'https://api.soulmatting.com' || 'https://api-staging.soulmatting.com' }}
+          API_KEY: ${{ secrets.API_TEST_KEY }}
+
+      - name: Performance baseline check
+        if: needs.prepare.outputs.environment == 'production'
+        run: |
+          pnpm test:performance:baseline
+        env:
+          BASE_URL: https://soulmatting.com
+
+  # =============================================================================
+  # Rollback (if needed)
+  # =============================================================================
+  rollback:
+    name: Rollback Deployment
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-k8s, post-deploy-tests]
+    if: failure() && needs.prepare.outputs.environment != 'none'
+    environment:
+      name: ${{ needs.prepare.outputs.environment }}
+
+    strategy:
+      matrix:
+        service: ${{ fromJSON(needs.prepare.outputs.services) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: ${{ env.KUBECTL_VERSION }}
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: ${{ env.HELM_VERSION }}
+
+      - name: Configure AWS credentials
+        if: needs.prepare.outputs.environment == 'production'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Configure GCP credentials
+        if: needs.prepare.outputs.environment == 'staging'
+        uses: google-github-actions/auth@v1
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Update kubeconfig
+        run: |
+          if [[ "${{ needs.prepare.outputs.environment }}" == "production" ]]; then
+            aws eks update-kubeconfig --region ${{ secrets.AWS_REGION }} --name soulmatting-prod
+          else
+            gcloud container clusters get-credentials soulmatting-staging --zone ${{ secrets.GCP_ZONE }} --project ${{ secrets.GCP_PROJECT_ID }}
+          fi
+
+      - name: Rollback deployment
+        run: |
+          helm rollback ${{ matrix.service }} --namespace soulmatting-${{ needs.prepare.outputs.environment }}
+
+      - name: Verify rollback
+        run: |
+          kubectl rollout status deployment/${{ matrix.service }} -n soulmatting-${{ needs.prepare.outputs.environment }} --timeout=300s
+
+  # =============================================================================
+  # Notifications
+  # =============================================================================
+  notify:
+    name: Send Notifications
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-k8s, post-deploy-tests]
+    if: always() && needs.prepare.outputs.environment != 'none'
+
+    steps:
+      - name: Determine deployment status
+        id: status
+        run: |
+          if [[ "${{ needs.deploy-k8s.result }}" == "success" && "${{ needs.post-deploy-tests.result }}" == "success" ]]; then
+            echo "status=success" >> $GITHUB_OUTPUT
+            echo "message=✅ Deployment to ${{ needs.prepare.outputs.environment }} completed successfully!" >> $GITHUB_OUTPUT
+          else
+            echo "status=failure" >> $GITHUB_OUTPUT
+            echo "message=❌ Deployment to ${{ needs.prepare.outputs.environment }} failed!" >> $GITHUB_OUTPUT
+          fi
+
+      # TEMPORARILY DISABLED: Slack notifications disabled due to GitHub Actions errors (run ids: #17197103321, #17197103316, #17197103314)
+      # TODO: Re-enable after fixing webhook configuration issues
+      # - name: Send Slack notification
+      #   uses: 8398a7/action-slack@v3
+      #   with:
+      #     status: ${{ steps.status.outputs.status }}
+      #     text: ${{ steps.status.outputs.message }}
+      #     webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+      #     fields: repo,message,commit,author,action,eventName,ref,workflow
+
+      - name: Send Discord notification
+        if: needs.prepare.outputs.environment == 'production'
+        uses: Ilshidur/action-discord@master
+        with:
+          args: ${{ steps.status.outputs.message }}
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK_URL }}
+
+      - name: Send email notification
+        if: steps.status.outputs.status == 'failure'
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: 'SoulMatting Deployment Failed - ${{ needs.prepare.outputs.environment }}'
+          body: |
+            Deployment to ${{ needs.prepare.outputs.environment }} has failed.
+
+            Repository: ${{ github.repository }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+            Workflow: ${{ github.workflow }}
+
+            Please check the GitHub Actions logs for more details.
+          to: ${{ secrets.NOTIFICATION_EMAIL }}
+          from: 'SoulMatting CI/CD <noreply@soulmatting.com>'
+
+  # =============================================================================
+  # Cleanup
+  # =============================================================================
+  cleanup:
+    name: Cleanup Resources
+    runs-on: ubuntu-latest
+    needs: [prepare, deploy-k8s, post-deploy-tests, notify]
+    if: always() && needs.prepare.outputs.environment != 'none'
+
+    steps:
+      - name: Clean up old deployments
+        run: |
+          echo "Cleaning up old deployments and resources..."
+          # Add cleanup logic here
+          # - Remove old Helm releases
+          # - Clean up old container images
+          # - Remove temporary resources
+
+      - name: Update deployment status
+        run: |
+          echo "Updating deployment status in monitoring systems..."
+          # Add status update logic here
+          # - Update deployment dashboard
+          # - Log deployment metrics
+          # - Update service catalog

@@ -1,0 +1,173 @@
+version: '3.8'
+
+services:
+  # Override for development
+  postgres:
+    environment:
+      POSTGRES_DB: soulmatting_dev
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "25432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./tools/docker/postgres/init:/docker-entrypoint-initdb.d
+      - ./tools/docker/postgres/dev-seed.sql:/docker-entrypoint-initdb.d/99-dev-seed.sql
+
+  redis:
+    command: redis-server --appendonly yes
+    ports:
+      - "26379:6379"
+    volumes:
+      - redis_dev_data:/data
+
+  minio:
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin123
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_dev_data:/data
+      - ./tools/docker/minio/policies:/policies
+
+  # Development-specific services
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: soulmatting-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"  # SMTP
+      - "8025:8025"  # Web UI
+    networks:
+      - soulmatting-network
+
+  # Database management UI
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: soulmatting-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@soulmatting.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+      - ./tools/docker/pgadmin/servers.json:/pgadmin4/servers.json
+    ports:
+      - "5050:80"
+    networks:
+      - soulmatting-network
+    depends_on:
+      - postgres
+
+  # Redis management UI
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: soulmatting-redis-commander
+    restart: unless-stopped
+    environment:
+      REDIS_HOSTS: local:redis:6379
+      HTTP_USER: admin
+      HTTP_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    networks:
+      - soulmatting-network
+    depends_on:
+      - redis
+
+  # Override auth service for development
+  auth:
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://postgres:postgres@postgres:5432/soulmatting_dev?search_path=auth
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_DISABLE_SIGNUP: false
+      GOTRUE_JWT_SECRET: your-super-secret-jwt-token-with-at-least-32-characters-long
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: true
+      GOTRUE_MAILER_AUTOCONFIRM: true
+      GOTRUE_SMTP_ADMIN_EMAIL: admin@soulmatting.com
+      GOTRUE_SMTP_HOST: mailhog
+      GOTRUE_SMTP_PORT: 1025
+      GOTRUE_SMTP_USER: ""
+      GOTRUE_SMTP_PASS: ""
+      GOTRUE_SMTP_SENDER_NAME: SoulMatting Dev
+      GOTRUE_LOG_LEVEL: debug
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mailhog:
+        condition: service_started
+
+  # Override storage for development
+  storage:
+    environment:
+      ANON_KEY: ${SUPABASE_ANON_KEY:-your_supabase_anon_key_here}
+      SERVICE_KEY: ${SUPABASE_SERVICE_KEY:-your_supabase_service_key_here}
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/soulmatting_dev
+      GLOBAL_S3_BUCKET: soulmatting-dev
+      AWS_ACCESS_KEY_ID: minioadmin
+      AWS_SECRET_ACCESS_KEY: minioadmin123
+      FILE_SIZE_LIMIT: 104857600  # 100MB for development
+      STORAGE_BACKEND: s3
+      GLOBAL_S3_ENDPOINT: http://minio:9000
+      GLOBAL_S3_PROTOCOL: http
+      GLOBAL_S3_FORCE_PATH_STYLE: "true"
+      LOG_LEVEL: debug
+
+  # Override web app for development
+  web:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development
+      - VITE_SUPABASE_URL=http://localhost:8000
+      - VITE_SUPABASE_ANON_KEY=${SUPABASE_ANON_KEY:-your_supabase_anon_key_here}
+      - VITE_API_URL=http://localhost:8000
+      - VITE_STORAGE_URL=http://localhost:5000
+      - VITE_REALTIME_URL=ws://localhost:4000
+      - VITE_APP_ENV=development
+    volumes:
+      - ./apps/web:/app
+      - web_node_modules:/app/node_modules
+    command: pnpm dev --host 0.0.0.0
+
+  # Override auth service for development
+  auth-service:
+    build:
+      target: development
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/soulmatting_dev
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=your-super-secret-jwt-token-with-at-least-32-characters-long
+      - SUPABASE_URL=http://auth:9999
+      - SUPABASE_SERVICE_KEY=${SUPABASE_SERVICE_KEY:-your_supabase_service_key_here}
+      - SMTP_HOST=mailhog
+      - SMTP_PORT=1025
+      - SMTP_USER=
+      - SMTP_PASS=
+      - LOG_LEVEL=debug
+    volumes:
+      - ./services/auth:/app
+      - auth_node_modules:/app/node_modules
+    command: pnpm dev
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+  minio_dev_data:
+    driver: local
+  pgadmin_dev_data:
+    driver: local
+  web_node_modules:
+    driver: local
+  auth_node_modules:
+    driver: local

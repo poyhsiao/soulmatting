@@ -1,6 +1,7 @@
 # Contributing Guide
 
-Thank you for your interest in the SoulMatting project! We welcome all forms of contributions, including but not limited to code, documentation, testing, issue reports, and feature suggestions.
+Thank you for your interest in the SoulMatting project! We welcome all forms of contributions,
+including but not limited to code, documentation, testing, issue reports, and feature suggestions.
 
 ## 📋 Table of Contents
 
@@ -16,7 +17,8 @@ Thank you for your interest in the SoulMatting project! We welcome all forms of 
 
 ## 🤝 Code of Conduct
 
-This project adopts the [Contributor Covenant](https://www.contributor-covenant.org/) Code of Conduct. By participating in this project, you agree to abide by its terms.
+This project adopts the [Contributor Covenant](https://www.contributor-covenant.org/) Code of
+Conduct. By participating in this project, you agree to abide by its terms.
 
 ### Our Pledge
 
@@ -58,8 +60,8 @@ This project adopts the [Contributor Covenant](https://www.contributor-covenant.
 
 ### Prerequisites
 
-- Node.js >= 18.0.0
-- pnpm >= 8.0.0
+- Node.js >= 22.0.0
+- pnpm >= 10.0.0
 - Docker >= 20.0.0
 - Docker Compose >= 2.0.0
 - Git >= 2.30.0
@@ -67,43 +69,49 @@ This project adopts the [Contributor Covenant](https://www.contributor-covenant.
 ### Setup Steps
 
 1. **Fork and Clone the Project**
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/soulmatting.git
    cd soulmatting
    ```
 
 2. **Add Upstream Repository**
+
    ```bash
    git remote add upstream https://github.com/kimhsiao/soulmatting.git
    ```
 
 3. **Install Dependencies**
+
    ```bash
    # Frontend dependencies
    cd frontend
    pnpm install
-   
+
    # Backend dependencies
    cd ../backend
    pnpm install
    ```
 
 4. **Setup Environment Variables**
+
    ```bash
    cp backend/.env.example backend/.env
    cp frontend/.env.example frontend/.env
    ```
 
 5. **Start Development Environment**
+
    ```bash
    docker-compose up -d
    ```
 
 6. **Run Tests**
+
    ```bash
    # Frontend tests
    cd frontend && pnpm test
-   
+
    # Backend tests
    cd backend && pnpm test
    ```
@@ -129,9 +137,9 @@ This project adopts the [Contributor Covenant](https://www.contributor-covenant.
 // ✅ Good example
 const UserProfile: React.FC<UserProfileProps> = ({ userId }) => {
   const { user, loading } = useUserData(userId);
-  
+
   if (loading) return <LoadingSpinner />;
-  
+
   return (
     <div className="user-profile">
       <h1>{user.name}</h1>
@@ -227,11 +235,13 @@ git commit -m "refactor(database): optimize user query performance"
 ### PR Workflow
 
 1. **Create Feature Branch**
+
    ```bash
    git checkout -b feature/your-feature-name
    ```
 
 2. **Develop and Test**
+
    ```bash
    # Perform development
    # Run tests
@@ -239,12 +249,14 @@ git commit -m "refactor(database): optimize user query performance"
    ```
 
 3. **Commit Changes**
+
    ```bash
    git add .
    git commit -m "feat: add your feature description"
    ```
 
 4. **Push Branch**
+
    ```bash
    git push origin feature/your-feature-name
    ```
@@ -259,9 +271,11 @@ git commit -m "refactor(database): optimize user query performance"
 
 ```markdown
 ## Change Description
+
 Briefly describe the changes in this PR
 
 ## Change Type
+
 - [ ] Bug fix
 - [ ] New feature
 - [ ] Refactoring
@@ -269,11 +283,13 @@ Briefly describe the changes in this PR
 - [ ] Other
 
 ## Testing
+
 - [ ] Unit tests pass
 - [ ] Integration tests pass
 - [ ] Manual testing completed
 
 ## Checklist
+
 - [ ] Code follows project standards
 - [ ] Self-review completed
 - [ ] Added necessary comments
@@ -281,6 +297,7 @@ Briefly describe the changes in this PR
 - [ ] No merge conflicts
 
 ## Related Issues
+
 Closes #(issue number)
 
 ## Screenshots (if applicable)
@@ -297,29 +314,27 @@ Closes #(issue number)
 ### Bug Report Template
 
 ```markdown
-**Bug Description**
-Clear and concise description of the bug
+**Bug Description** Clear and concise description of the bug
 
 **Steps to Reproduce**
+
 1. Go to '...'
 2. Click on '...'
 3. Scroll down to '...'
 4. See error
 
-**Expected Behavior**
-Describe what you expected to happen
+**Expected Behavior** Describe what you expected to happen
 
-**Actual Behavior**
-Describe what actually happened
+**Actual Behavior** Describe what actually happened
 
 **Environment Information**
+
 - OS: [e.g. macOS 12.0]
 - Browser: [e.g. Chrome 95.0]
 - Node.js: [e.g. 18.0.0]
 - Project version: [e.g. 1.0.0]
 
-**Additional Information**
-Add any other relevant information
+**Additional Information** Add any other relevant information
 ```
 
 ## 💡 Feature Requests
@@ -327,20 +342,15 @@ Add any other relevant information
 ### Feature Request Template
 
 ```markdown
-**Feature Description**
-Clearly describe the feature you want
+**Feature Description** Clearly describe the feature you want
 
-**Problem Background**
-Describe the problem this feature would solve
+**Problem Background** Describe the problem this feature would solve
 
-**Proposed Solution**
-Describe your desired solution
+**Proposed Solution** Describe your desired solution
 
-**Alternative Solutions**
-Describe other solutions you've considered
+**Alternative Solutions** Describe other solutions you've considered
 
-**Additional Information**
-Add any other relevant information
+**Additional Information** Add any other relevant information
 ```
 
 ## 📚 Documentation Contributions

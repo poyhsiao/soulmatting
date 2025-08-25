@@ -1,0 +1,35 @@
+# SoulMatting Web Frontend - Service Template
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-01-20
+# Last Updated: 2024-01-20
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "soulmatting-web.fullname" . }}
+  namespace: {{ .Release.Namespace | quote }}
+  labels:
+{{ include "soulmatting-web.labels" . | indent 4 }}
+{{- with .Values.service.annotations }}
+  annotations:
+{{ toYaml . | indent 4 }}
+{{- end }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+{{ include "soulmatting-web.selectorLabels" . | indent 4 }}
+{{- if eq .Values.service.type "LoadBalancer" }}
+{{- with .Values.service.loadBalancerIP }}
+  loadBalancerIP: {{ . }}
+{{- end }}
+{{- with .Values.service.loadBalancerSourceRanges }}
+  loadBalancerSourceRanges:
+{{ toYaml . | indent 4 }}
+{{- end }}
+{{- end }}
+  sessionAffinity: None

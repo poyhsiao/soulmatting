@@ -1,9 +1,6 @@
 # Technical Requirements Document - SoulMatting Platform
 
-**Version:** 1.0.0
-**Created:** 2025-01-21
-**Updated:** 2025-01-21
-**Author:** Kim Hsiao
+**Version:** 1.0.0 **Created:** 2025-01-21 **Updated:** 2025-01-21 **Author:** Kim Hsiao
 
 ## Changelog
 
@@ -87,7 +84,7 @@
 #### 2.2.1 Core Framework
 
 - **NestJS:** Enterprise-grade Node.js framework
-- **Node.js 20+:** Latest LTS version
+- **Node.js 22+:** Latest LTS version
 - **TypeScript:** Strict type checking enabled
 - **pnpm:** Package management consistency
 
@@ -102,7 +99,7 @@
 
 #### 2.3.1 Primary Database
 
-- **PostgreSQL 15+:** ACID-compliant relational database
+- **PostgreSQL 16+:** ACID-compliant relational database
 - **Prisma:** Type-safe database ORM
 - **Connection Pooling:** PgBouncer for connection management
 
@@ -329,19 +326,19 @@ interface MatchingCriteria {
 
 ```typescript
 // Client to Server
-"message:send";
-"message:typing";
-"message:read";
-"conversation:join";
-"conversation:leave";
+'message:send';
+'message:typing';
+'message:read';
+'conversation:join';
+'conversation:leave';
 
 // Server to Client
-"message:received";
-"message:delivered";
-"message:read";
-"user:typing";
-"user:online";
-"user:offline";
+'message:received';
+'message:delivered';
+'message:read';
+'user:typing';
+'user:online';
+'user:offline';
 ```
 
 #### 3.4.3 Data Models
@@ -361,7 +358,7 @@ interface Message {
   conversationId: string;
   senderId: string;
   content: string;
-  type: "text" | "image" | "video" | "file";
+  type: 'text' | 'image' | 'video' | 'file';
   encrypted: boolean;
   readBy: Record<string, Date>;
   createdAt: Date;
@@ -698,8 +695,8 @@ services:
   nginx:
     image: nginx:alpine
     ports:
-      - "80:80"
-      - "443:443"
+      - '80:80'
+      - '443:443'
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
       - ./ssl:/etc/ssl/certs
@@ -725,14 +722,14 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - '5432:5432'
 
   redis:
     image: redis:7-alpine
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - '6379:6379'
 
   minio:
     image: minio/minio:latest
@@ -743,8 +740,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - '9000:9000'
+      - '9001:9001'
 
 volumes:
   postgres_data:
@@ -861,6 +858,5 @@ volumes:
 
 ---
 
-**Document Status:** Approved for Implementation
-**Next Review Date:** 2025-02-21
-**Technical Lead Approval:** [Approved]
+**Document Status:** Approved for Implementation **Next Review Date:** 2025-02-21 **Technical Lead
+Approval:** [Approved]

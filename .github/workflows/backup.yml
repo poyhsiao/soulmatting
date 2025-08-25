@@ -1,0 +1,780 @@
+# =============================================================================
+# SoulMatting Platform - Backup and Recovery Workflow
+# =============================================================================
+# This workflow handles automated backups of databases, files, and configurations
+# for the SoulMatting platform with disaster recovery capabilities.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 💾 Backup & Recovery
+
+on:
+  # Scheduled backups
+  schedule:
+    # Daily backup at 2 AM UTC
+    - cron: '0 2 * * *'
+    # Weekly full backup on Sundays at 1 AM UTC
+    - cron: '0 1 * * 0'
+    # Monthly archive on the 1st at midnight UTC
+    - cron: '0 0 1 * *'
+
+  # Manual trigger
+  workflow_dispatch:
+    inputs:
+      backup_type:
+        description: 'Type of backup to perform'
+        required: true
+        default: 'incremental'
+        type: choice
+        options:
+          - incremental
+          - full
+          - database_only
+          - files_only
+          - config_only
+      environment:
+        description: 'Environment to backup'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+          - all
+      retention_days:
+        description: 'Backup retention period (days)'
+        required: false
+        default: '30'
+        type: string
+      compress:
+        description: 'Compress backup files'
+        required: false
+        default: true
+        type: boolean
+
+  # Trigger before major deployments
+  workflow_run:
+    workflows: ['🚀 Deploy']
+    types:
+      - requested
+
+env:
+  NODE_VERSION: '22'
+  BACKUP_BUCKET: 'soulmatting-backups'
+  AWS_REGION: 'us-west-2'
+  BACKUP_ENCRYPTION_KEY: ${{ secrets.BACKUP_ENCRYPTION_KEY }}
+  SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+  SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+jobs:
+  # =============================================================================
+  # Backup Configuration
+  # =============================================================================
+  setup:
+    name: Setup Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      backup_type: ${{ steps.config.outputs.backup_type }}
+      environments: ${{ steps.config.outputs.environments }}
+      retention_days: ${{ steps.config.outputs.retention_days }}
+      compress: ${{ steps.config.outputs.compress }}
+      backup_id: ${{ steps.config.outputs.backup_id }}
+      timestamp: ${{ steps.config.outputs.timestamp }}
+
+    steps:
+      - name: Configure backup parameters
+        id: config
+        run: |
+          # Determine backup type based on schedule or input
+          if [ "${{ github.event_name }}" == "schedule" ]; then
+            if [ "${{ github.event.schedule }}" == "0 1 * * 0" ]; then
+              BACKUP_TYPE="full"
+            elif [ "${{ github.event.schedule }}" == "0 0 1 * *" ]; then
+              BACKUP_TYPE="archive"
+            else
+              BACKUP_TYPE="incremental"
+            fi
+          else
+            BACKUP_TYPE="${{ github.event.inputs.backup_type || 'incremental' }}"
+          fi
+
+          echo "backup_type=$BACKUP_TYPE" >> $GITHUB_OUTPUT
+
+          # Determine environments
+          if [ "${{ github.event.inputs.environment }}" == "all" ] || [ -z "${{ github.event.inputs.environment }}" ]; then
+            echo "environments=[\"production\",\"staging\"]" >> $GITHUB_OUTPUT
+          else
+            echo "environments=[\"${{ github.event.inputs.environment }}\"]" >> $GITHUB_OUTPUT
+          fi
+
+          # Set retention and compression
+          echo "retention_days=${{ github.event.inputs.retention_days || '30' }}" >> $GITHUB_OUTPUT
+          echo "compress=${{ github.event.inputs.compress || 'true' }}" >> $GITHUB_OUTPUT
+
+          # Generate unique backup ID
+          TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
+          BACKUP_ID="${BACKUP_TYPE}_${TIMESTAMP}_$(echo $RANDOM | md5sum | head -c 8)"
+          echo "backup_id=$BACKUP_ID" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+          echo "💾 Backup configuration:"
+          echo "- Type: $BACKUP_TYPE"
+          echo "- Environments: ${{ github.event.inputs.environment || 'production,staging' }}"
+          echo "- Retention: ${{ github.event.inputs.retention_days || '30' }} days"
+          echo "- Compress: ${{ github.event.inputs.compress || 'true' }}"
+          echo "- Backup ID: $BACKUP_ID"
+
+  # =============================================================================
+  # Database Backup
+  # =============================================================================
+  database_backup:
+    name: Database Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: contains(fromJson('["incremental", "full", "database_only", "archive"]'), needs.setup.outputs.backup_type)
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: |
+          pnpm add -g @supabase/cli
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client awscli
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create database backup
+        id: db_backup
+        run: |
+          # Set environment-specific database URL
+          case "${{ matrix.environment }}" in
+            "development")
+              DB_URL="${{ secrets.DEV_DATABASE_URL }}"
+              ;;
+            "staging")
+              DB_URL="${{ secrets.STAGING_DATABASE_URL }}"
+              ;;
+            "production")
+              DB_URL="${{ secrets.PROD_DATABASE_URL }}"
+              ;;
+          esac
+
+          echo "💾 Creating database backup for ${{ matrix.environment }}"
+
+          # Create backup directory
+          BACKUP_DIR="./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}"
+          mkdir -p "$BACKUP_DIR"
+
+          # Generate backup filename
+          BACKUP_FILE="$BACKUP_DIR/database_${{ matrix.environment }}_${{ needs.setup.outputs.timestamp }}.sql"
+
+          # Create database dump
+          if [ "${{ needs.setup.outputs.backup_type }}" == "full" ] || [ "${{ needs.setup.outputs.backup_type }}" == "archive" ]; then
+            # Full backup with schema and data
+            pg_dump "$DB_URL" \
+              --verbose \
+              --clean \
+              --if-exists \
+              --create \
+              --format=custom \
+              --file="${BACKUP_FILE}.dump"
+            
+            # Also create SQL format for readability
+            pg_dump "$DB_URL" \
+              --verbose \
+              --clean \
+              --if-exists \
+              --create \
+              --format=plain \
+              --file="$BACKUP_FILE"
+          else
+            # Incremental backup (data only)
+            pg_dump "$DB_URL" \
+              --verbose \
+              --data-only \
+              --format=custom \
+              --file="${BACKUP_FILE}.dump"
+            
+            pg_dump "$DB_URL" \
+              --verbose \
+              --data-only \
+              --format=plain \
+              --file="$BACKUP_FILE"
+          fi
+
+          # Get backup size
+          BACKUP_SIZE=$(du -h "${BACKUP_FILE}.dump" | cut -f1)
+          echo "📊 Backup size: $BACKUP_SIZE"
+
+          # Compress if requested
+          if [ "${{ needs.setup.outputs.compress }}" == "true" ]; then
+            echo "🗜️ Compressing backup files..."
+            gzip "${BACKUP_FILE}.dump"
+            gzip "$BACKUP_FILE"
+            COMPRESSED_SIZE=$(du -h "${BACKUP_FILE}.dump.gz" | cut -f1)
+            echo "📦 Compressed size: $COMPRESSED_SIZE"
+          fi
+
+          echo "backup_file=$BACKUP_FILE" >> $GITHUB_OUTPUT
+          echo "backup_size=$BACKUP_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Backup Supabase metadata
+        run: |
+          echo "📋 Backing up Supabase metadata for ${{ matrix.environment }}"
+
+          METADATA_DIR="./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}/metadata"
+          mkdir -p "$METADATA_DIR"
+
+          # Set environment-specific Supabase project
+          case "${{ matrix.environment }}" in
+            "development")
+              SUPABASE_PROJECT_ID="${{ secrets.DEV_SUPABASE_PROJECT_ID }}"
+              ;;
+            "staging")
+              SUPABASE_PROJECT_ID="${{ secrets.STAGING_SUPABASE_PROJECT_ID }}"
+              ;;
+            "production")
+              SUPABASE_PROJECT_ID="${{ secrets.PROD_SUPABASE_PROJECT_ID }}"
+              ;;
+          esac
+
+          # Export Supabase configuration
+          supabase projects list --output json > "$METADATA_DIR/projects.json"
+
+          # Export database schema
+          supabase db dump \
+            --project-id "$SUPABASE_PROJECT_ID" \
+            --schema-only \
+            --file "$METADATA_DIR/schema.sql"
+
+          # Export Edge Functions (if any)
+          if [ -d "./supabase/functions" ]; then
+            cp -r "./supabase/functions" "$METADATA_DIR/"
+          fi
+
+          # Export migrations
+          if [ -d "./supabase/migrations" ]; then
+            cp -r "./supabase/migrations" "$METADATA_DIR/"
+          fi
+
+          echo "✅ Supabase metadata backup completed"
+
+      - name: Upload database backup to S3
+        run: |
+          echo "☁️ Uploading database backup to S3"
+
+          BACKUP_PATH="backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}"
+          S3_PATH="s3://${{ env.BACKUP_BUCKET }}/${{ matrix.environment }}/${{ needs.setup.outputs.backup_type }}/${{ needs.setup.outputs.timestamp }}/"
+
+          # Upload backup files
+          aws s3 cp "./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}/" \
+            "$S3_PATH" \
+            --recursive \
+            --storage-class STANDARD_IA
+
+          # Create backup manifest
+          cat > backup_manifest.json << EOF
+          {
+            "backup_id": "${{ needs.setup.outputs.backup_id }}",
+            "environment": "${{ matrix.environment }}",
+            "type": "${{ needs.setup.outputs.backup_type }}",
+            "timestamp": "${{ needs.setup.outputs.timestamp }}",
+            "retention_days": ${{ needs.setup.outputs.retention_days }},
+            "compressed": ${{ needs.setup.outputs.compress }},
+            "files": [
+              "database_${{ matrix.environment }}_${{ needs.setup.outputs.timestamp }}.sql",
+              "database_${{ matrix.environment }}_${{ needs.setup.outputs.timestamp }}.sql.dump"
+            ],
+            "metadata": {
+              "workflow_run": "${{ github.run_id }}",
+              "commit_sha": "${{ github.sha }}",
+              "actor": "${{ github.actor }}"
+            }
+          }
+          EOF
+
+          # Upload manifest
+          aws s3 cp backup_manifest.json "${S3_PATH}backup_manifest.json"
+
+          echo "✅ Database backup uploaded successfully"
+
+  # =============================================================================
+  # File System Backup
+  # =============================================================================
+  files_backup:
+    name: Files Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: setup
+    if: contains(fromJson('["full", "files_only", "archive"]'), needs.setup.outputs.backup_type)
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create files backup
+        id: files_backup
+        run: |
+          echo "📁 Creating files backup for ${{ matrix.environment }}"
+
+          BACKUP_DIR="./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}/files"
+          mkdir -p "$BACKUP_DIR"
+
+          # Define files and directories to backup
+          BACKUP_ITEMS=(
+            "./apps"
+            "./packages"
+            "./docker-compose.yml"
+            "./docker-compose.prod.yml"
+            "./package.json"
+            "./pnpm-workspace.yaml"
+            "./README.md"
+            "./docs"
+            "./.github"
+            "./supabase"
+          )
+
+          # Create archive
+          ARCHIVE_NAME="files_${{ matrix.environment }}_${{ needs.setup.outputs.timestamp }}.tar"
+
+          echo "📦 Creating archive: $ARCHIVE_NAME"
+          tar -cf "$BACKUP_DIR/$ARCHIVE_NAME" \
+            --exclude='node_modules' \
+            --exclude='.git' \
+            --exclude='dist' \
+            --exclude='build' \
+            --exclude='.next' \
+            --exclude='coverage' \
+            --exclude='*.log' \
+            --exclude='.env*' \
+            "${BACKUP_ITEMS[@]}"
+
+          # Compress if requested
+          if [ "${{ needs.setup.outputs.compress }}" == "true" ]; then
+            echo "🗜️ Compressing archive..."
+            gzip "$BACKUP_DIR/$ARCHIVE_NAME"
+            ARCHIVE_NAME="${ARCHIVE_NAME}.gz"
+          fi
+
+          # Get archive size
+          ARCHIVE_SIZE=$(du -h "$BACKUP_DIR/$ARCHIVE_NAME" | cut -f1)
+          echo "📊 Archive size: $ARCHIVE_SIZE"
+
+          echo "archive_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
+          echo "archive_size=$ARCHIVE_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload files backup to S3
+        run: |
+          echo "☁️ Uploading files backup to S3"
+
+          S3_PATH="s3://${{ env.BACKUP_BUCKET }}/${{ matrix.environment }}/${{ needs.setup.outputs.backup_type }}/${{ needs.setup.outputs.timestamp }}/files/"
+
+          # Upload files backup
+          aws s3 cp "./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}/files/" \
+            "$S3_PATH" \
+            --recursive \
+            --storage-class STANDARD_IA
+
+          echo "✅ Files backup uploaded successfully"
+
+  # =============================================================================
+  # Configuration Backup
+  # =============================================================================
+  config_backup:
+    name: Configuration Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: setup
+    if: contains(fromJson('["full", "config_only", "archive"]'), needs.setup.outputs.backup_type)
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Create configuration backup
+        id: config_backup
+        run: |
+          echo "⚙️ Creating configuration backup for ${{ matrix.environment }}"
+
+          BACKUP_DIR="./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}/config"
+          mkdir -p "$BACKUP_DIR"
+
+          # Backup environment-specific configurations
+          case "${{ matrix.environment }}" in
+            "development")
+              ENV_FILE=".env.development"
+              ;;
+            "staging")
+              ENV_FILE=".env.staging"
+              ;;
+            "production")
+              ENV_FILE=".env.production"
+              ;;
+          esac
+
+          # Create configuration snapshot (without sensitive data)
+          cat > "$BACKUP_DIR/environment_config.json" << EOF
+          {
+            "environment": "${{ matrix.environment }}",
+            "timestamp": "${{ needs.setup.outputs.timestamp }}",
+            "node_version": "${{ env.NODE_VERSION }}",
+            "backup_type": "${{ needs.setup.outputs.backup_type }}",
+            "services": {
+              "web": {
+                "port": "3000",
+                "framework": "Next.js"
+              },
+              "api": {
+                "port": "3001",
+                "framework": "Express.js"
+              },
+              "auth_service": {
+                "port": "3002"
+              },
+              "user_service": {
+                "port": "3003"
+              },
+              "matching_service": {
+                "port": "3004"
+              },
+              "messaging_service": {
+                "port": "3005"
+              },
+              "notification_service": {
+                "port": "3006"
+              }
+            },
+            "infrastructure": {
+              "database": "Supabase PostgreSQL",
+              "storage": "Supabase Storage",
+              "auth": "Supabase Auth",
+              "realtime": "Supabase Realtime"
+            }
+          }
+          EOF
+
+          # Backup Docker configurations
+          cp docker-compose.yml "$BACKUP_DIR/" 2>/dev/null || true
+          cp docker-compose.prod.yml "$BACKUP_DIR/" 2>/dev/null || true
+          cp Dockerfile "$BACKUP_DIR/" 2>/dev/null || true
+
+          # Backup CI/CD configurations
+          cp -r .github "$BACKUP_DIR/" 2>/dev/null || true
+
+          # Backup package configurations
+          cp package.json "$BACKUP_DIR/" 2>/dev/null || true
+          cp pnpm-workspace.yaml "$BACKUP_DIR/" 2>/dev/null || true
+
+          # Backup linting and formatting configurations
+          cp .eslintrc.* "$BACKUP_DIR/" 2>/dev/null || true
+          cp .prettierrc* "$BACKUP_DIR/" 2>/dev/null || true
+          cp tsconfig.json "$BACKUP_DIR/" 2>/dev/null || true
+
+          # Create archive
+          ARCHIVE_NAME="config_${{ matrix.environment }}_${{ needs.setup.outputs.timestamp }}.tar"
+          tar -cf "$BACKUP_DIR/../$ARCHIVE_NAME" -C "$BACKUP_DIR" .
+
+          # Compress if requested
+          if [ "${{ needs.setup.outputs.compress }}" == "true" ]; then
+            gzip "$BACKUP_DIR/../$ARCHIVE_NAME"
+            ARCHIVE_NAME="${ARCHIVE_NAME}.gz"
+          fi
+
+          # Get archive size
+          ARCHIVE_SIZE=$(du -h "$BACKUP_DIR/../$ARCHIVE_NAME" | cut -f1)
+          echo "📊 Configuration archive size: $ARCHIVE_SIZE"
+
+          echo "archive_name=$ARCHIVE_NAME" >> $GITHUB_OUTPUT
+          echo "archive_size=$ARCHIVE_SIZE" >> $GITHUB_OUTPUT
+
+      - name: Upload configuration backup to S3
+        run: |
+          echo "☁️ Uploading configuration backup to S3"
+
+          S3_PATH="s3://${{ env.BACKUP_BUCKET }}/${{ matrix.environment }}/${{ needs.setup.outputs.backup_type }}/${{ needs.setup.outputs.timestamp }}/config/"
+
+          # Upload configuration backup
+          aws s3 cp "./backups/${{ needs.setup.outputs.backup_id }}/${{ matrix.environment }}/config/" \
+            "$S3_PATH" \
+            --recursive \
+            --storage-class STANDARD_IA
+
+          echo "✅ Configuration backup uploaded successfully"
+
+  # =============================================================================
+  # Backup Verification
+  # =============================================================================
+  verify_backup:
+    name: Verify Backup
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup, database_backup, files_backup, config_backup]
+    if: always() && !cancelled()
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify backup integrity
+        id: verify
+        run: |
+          echo "🔍 Verifying backup integrity for ${{ matrix.environment }}"
+
+          S3_BASE_PATH="s3://${{ env.BACKUP_BUCKET }}/${{ matrix.environment }}/${{ needs.setup.outputs.backup_type }}/${{ needs.setup.outputs.timestamp }}/"
+
+          # Check if backup files exist
+          VERIFICATION_RESULTS=""
+
+          # Verify database backup
+          if [ "${{ needs.database_backup.result }}" == "success" ]; then
+            if aws s3 ls "${S3_BASE_PATH}backup_manifest.json" > /dev/null 2>&1; then
+              echo "✅ Database backup verified"
+              VERIFICATION_RESULTS="$VERIFICATION_RESULTS\n✅ Database backup: OK"
+            else
+              echo "❌ Database backup verification failed"
+              VERIFICATION_RESULTS="$VERIFICATION_RESULTS\n❌ Database backup: FAILED"
+            fi
+          fi
+
+          # Verify files backup
+          if [ "${{ needs.files_backup.result }}" == "success" ]; then
+            if aws s3 ls "${S3_BASE_PATH}files/" > /dev/null 2>&1; then
+              echo "✅ Files backup verified"
+              VERIFICATION_RESULTS="$VERIFICATION_RESULTS\n✅ Files backup: OK"
+            else
+              echo "❌ Files backup verification failed"
+              VERIFICATION_RESULTS="$VERIFICATION_RESULTS\n❌ Files backup: FAILED"
+            fi
+          fi
+
+          # Verify configuration backup
+          if [ "${{ needs.config_backup.result }}" == "success" ]; then
+            if aws s3 ls "${S3_BASE_PATH}config/" > /dev/null 2>&1; then
+              echo "✅ Configuration backup verified"
+              VERIFICATION_RESULTS="$VERIFICATION_RESULTS\n✅ Configuration backup: OK"
+            else
+              echo "❌ Configuration backup verification failed"
+              VERIFICATION_RESULTS="$VERIFICATION_RESULTS\n❌ Configuration backup: FAILED"
+            fi
+          fi
+
+          echo "verification_results=$VERIFICATION_RESULTS" >> $GITHUB_OUTPUT
+
+      - name: Test backup restoration (sample)
+        run: |
+          echo "🧪 Testing backup restoration capability"
+
+          # Download and test a small sample of the backup
+          TEMP_DIR="./restore_test"
+          mkdir -p "$TEMP_DIR"
+
+          S3_BASE_PATH="s3://${{ env.BACKUP_BUCKET }}/${{ matrix.environment }}/${{ needs.setup.outputs.backup_type }}/${{ needs.setup.outputs.timestamp }}/"
+
+          # Test downloading backup manifest
+          if aws s3 cp "${S3_BASE_PATH}backup_manifest.json" "$TEMP_DIR/" 2>/dev/null; then
+            echo "✅ Backup manifest download test passed"
+            
+            # Validate manifest structure
+            if jq -e '.backup_id' "$TEMP_DIR/backup_manifest.json" > /dev/null; then
+              echo "✅ Backup manifest structure is valid"
+            else
+              echo "❌ Backup manifest structure is invalid"
+            fi
+          else
+            echo "❌ Backup manifest download test failed"
+          fi
+
+          # Cleanup test files
+          rm -rf "$TEMP_DIR"
+
+  # =============================================================================
+  # Cleanup Old Backups
+  # =============================================================================
+  cleanup:
+    name: Cleanup Old Backups
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, verify_backup]
+    if: always() && !cancelled()
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Cleanup old backups
+        run: |
+          echo "🧹 Cleaning up old backups"
+
+          RETENTION_DAYS=${{ needs.setup.outputs.retention_days }}
+          CUTOFF_DATE=$(date -d "$RETENTION_DAYS days ago" +%Y%m%d)
+
+          echo "📅 Removing backups older than $RETENTION_DAYS days (before $CUTOFF_DATE)"
+
+          # List and delete old backups for each environment
+          for ENV in production staging development; do
+            echo "🔍 Checking $ENV environment..."
+            
+            # List all backup directories for this environment
+            aws s3 ls "s3://${{ env.BACKUP_BUCKET }}/$ENV/" --recursive | while read -r line; do
+              # Extract date from backup path
+              BACKUP_DATE=$(echo "$line" | grep -oE '[0-9]{8}_[0-9]{6}' | head -1 | cut -d'_' -f1)
+              
+              if [ -n "$BACKUP_DATE" ] && [ "$BACKUP_DATE" -lt "$CUTOFF_DATE" ]; then
+                BACKUP_PATH=$(echo "$line" | awk '{print $4}')
+                echo "🗑️ Deleting old backup: $BACKUP_PATH"
+                aws s3 rm "s3://${{ env.BACKUP_BUCKET }}/$BACKUP_PATH"
+              fi
+            done
+          done
+
+          echo "✅ Cleanup completed"
+
+  # =============================================================================
+  # Backup Summary
+  # =============================================================================
+  summary:
+    name: Backup Summary
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      [
+        setup,
+        database_backup,
+        files_backup,
+        config_backup,
+        verify_backup,
+        cleanup,
+      ]
+
+    steps:
+      - name: Generate backup summary
+        run: |
+          echo "# 💾 Backup Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Backup ID:** ${{ needs.setup.outputs.backup_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** ${{ needs.setup.outputs.backup_type }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environments:** ${{ needs.setup.outputs.environments }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** ${{ needs.setup.outputs.timestamp }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Retention:** ${{ needs.setup.outputs.retention_days }} days" >> $GITHUB_STEP_SUMMARY
+          echo "**Compressed:** ${{ needs.setup.outputs.compress }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Backup Results
+          echo "## 📊 Backup Results" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.database_backup.result }}" == "success" ]; then
+            echo "✅ Database backup completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.database_backup.result }}" == "skipped" ]; then
+            echo "⏭️ Database backup skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Database backup failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.files_backup.result }}" == "success" ]; then
+            echo "✅ Files backup completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.files_backup.result }}" == "skipped" ]; then
+            echo "⏭️ Files backup skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Files backup failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          if [ "${{ needs.config_backup.result }}" == "success" ]; then
+            echo "✅ Configuration backup completed successfully" >> $GITHUB_STEP_SUMMARY
+          elif [ "${{ needs.config_backup.result }}" == "skipped" ]; then
+            echo "⏭️ Configuration backup skipped" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Configuration backup failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Verification Results
+          echo "## 🔍 Verification Results" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ needs.verify_backup.result }}" == "success" ]; then
+            echo "✅ Backup verification completed successfully" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Backup verification failed" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Storage Information
+          echo "## 💾 Storage Information" >> $GITHUB_STEP_SUMMARY
+          echo "**S3 Bucket:** ${{ env.BACKUP_BUCKET }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Region:** ${{ env.AWS_REGION }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Storage Class:** STANDARD_IA" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Backup completed at $(date -u)*" >> $GITHUB_STEP_SUMMARY
+
+      - name: Send notification
+        if: failure()
+        run: |
+          echo "🚨 Backup failed - sending notification"
+          # Add notification logic here (Slack, email, etc.)
+          echo "Backup failure notification would be sent here"

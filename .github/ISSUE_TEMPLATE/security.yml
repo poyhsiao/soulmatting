@@ -1,0 +1,187 @@
+name: Security Vulnerability Report
+description: Report a security vulnerability (Please use private reporting for sensitive issues)
+title: '[SECURITY]: '
+labels: ['security', 'triage', 'high-priority']
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## ⚠️ Security Vulnerability Report
+
+        **IMPORTANT**: If this is a sensitive security issue that could be exploited, please use GitHub's private vulnerability reporting feature instead of creating a public issue.
+
+        For non-sensitive security improvements or questions, you can continue with this form.
+
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info? (This will be kept confidential)
+      placeholder: ex. email@example.com
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Level
+      description: How severe is this security issue?
+      options:
+        - Critical - Immediate threat to user data or system integrity
+        - High - Significant security risk
+        - Medium - Moderate security concern
+        - Low - Minor security improvement
+        - Informational - Security best practice suggestion
+    validations:
+      required: true
+
+  - type: dropdown
+    id: vulnerability-type
+    attributes:
+      label: Vulnerability Type
+      description: What type of security issue is this?
+      multiple: true
+      options:
+        - Authentication Bypass
+        - Authorization Issues
+        - SQL Injection
+        - Cross-Site Scripting (XSS)
+        - Cross-Site Request Forgery (CSRF)
+        - Insecure Direct Object References
+        - Security Misconfiguration
+        - Sensitive Data Exposure
+        - Insufficient Logging & Monitoring
+        - Broken Access Control
+        - Cryptographic Issues
+        - Injection Attacks
+        - Deserialization Vulnerabilities
+        - API Security Issues
+        - Third-party Dependencies
+        - Infrastructure Security
+        - Other
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Provide a clear description of the security issue
+      placeholder: Describe the security vulnerability...
+    validations:
+      required: true
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact Assessment
+      description: What is the potential impact of this vulnerability?
+      placeholder: |
+        - Data that could be compromised:
+        - Systems that could be affected:
+        - Potential for privilege escalation:
+        - Risk to user privacy:
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to Reproduce
+      description: Provide detailed steps to reproduce the vulnerability (if safe to do so)
+      placeholder: |
+        1. Go to '...'
+        2. Perform action '...'
+        3. Observe security issue '...'
+
+        **Note**: Only include reproduction steps if they don't pose additional security risks
+    validations:
+      required: false
+
+  - type: textarea
+    id: proof-of-concept
+    attributes:
+      label: Proof of Concept
+      description: Provide a proof of concept (if applicable and safe)
+      placeholder: |
+        **Warning**: Only include PoC if it doesn't cause harm or expose sensitive information
+
+        ```
+        // Safe proof of concept code here
+        ```
+    validations:
+      required: false
+
+  - type: textarea
+    id: affected-versions
+    attributes:
+      label: Affected Versions
+      description: Which versions are affected by this vulnerability?
+      placeholder: |
+        - Version X.X.X
+        - All versions since X.X.X
+        - Latest version (specify)
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment Details
+      description: Provide relevant environment information
+      placeholder: |
+        - Operating System:
+        - Browser (if applicable):
+        - Database version:
+        - Deployment environment:
+    validations:
+      required: false
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: Do you have suggestions for fixing this vulnerability?
+      placeholder: |
+        - Immediate workarounds:
+        - Long-term fixes:
+        - Security best practices to implement:
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Any relevant security advisories, CVEs, or documentation
+      placeholder: |
+        - CVE-XXXX-XXXX
+        - OWASP reference:
+        - Security advisory:
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Responsible Disclosure
+      description: Disclosure and reporting acknowledgments
+      options:
+        - label: I have not publicly disclosed this vulnerability
+          required: true
+        - label: I have not shared this information with unauthorized parties
+          required: true
+        - label: I understand this report may be kept confidential during investigation
+          required: true
+        - label: I am willing to work with the team to resolve this issue
+          required: true
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      description: By submitting this issue, you agree to follow our Code of Conduct
+      options:
+        - label: I agree to follow this project's Code of Conduct
+          required: true
+        - label: I understand that security issues require careful handling
+          required: true

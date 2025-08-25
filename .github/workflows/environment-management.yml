@@ -1,0 +1,927 @@
+# =============================================================================
+# SoulMatting Platform - Environment Management Workflow
+# =============================================================================
+# This workflow manages environment configurations, provisioning, and
+# synchronization across development, staging, and production environments.
+#
+# Author: Kim Hsiao
+# Version: 1.0.0
+# Created: 2024-12-21
+# Last Updated: 2024-12-21
+# =============================================================================
+
+name: 🌍 Environment Management
+
+on:
+  # Manual trigger for environment operations
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Environment action to perform'
+        required: true
+        type: choice
+        options:
+          - provision
+          - configure
+          - sync
+          - validate
+          - cleanup
+          - backup
+          - restore
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+          - all
+      config_source:
+        description: 'Configuration source (for sync/restore)'
+        required: false
+        type: choice
+        options:
+          - production
+          - staging
+          - development
+          - backup
+        default: 'production'
+      dry_run:
+        description: 'Perform dry run (no actual changes)'
+        required: false
+        type: boolean
+        default: true
+      force:
+        description: 'Force operation (skip confirmations)'
+        required: false
+        type: boolean
+        default: false
+
+  # Scheduled environment validation
+  schedule:
+    # Daily environment health check at 2:00 AM UTC
+    - cron: '0 2 * * *'
+
+  # Trigger on environment configuration changes
+  push:
+    paths:
+      - 'environments/**'
+      - 'docker-compose*.yml'
+      - '.env.example'
+      - 'infrastructure/**'
+    branches:
+      - main
+      - develop
+
+env:
+  NODE_VERSION: '22'
+  PYTHON_VERSION: '3.11'
+  TERRAFORM_VERSION: '1.6.0'
+  ANSIBLE_VERSION: '8.0.0'
+
+jobs:
+  # =============================================================================
+  # Environment Management Setup
+  # =============================================================================
+  setup:
+    name: Environment Setup
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    outputs:
+      action: ${{ steps.setup.outputs.action }}
+      environment: ${{ steps.setup.outputs.environment }}
+      config_source: ${{ steps.setup.outputs.config_source }}
+      dry_run: ${{ steps.setup.outputs.dry_run }}
+      force: ${{ steps.setup.outputs.force }}
+      environments: ${{ steps.setup.outputs.environments }}
+      timestamp: ${{ steps.setup.outputs.timestamp }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup parameters
+        id: setup
+        run: |
+          # Determine action and parameters
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            ACTION="${{ github.event.inputs.action }}"
+            ENVIRONMENT="${{ github.event.inputs.environment }}"
+            CONFIG_SOURCE="${{ github.event.inputs.config_source }}"
+            DRY_RUN="${{ github.event.inputs.dry_run }}"
+            FORCE="${{ github.event.inputs.force }}"
+          elif [ "${{ github.event_name }}" == "schedule" ]; then
+            # Scheduled validation
+            ACTION="validate"
+            ENVIRONMENT="all"
+            CONFIG_SOURCE="production"
+            DRY_RUN="false"
+            FORCE="false"
+          else
+            # Push trigger - validate changed environments
+            ACTION="validate"
+            ENVIRONMENT="all"
+            CONFIG_SOURCE="production"
+            DRY_RUN="false"
+            FORCE="false"
+          fi
+
+          # Determine target environments
+          if [ "$ENVIRONMENT" == "all" ]; then
+            ENVIRONMENTS='["development", "staging", "production"]'
+          else
+            ENVIRONMENTS='["'$ENVIRONMENT'"]'
+          fi
+
+          # Generate timestamp
+          TIMESTAMP=$(date -u +%Y%m%d_%H%M%S)
+
+          echo "🌍 Environment Management Configuration:"
+          echo "- Action: $ACTION"
+          echo "- Environment: $ENVIRONMENT"
+          echo "- Config Source: $CONFIG_SOURCE"
+          echo "- Dry Run: $DRY_RUN"
+          echo "- Force: $FORCE"
+          echo "- Environments: $ENVIRONMENTS"
+          echo "- Timestamp: $TIMESTAMP"
+
+          # Set outputs
+          echo "action=$ACTION" >> $GITHUB_OUTPUT
+          echo "environment=$ENVIRONMENT" >> $GITHUB_OUTPUT
+          echo "config_source=$CONFIG_SOURCE" >> $GITHUB_OUTPUT
+          echo "dry_run=$DRY_RUN" >> $GITHUB_OUTPUT
+          echo "force=$FORCE" >> $GITHUB_OUTPUT
+          echo "environments=$ENVIRONMENTS" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+
+  # =============================================================================
+  # Environment Provisioning
+  # =============================================================================
+  provision:
+    name: Provision Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    needs: setup
+    if: needs.setup.outputs.action == 'provision'
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Setup Python for Ansible
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Ansible
+        run: |
+          echo "📦 Installing Ansible"
+          pip install ansible==${{ env.ANSIBLE_VERSION }}
+          ansible --version
+
+      - name: Validate environment configuration
+        run: |
+          echo "🔍 Validating environment configuration for ${{ matrix.environment }}"
+
+          # Check if environment directory exists
+          if [ ! -d "environments/${{ matrix.environment }}" ]; then
+            echo "❌ Environment directory not found: environments/${{ matrix.environment }}"
+            exit 1
+          fi
+
+          # Validate required configuration files
+          REQUIRED_FILES=(
+            "environments/${{ matrix.environment }}/config.yml"
+            "environments/${{ matrix.environment }}/terraform.tfvars"
+            "environments/${{ matrix.environment }}/.env.template"
+          )
+
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ ! -f "$file" ]; then
+              echo "❌ Required file not found: $file"
+              exit 1
+            fi
+            echo "✅ Found: $file"
+          done
+
+          echo "✅ Environment configuration validated"
+
+      - name: Initialize Terraform
+        run: |
+          echo "🏗️ Initializing Terraform for ${{ matrix.environment }}"
+
+          cd infrastructure/terraform
+
+          # Initialize Terraform with environment-specific backend
+          terraform init \
+            -backend-config="key=soulmatting/${{ matrix.environment }}/terraform.tfstate" \
+            -backend-config="region=us-west-2"
+
+          echo "✅ Terraform initialized"
+
+      - name: Plan infrastructure
+        run: |
+          echo "📋 Planning infrastructure for ${{ matrix.environment }}"
+
+          cd infrastructure/terraform
+
+          # Plan with environment-specific variables
+          terraform plan \
+            -var-file="../../environments/${{ matrix.environment }}/terraform.tfvars" \
+            -var="environment=${{ matrix.environment }}" \
+            -out="${{ matrix.environment }}.tfplan"
+
+          echo "✅ Infrastructure plan created"
+
+      - name: Apply infrastructure (if not dry run)
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "🚀 Applying infrastructure for ${{ matrix.environment }}"
+
+          cd infrastructure/terraform
+
+          # Apply the plan
+          terraform apply "${{ matrix.environment }}.tfplan"
+
+          # Output infrastructure details
+          terraform output -json > "../../environments/${{ matrix.environment }}/infrastructure-output.json"
+
+          echo "✅ Infrastructure provisioned"
+
+      - name: Configure environment with Ansible
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "⚙️ Configuring environment with Ansible for ${{ matrix.environment }}"
+
+          cd infrastructure/ansible
+
+          # Run Ansible playbook for environment setup
+          ansible-playbook \
+            -i "inventories/${{ matrix.environment }}/hosts.yml" \
+            -e "environment=${{ matrix.environment }}" \
+            -e "@../../environments/${{ matrix.environment }}/config.yml" \
+            playbooks/environment-setup.yml
+
+          echo "✅ Environment configured"
+
+      - name: Upload provisioning results
+        uses: actions/upload-artifact@v4
+        with:
+          name: provisioning-results-${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}/infrastructure-output.json
+            infrastructure/terraform/${{ matrix.environment }}.tfplan
+          retention-days: 30
+
+  # =============================================================================
+  # Environment Configuration
+  # =============================================================================
+  configure:
+    name: Configure Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: setup
+    if: needs.setup.outputs.action == 'configure'
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'pnpm'
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install configuration tools
+        run: |
+          echo "📦 Installing configuration tools"
+          pnpm add -g dotenv-cli
+          pip install pyyaml jinja2
+
+      - name: Generate environment configuration
+        run: |
+          echo "⚙️ Generating configuration for ${{ matrix.environment }}"
+
+          # Create configuration directory if it doesn't exist
+          mkdir -p "environments/${{ matrix.environment }}/generated"
+
+          # Generate Docker Compose configuration
+          python scripts/generate-docker-compose.py \
+            --environment "${{ matrix.environment }}" \
+            --config "environments/${{ matrix.environment }}/config.yml" \
+            --output "environments/${{ matrix.environment }}/generated/docker-compose.yml"
+
+          # Generate environment variables
+          python scripts/generate-env.py \
+            --environment "${{ matrix.environment }}" \
+            --config "environments/${{ matrix.environment }}/config.yml" \
+            --template "environments/${{ matrix.environment }}/.env.template" \
+            --output "environments/${{ matrix.environment }}/generated/.env"
+
+          # Generate Nginx configuration
+          python scripts/generate-nginx-config.py \
+            --environment "${{ matrix.environment }}" \
+            --config "environments/${{ matrix.environment }}/config.yml" \
+            --output "environments/${{ matrix.environment }}/generated/nginx.conf"
+
+          echo "✅ Configuration generated"
+
+      - name: Validate generated configuration
+        run: |
+          echo "🔍 Validating generated configuration for ${{ matrix.environment }}"
+
+          # Validate Docker Compose file
+          if [ -f "environments/${{ matrix.environment }}/generated/docker-compose.yml" ]; then
+            docker compose -f "environments/${{ matrix.environment }}/generated/docker-compose.yml" config
+            echo "✅ Docker Compose configuration valid"
+          fi
+
+          # Validate environment variables
+          if [ -f "environments/${{ matrix.environment }}/generated/.env" ]; then
+            # Check for required variables
+            REQUIRED_VARS=("DATABASE_URL" "REDIS_URL" "JWT_SECRET" "API_BASE_URL")
+            
+            for var in "${REQUIRED_VARS[@]}"; do
+              if ! grep -q "^$var=" "environments/${{ matrix.environment }}/generated/.env"; then
+                echo "❌ Required environment variable missing: $var"
+                exit 1
+              fi
+            done
+            
+            echo "✅ Environment variables valid"
+          fi
+
+          # Validate Nginx configuration
+          if [ -f "environments/${{ matrix.environment }}/generated/nginx.conf" ]; then
+            # Basic syntax check
+            nginx -t -c "$(pwd)/environments/${{ matrix.environment }}/generated/nginx.conf" 2>/dev/null || {
+              echo "⚠️ Nginx configuration syntax check failed (this might be expected in CI)"
+            }
+            echo "✅ Nginx configuration checked"
+          fi
+
+          echo "✅ Configuration validation completed"
+
+      - name: Apply configuration (if not dry run)
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "🚀 Applying configuration for ${{ matrix.environment }}"
+
+          # Copy generated files to their target locations
+          if [ -f "environments/${{ matrix.environment }}/generated/docker-compose.yml" ]; then
+            cp "environments/${{ matrix.environment }}/generated/docker-compose.yml" "docker-compose.${{ matrix.environment }}.yml"
+            echo "✅ Docker Compose configuration applied"
+          fi
+
+          if [ -f "environments/${{ matrix.environment }}/generated/.env" ]; then
+            cp "environments/${{ matrix.environment }}/generated/.env" ".env.${{ matrix.environment }}"
+            echo "✅ Environment variables applied"
+          fi
+
+          if [ -f "environments/${{ matrix.environment }}/generated/nginx.conf" ]; then
+            mkdir -p "nginx/conf.d"
+            cp "environments/${{ matrix.environment }}/generated/nginx.conf" "nginx/conf.d/${{ matrix.environment }}.conf"
+            echo "✅ Nginx configuration applied"
+          fi
+
+          echo "✅ Configuration applied"
+
+      - name: Upload configuration results
+        uses: actions/upload-artifact@v4
+        with:
+          name: configuration-results-${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}/generated/
+            docker-compose.${{ matrix.environment }}.yml
+            .env.${{ matrix.environment }}
+            nginx/conf.d/${{ matrix.environment }}.conf
+          retention-days: 30
+
+  # =============================================================================
+  # Environment Synchronization
+  # =============================================================================
+  sync:
+    name: Sync Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    if: needs.setup.outputs.action == 'sync'
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install sync tools
+        run: |
+          echo "📦 Installing synchronization tools"
+          pip install pyyaml deepdiff
+
+      - name: Validate sync operation
+        run: |
+          echo "🔍 Validating sync operation"
+
+          SOURCE_ENV="${{ needs.setup.outputs.config_source }}"
+          TARGET_ENV="${{ matrix.environment }}"
+
+          # Skip if source and target are the same
+          if [ "$SOURCE_ENV" == "$TARGET_ENV" ]; then
+            echo "⏭️ Skipping sync: source and target are the same ($SOURCE_ENV)"
+            exit 0
+          fi
+
+          # Check if source environment exists
+          if [ ! -d "environments/$SOURCE_ENV" ]; then
+            echo "❌ Source environment not found: $SOURCE_ENV"
+            exit 1
+          fi
+
+          # Check if target environment exists
+          if [ ! -d "environments/$TARGET_ENV" ]; then
+            echo "❌ Target environment not found: $TARGET_ENV"
+            exit 1
+          fi
+
+          echo "✅ Sync validation passed"
+          echo "SOURCE_ENV=$SOURCE_ENV" >> $GITHUB_ENV
+          echo "TARGET_ENV=$TARGET_ENV" >> $GITHUB_ENV
+
+      - name: Compare configurations
+        run: |
+          echo "🔍 Comparing configurations"
+
+          # Compare configuration files
+          python scripts/compare-environments.py \
+            --source "environments/$SOURCE_ENV" \
+            --target "environments/$TARGET_ENV" \
+            --output "environment-diff-$TARGET_ENV.json"
+
+          # Display differences
+          if [ -f "environment-diff-$TARGET_ENV.json" ]; then
+            echo "📊 Configuration differences found:"
+            cat "environment-diff-$TARGET_ENV.json"
+          else
+            echo "✅ No configuration differences found"
+          fi
+
+      - name: Sync configurations (if not dry run)
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "🔄 Synchronizing configurations"
+
+          # Backup current target configuration
+          BACKUP_DIR="environments/$TARGET_ENV/backup-${{ needs.setup.outputs.timestamp }}"
+          mkdir -p "$BACKUP_DIR"
+          cp -r "environments/$TARGET_ENV/"* "$BACKUP_DIR/" || true
+
+          # Sync specific configuration files
+          SYNC_FILES=(
+            "config.yml"
+            ".env.template"
+            "terraform.tfvars"
+          )
+
+          for file in "${SYNC_FILES[@]}"; do
+            if [ -f "environments/$SOURCE_ENV/$file" ]; then
+              echo "🔄 Syncing $file"
+              
+              # Create environment-specific version
+              python scripts/adapt-config.py \
+                --source "environments/$SOURCE_ENV/$file" \
+                --target-env "$TARGET_ENV" \
+                --output "environments/$TARGET_ENV/$file.new"
+              
+              # Replace if different
+              if ! diff -q "environments/$TARGET_ENV/$file" "environments/$TARGET_ENV/$file.new" >/dev/null 2>&1; then
+                mv "environments/$TARGET_ENV/$file.new" "environments/$TARGET_ENV/$file"
+                echo "✅ Updated $file"
+              else
+                rm "environments/$TARGET_ENV/$file.new"
+                echo "⏭️ No changes needed for $file"
+              fi
+            fi
+          done
+
+          echo "✅ Configuration synchronization completed"
+
+      - name: Upload sync results
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-results-${{ matrix.environment }}
+          path: |
+            environment-diff-${{ matrix.environment }}.json
+            environments/${{ matrix.environment }}/backup-${{ needs.setup.outputs.timestamp }}/
+          retention-days: 30
+
+  # =============================================================================
+  # Environment Validation
+  # =============================================================================
+  validate:
+    name: Validate Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: setup
+    if: |
+      needs.setup.outputs.action == 'validate' ||
+      github.event_name == 'schedule' ||
+      github.event_name == 'push'
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    outputs:
+      validation_results: ${{ steps.validate.outputs.validation_results }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install validation tools
+        run: |
+          echo "📦 Installing validation tools"
+          pip install pyyaml jsonschema docker-compose
+
+      - name: Validate environment structure
+        id: validate
+        run: |
+          echo "🔍 Validating environment structure for ${{ matrix.environment }}"
+
+          VALIDATION_RESULTS=""
+          VALIDATION_PASSED=true
+
+          # Check directory structure
+          REQUIRED_DIRS=(
+            "environments/${{ matrix.environment }}"
+          )
+
+          for dir in "${REQUIRED_DIRS[@]}"; do
+            if [ -d "$dir" ]; then
+              echo "✅ Directory exists: $dir"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ Directory: $dir\n"
+            else
+              echo "❌ Directory missing: $dir"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}❌ Directory missing: $dir\n"
+              VALIDATION_PASSED=false
+            fi
+          done
+
+          # Check required files
+          REQUIRED_FILES=(
+            "environments/${{ matrix.environment }}/config.yml"
+            "environments/${{ matrix.environment }}/.env.template"
+          )
+
+          for file in "${REQUIRED_FILES[@]}"; do
+            if [ -f "$file" ]; then
+              echo "✅ File exists: $file"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ File: $file\n"
+              
+              # Validate YAML syntax
+              if [[ "$file" == *.yml ]] || [[ "$file" == *.yaml ]]; then
+                if python -c "import yaml; yaml.safe_load(open('$file'))" 2>/dev/null; then
+                  echo "✅ YAML syntax valid: $file"
+                  VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ YAML syntax: $file\n"
+                else
+                  echo "❌ YAML syntax invalid: $file"
+                  VALIDATION_RESULTS="${VALIDATION_RESULTS}❌ YAML syntax invalid: $file\n"
+                  VALIDATION_PASSED=false
+                fi
+              fi
+            else
+              echo "❌ File missing: $file"
+              VALIDATION_RESULTS="${VALIDATION_RESULTS}❌ File missing: $file\n"
+              VALIDATION_PASSED=false
+            fi
+          done
+
+          # Validate Docker Compose files
+          COMPOSE_FILES=(
+            "docker-compose.${{ matrix.environment }}.yml"
+            "environments/${{ matrix.environment }}/generated/docker-compose.yml"
+          )
+
+          for compose_file in "${COMPOSE_FILES[@]}"; do
+            if [ -f "$compose_file" ]; then
+              echo "🔍 Validating Docker Compose: $compose_file"
+              if docker compose -f "$compose_file" config >/dev/null 2>&1; then
+                echo "✅ Docker Compose valid: $compose_file"
+                VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ Docker Compose: $compose_file\n"
+              else
+                echo "❌ Docker Compose invalid: $compose_file"
+                VALIDATION_RESULTS="${VALIDATION_RESULTS}❌ Docker Compose invalid: $compose_file\n"
+                VALIDATION_PASSED=false
+              fi
+            fi
+          done
+
+          # Validate environment variables
+          ENV_FILES=(
+            ".env.${{ matrix.environment }}"
+            "environments/${{ matrix.environment }}/generated/.env"
+          )
+
+          for env_file in "${ENV_FILES[@]}"; do
+            if [ -f "$env_file" ]; then
+              echo "🔍 Validating environment variables: $env_file"
+              
+              # Check for required variables
+              REQUIRED_VARS=("DATABASE_URL" "REDIS_URL" "JWT_SECRET")
+              
+              for var in "${REQUIRED_VARS[@]}"; do
+                if grep -q "^$var=" "$env_file"; then
+                  echo "✅ Required variable found: $var"
+                  VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ Env var: $var\n"
+                else
+                  echo "❌ Required variable missing: $var"
+                  VALIDATION_RESULTS="${VALIDATION_RESULTS}❌ Env var missing: $var\n"
+                  VALIDATION_PASSED=false
+                fi
+              done
+            fi
+          done
+
+          # Set validation results
+          if [ "$VALIDATION_PASSED" == "true" ]; then
+            echo "✅ Environment validation passed for ${{ matrix.environment }}"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}✅ Overall: PASSED\n"
+          else
+            echo "❌ Environment validation failed for ${{ matrix.environment }}"
+            VALIDATION_RESULTS="${VALIDATION_RESULTS}❌ Overall: FAILED\n"
+            exit 1
+          fi
+
+          # Output results
+          echo "validation_results<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$VALIDATION_RESULTS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results-${{ matrix.environment }}
+          path: |
+            environments/${{ matrix.environment }}/
+          retention-days: 30
+
+  # =============================================================================
+  # Environment Cleanup
+  # =============================================================================
+  cleanup:
+    name: Cleanup Environment
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: setup
+    if: needs.setup.outputs.action == 'cleanup'
+
+    strategy:
+      matrix:
+        environment: ${{ fromJson(needs.setup.outputs.environments) }}
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Confirm cleanup operation
+        if: needs.setup.outputs.force == 'false'
+        run: |
+          echo "⚠️ Cleanup operation requires confirmation"
+          echo "This will remove resources for environment: ${{ matrix.environment }}"
+          echo "To proceed, set force=true in the workflow inputs"
+          exit 1
+
+      - name: Cleanup Docker resources
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "🧹 Cleaning up Docker resources for ${{ matrix.environment }}"
+
+          # Stop and remove containers
+          if [ -f "docker-compose.${{ matrix.environment }}.yml" ]; then
+            docker compose -f "docker-compose.${{ matrix.environment }}.yml" down --volumes --remove-orphans || true
+            echo "✅ Docker containers cleaned up"
+          fi
+
+          # Remove environment-specific images
+          docker images --filter "label=environment=${{ matrix.environment }}" -q | xargs -r docker rmi || true
+          echo "✅ Docker images cleaned up"
+
+      - name: Cleanup infrastructure
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "🧹 Cleaning up infrastructure for ${{ matrix.environment }}"
+
+          cd infrastructure/terraform
+
+          # Initialize Terraform
+          terraform init \
+            -backend-config="key=soulmatting/${{ matrix.environment }}/terraform.tfstate" \
+            -backend-config="region=us-west-2"
+
+          # Destroy infrastructure
+          terraform destroy \
+            -var-file="../../environments/${{ matrix.environment }}/terraform.tfvars" \
+            -var="environment=${{ matrix.environment }}" \
+            -auto-approve
+
+          echo "✅ Infrastructure cleaned up"
+
+      - name: Cleanup configuration files
+        if: needs.setup.outputs.dry_run == 'false'
+        run: |
+          echo "🧹 Cleaning up configuration files for ${{ matrix.environment }}"
+
+          # Remove generated files
+          rm -rf "environments/${{ matrix.environment }}/generated" || true
+          rm -f "docker-compose.${{ matrix.environment }}.yml" || true
+          rm -f ".env.${{ matrix.environment }}" || true
+          rm -f "nginx/conf.d/${{ matrix.environment }}.conf" || true
+
+          echo "✅ Configuration files cleaned up"
+
+  # =============================================================================
+  # Generate Environment Report
+  # =============================================================================
+  report:
+    name: Generate Environment Report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [setup, validate]
+    if: always() && !cancelled()
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: environment-results
+
+      - name: Generate environment report
+        run: |
+          echo "📊 Generating environment management report"
+
+          # Create report directory
+          mkdir -p reports
+
+          # Generate report
+          cat > reports/environment-management-report.md << EOF
+          # 🌍 Environment Management Report
+
+          **Action:** ${{ needs.setup.outputs.action }}
+          **Environment(s):** ${{ needs.setup.outputs.environment }}
+          **Timestamp:** ${{ needs.setup.outputs.timestamp }}
+          **Dry Run:** ${{ needs.setup.outputs.dry_run }}
+
+          ## 📊 Summary
+
+          | Environment | Status | Action Performed |
+          |-------------|--------|------------------|
+          EOF
+
+          # Add environment status to report
+          for env in development staging production; do
+            if echo '${{ needs.setup.outputs.environments }}' | grep -q "$env"; then
+              if [ -d "environment-results/validation-results-$env" ]; then
+                echo "| $env | ✅ Validated | ${{ needs.setup.outputs.action }} |" >> reports/environment-management-report.md
+              else
+                echo "| $env | ⏭️ Skipped | ${{ needs.setup.outputs.action }} |" >> reports/environment-management-report.md
+              fi
+            else
+              echo "| $env | ⏭️ Not Selected | - |" >> reports/environment-management-report.md
+            fi
+          done
+
+          # Add detailed results
+          cat >> reports/environment-management-report.md << EOF
+
+          ## 📝 Detailed Results
+
+          ### Validation Results
+
+          EOF
+
+          # Add validation results for each environment
+          for result_dir in environment-results/validation-results-*; do
+            if [ -d "$result_dir" ]; then
+              env_name=$(basename "$result_dir" | sed 's/validation-results-//')
+              echo "#### $env_name Environment" >> reports/environment-management-report.md
+              echo "" >> reports/environment-management-report.md
+              
+              # Add validation details if available
+              if [ -f "$result_dir/validation.log" ]; then
+                echo '```' >> reports/environment-management-report.md
+                cat "$result_dir/validation.log" >> reports/environment-management-report.md
+                echo '```' >> reports/environment-management-report.md
+              else
+                echo "Validation completed successfully." >> reports/environment-management-report.md
+              fi
+              echo "" >> reports/environment-management-report.md
+            fi
+          done
+
+          # Add footer
+          cat >> reports/environment-management-report.md << EOF
+
+          ---
+
+          **Generated:** $(date -u)
+          **Workflow:** Environment Management
+          **Triggered by:** ${{ github.actor }}
+          EOF
+
+          echo "✅ Environment management report generated"
+
+      - name: Upload environment report
+        uses: actions/upload-artifact@v4
+        with:
+          name: environment-management-report
+          path: |
+            reports/environment-management-report.md
+            environment-results/
+          retention-days: 30
+
+      - name: Generate GitHub step summary
+        run: |
+          echo "# 🌍 Environment Management Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ needs.setup.outputs.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment(s):** ${{ needs.setup.outputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Dry Run:** ${{ needs.setup.outputs.dry_run }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          echo "## 📊 Results" >> $GITHUB_STEP_SUMMARY
+
+          # Add environment status
+          for env in development staging production; do
+            if echo '${{ needs.setup.outputs.environments }}' | grep -q "$env"; then
+              if [ -d "environment-results/validation-results-$env" ]; then
+                echo "✅ **$env**: Action completed successfully" >> $GITHUB_STEP_SUMMARY
+              else
+                echo "❌ **$env**: Action failed or was skipped" >> $GITHUB_STEP_SUMMARY
+              fi
+            else
+              echo "⏭️ **$env**: Not selected for this operation" >> $GITHUB_STEP_SUMMARY
+            fi
+          done
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Detailed results are available in the workflow artifacts.**" >> $GITHUB_STEP_SUMMARY
